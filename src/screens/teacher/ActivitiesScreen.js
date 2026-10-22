@@ -10,7 +10,7 @@ import { activitiesFor, ACTIVITY_TYPES } from '../../data/activities';
 import { Header, Card } from '../../teacher/ui';
 
 const gradeRange = (gs) => {
-  const u = [...new Set(gs)].sort((a, b) => a - b);
+  const u = [...new Set(gs.filter(Boolean))].sort((a, b) => a - b);
   if (!u.length) return '';
   const run = u.every((g, i) => !i || g === u[i - 1] + 1);
   return `${u.length > 1 && run ? `${u[0]}–${u[u.length - 1]}` : u.join(', ')}. sınıf`;
@@ -73,7 +73,7 @@ export default function ActivitiesScreen({ navigation, route }) {
                         {g.t.desc}
                       </Text>
                       <View style={st.foot}>
-                        <Text style={{ color: c, fontWeight: '800', fontSize: font.small }}>{gradeRange(g.items.map((a) => a.grade))}</Text>
+                        <Text style={{ color: c, fontWeight: '800', fontSize: font.small }}>{gradeRange(g.items.some((a) => !a.grade) ? (branch ? branch.grades : []) : g.items.map((a) => a.grade))}</Text>
                         <View style={[st.play, { backgroundColor: c }]}>
                           <Text style={st.playT}>▶ Oyna</Text>
                         </View>

@@ -7,7 +7,7 @@ const esc = (t) => String(t || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').
 
 export function activityTitle(act) {
   const branch = BRANCH_BY_ID[act.branchId];
-  return `${act.grade}. Sınıf ${branch ? branch.name : ''} · ${act.unit ? `${act.unit}. Ünite: ` : ''}${act.unitName}`;
+  return `${act.grade ? `${act.grade}. Sınıf ` : ''}${branch ? branch.name : ''} · ${act.unit ? `${act.unit}. Ünite: ` : ''}${act.unitName}`;
 }
 
 export function buildHtml(act) {
@@ -18,7 +18,7 @@ export function buildHtml(act) {
     .replace('/*__HAVUZ__*/', () => `const HAVUZ=${pool};`)
     // Gömülü doğal sesler (varsa): { metin: mp3 base64 } — tools/etkinlik/sesler.mjs üretir.
     .replace('/*__SESLER__*/', () => `const SESLER=${act.sesler ? JSON.stringify(act.sesler()) : '{}'};`)
-    .replace('__BASLIK__', () => esc(`${type.name} · ${act.grade}. Sınıf`))
+    .replace('__BASLIK__', () => esc(act.grade ? `${type.name} · ${act.grade}. Sınıf` : type.name))
     .replace('__ALT__', () => esc(activityTitle(act)))
     .replace('__IMZA__', () => (act.imza ? `<div class="imza">${act.imza}</div>` : ''))
     .split('__ANAHTAR__')
@@ -28,6 +28,6 @@ export function buildHtml(act) {
 // "Pasaparola - 10. Sınıf Din Kültürü ve Ahlak Bilgisi - 1. Ünite.html"
 export function fileName(act) {
   const branch = BRANCH_BY_ID[act.branchId];
-  const name = `${ACTIVITY_TYPES[act.type].name} - ${act.grade}. Sınıf ${branch ? branch.name : ''} - ${act.unit ? `${act.unit}. Ünite` : act.unitName}`;
+  const name = `${ACTIVITY_TYPES[act.type].name} - ${act.grade ? `${act.grade}. Sınıf ` : ''}${branch ? branch.name : ''} - ${act.unit ? `${act.unit}. Ünite` : act.unitName}`;
   return `${name.replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, ' ').trim()}.html`;
 }

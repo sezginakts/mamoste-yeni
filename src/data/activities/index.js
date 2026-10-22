@@ -58,6 +58,15 @@ export const ACTIVITY_TYPES = {
   },
   // Kaynağı tools/etkinlik/hikaye.html; değişince `node tools/etkinlik/derle.js`.
   // Havuz: { baslangiclar, kelimeler, gorevler, sinif } — tek içerik dosyası, sınıf düzeyi görevleri seçer.
+  // Kaynağı tools/etkinlik/logo.html (öğretmenin Claude'da hazırladığı oyun); değişince `node tools/etkinlik/derle.js`.
+  // Havuz yok: hazır logo paketi oyunun içinde, öğretmen kendi logolarını ekleyebilir (cihazda saklanır).
+  logo: {
+    icon: '🔍',
+    name: 'Logo Avcısı',
+    desc: 'Logo parça parça açılır; takımlar markayı ne kadar erken tanırsa o kadar çok puan alır. Hazır logo paketi var, öğretmen kendi logolarını da ekleyebilir.',
+    branches: ['teknoloji-tasarim'],
+    engine: () => require('./logoEngine.js').default,
+  },
   // Uygulama ekranı: src/screens/teacher/TimelineScreen.js · olaylar ve düzey zorluğu src/data/timelines.js
   zaman: {
     icon: '🕰️',
@@ -101,7 +110,8 @@ const LIST = {
     { type: 'cark', grade: 7, unit: 1, unitName: 'Appearance and Personality', pool: () => require('./ingilizce/cark7_u1.js').default, sesler: () => require('./ingilizce/ses/cark7_u1.js').default },
     { type: 'cark', grade: 8, unit: 1, unitName: 'Friendship', pool: () => require('./ingilizce/cark8_u1.js').default, sesler: () => require('./ingilizce/ses/cark8_u1.js').default },
   ],
-  'teknoloji-tasarim': [],
+  // grade: null → sınıf düzeyine bağlı değil (branşın tüm sınıfları).
+  'teknoloji-tasarim': [{ type: 'logo', grade: null, unit: null, unitName: 'Marka ve logo', pool: () => ({}) }],
   turkce: [
     { type: 'fiilimsi', grade: 8, unit: null, unitName: 'Fiilimsiler', pool: () => require('./turkce/fiilimsi8.js').default },
     { type: 'hikaye', grade: 5, unit: null, unitName: 'Yaratıcı Yazma', pool: () => ({ ...require('./turkce/hikaye.js').default, sinif: 5 }) },

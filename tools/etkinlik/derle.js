@@ -9,6 +9,7 @@ const MOTORLAR = [
   { kaynak: 'terazi.html', hedef: '../../src/data/activities/teraziEngine.js' },
   { kaynak: 'fiilimsi.html', hedef: '../../src/data/activities/fiilimsiEngine.js' },
   { kaynak: 'hikaye.html', hedef: '../../src/data/activities/hikayeEngine.js' },
+  { kaynak: 'logo.html', hedef: '../../src/data/activities/logoEngine.js' },
 ];
 
 for (const m of MOTORLAR) {
