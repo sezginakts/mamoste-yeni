@@ -43,6 +43,15 @@ export const ACTIVITY_TYPES = {
     branches: ['matematik'],
     engine: () => require('./teraziEngine.js').default,
   },
+  // Kaynağı tools/etkinlik/fiilimsi.html; değişince `node tools/etkinlik/derle.js`.
+  // Havuz: [["cümle (*hedef kelime*)", "isim|sifat|zarf|degil", "kök|ek|diğer", "açıklama"], …]
+  fiilimsi: {
+    icon: '🗂️',
+    name: 'Fiilimsi Kovası',
+    desc: 'Cümledeki altı çizili kelimeyi doğru kovaya at: isim-fiil, sıfat-fiil, zarf-fiil ya da fiilimsi değil. Kart aşağı inerken hızlı ol; doğru bilince ekin başladığı harfi bul.',
+    branches: ['turkce'],
+    engine: () => require('./fiilimsiEngine.js').default,
+  },
 };
 
 const DKAB_IMZA = 'Hazırlayan: <b>Ejder AKÇİÇEK</b> · Din Kültürü ve Ahlak Bilgisi Öğretmeni';
@@ -64,7 +73,9 @@ const LIST = {
     { type: 'cark', grade: 8, unit: 1, unitName: 'Friendship', pool: () => require('./ingilizce/cark8_u1.js').default },
   ],
   'teknoloji-tasarim': [],
-  turkce: [],
+  turkce: [
+    { type: 'fiilimsi', grade: 8, unit: null, unitName: 'Fiilimsiler', pool: () => require('./turkce/fiilimsi8.js').default },
+  ],
   matematik: [
     { type: 'terazi', grade: 7, unit: null, unitName: 'Birinci Dereceden Denklemler', pool: () => require('./matematik/terazi7.js').default },
     { type: 'terazi', grade: 8, unit: null, unitName: 'Doğrusal Denklemler', pool: () => require('./matematik/terazi8.js').default },

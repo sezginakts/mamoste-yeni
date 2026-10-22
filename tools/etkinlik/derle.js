@@ -7,6 +7,7 @@ const MOTORLAR = [
   { kaynak: 'cumle.html', hedef: '../../src/data/activities/cumleEngine.js' },
   { kaynak: 'cark.html', hedef: '../../src/data/activities/carkEngine.js' },
   { kaynak: 'terazi.html', hedef: '../../src/data/activities/teraziEngine.js' },
+  { kaynak: 'fiilimsi.html', hedef: '../../src/data/activities/fiilimsiEngine.js' },
 ];
 
 for (const m of MOTORLAR) {
