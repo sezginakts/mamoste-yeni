@@ -61,6 +61,9 @@ export default function ActivitiesScreen({ navigation, route }) {
             <View key={type}>
               <SectionTitle>{`${t.icon} ${t.name.toLocaleUpperCase('tr')}`}</SectionTitle>
               <Text style={{ color: colors.textMuted, fontSize: font.small, marginBottom: spacing.sm }}>{t.desc}</Text>
+              {t.screen ? (
+                <Text style={{ color: colors.textFaint, fontSize: font.tiny, marginBottom: spacing.sm }}>Uygulama içinde oynanır; akıllı tahtada web sürümünden açılır (dosya olarak indirilemez).</Text>
+              ) : null}
               {games.length ? (
                 games.map((a) => (
                   <Card key={a.id} style={st.row}>
@@ -72,12 +75,14 @@ export default function ActivitiesScreen({ navigation, route }) {
                       <Text style={{ color: colors.text, fontWeight: '900', fontSize: font.body }}>{a.unit ? `${a.unit}. Ünite` : a.unitName}</Text>
                       {a.unit ? <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: 2 }} numberOfLines={2}>{a.unitName}</Text> : null}
                       <View style={st.btns}>
-                        <Pressable onPress={() => navigation.navigate('ActivityPlay', { id: a.id })} style={[st.btn, { backgroundColor: colors.accent }]} accessibilityLabel={`${a.unit ? `${a.unit}. ünite` : a.unitName} oyununu oyna`}>
+                        <Pressable onPress={() => (t.screen ? navigation.navigate(t.screen, { grade: a.grade }) : navigation.navigate('ActivityPlay', { id: a.id }))} style={[st.btn, { backgroundColor: colors.accent }]} accessibilityLabel={`${a.unit ? `${a.unit}. ünite` : a.unitName} oyununu oyna`}>
                           <Text style={st.btnT}>▶ Oyna</Text>
                         </Pressable>
-                        <Pressable onPress={() => download(a)} disabled={busy === a.id} style={[st.btn, { backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.accent }]} accessibilityLabel="Akıllı tahta için indir">
-                          {busy === a.id ? <ActivityIndicator color={colors.accent} /> : <Text style={[st.btnT, { color: colors.accent }]}>⬇ İndir</Text>}
-                        </Pressable>
+                        {t.screen ? null : (
+                          <Pressable onPress={() => download(a)} disabled={busy === a.id} style={[st.btn, { backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.accent }]} accessibilityLabel="Akıllı tahta için indir">
+                            {busy === a.id ? <ActivityIndicator color={colors.accent} /> : <Text style={[st.btnT, { color: colors.accent }]}>⬇ İndir</Text>}
+                          </Pressable>
+                        )}
                       </View>
                     </View>
                   </Card>

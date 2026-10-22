@@ -9,6 +9,8 @@
 // Branş kimlikleri: data/branches.js (ingilizce, teknoloji-tasarim, turkce, matematik, fen, sosyal, inkilap, din, gorsel, muzik, beden, bilisim).
 
 // Etkinlik türleri. Yeni bir oyun türü eklenirse motoru (HTML) buraya bağlanır.
+// `screen` olan türler HTML değil, uygulamanın kendi ekranıdır (Oyna → o ekran, sınıf düzeyiyle);
+// tek dosya olarak indirilemez, akıllı tahtada web sürümünden (npm run web) açılır.
 export const ACTIVITY_TYPES = {
   pasaparola: {
     icon: '🔤',
@@ -54,6 +56,22 @@ export const ACTIVITY_TYPES = {
   },
   // Kaynağı tools/etkinlik/hikaye.html; değişince `node tools/etkinlik/derle.js`.
   // Havuz: { baslangiclar, kelimeler, gorevler, sinif } — tek içerik dosyası, sınıf düzeyi görevleri seçer.
+  // Uygulama ekranı: src/screens/teacher/TimelineScreen.js · olaylar ve düzey zorluğu src/data/timelines.js
+  zaman: {
+    icon: '🕰️',
+    name: 'Zaman Şeridi',
+    desc: 'Görselli olay kartlarını soldan sağa doğru sıraya diz. Tarihler kontrol edilmeden görünmez; doğru yerdekilerin tarihi açılır, yanlışlar yeniden denenir. Öğretmen kendi olaylarını da ekleyebilir.',
+    branches: ['sosyal', 'inkilap'],
+    screen: 'Timeline',
+  },
+  // Uygulama ekranı: src/screens/teacher/MapGameScreen.js · yerler ve düzey zorluğu src/data/mapFeatures.js
+  harita: {
+    icon: '🗺️',
+    name: 'Türkiye Haritası',
+    desc: 'Önce İller (81 il, plaka), sonra dağlar, akarsular, göller, ovalar, platolar, madenler, ticaret ve ulaşım. Keşfet, Hangisi? ve Bul kipleri; doğru yer ve uzaklık haritada gösterilir.',
+    branches: ['sosyal'],
+    screen: 'MapGame',
+  },
   hikaye: {
     icon: '📖',
     name: 'Hikâye Zinciri',
@@ -94,8 +112,15 @@ const LIST = {
     { type: 'terazi', grade: 8, unit: null, unitName: 'Doğrusal Denklemler', pool: () => require('./matematik/terazi8.js').default },
   ],
   fen: [],
-  sosyal: [],
-  inkilap: [],
+  sosyal: [
+    { type: 'zaman', grade: 5, unit: null, unitName: 'Önemli günler · icatlar · Anadolu’nun ilk izleri' },
+    { type: 'zaman', grade: 6, unit: null, unitName: 'İlk Türk devletleri ve Türk-İslam tarihi' },
+    { type: 'zaman', grade: 7, unit: null, unitName: 'Osmanlı · Avrupa’da değişim' },
+    { type: 'harita', grade: 5, unit: null, unitName: '20 il ve temel yeryüzü şekilleri' },
+    { type: 'harita', grade: 6, unit: null, unitName: '45 il ve Türkiye’nin fiziki-ekonomik coğrafyası' },
+    { type: 'harita', grade: 7, unit: null, unitName: '81 il ve tüm yerler' },
+  ],
+  inkilap: [{ type: 'zaman', grade: 8, unit: null, unitName: 'Milli Mücadele · Atatürk ilke ve inkılapları' }],
   gorsel: [],
   muzik: [],
   beden: [],
