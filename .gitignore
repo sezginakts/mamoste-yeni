@@ -1,0 +1,15 @@
+node_modules/
+.expo/
+dist/
+web-build/
+*.log
+.DS_Store
+
+# build/üretim araçları
+expo-qr.png
+expo-qr.log
+expo-web.log
+voice_test.mp3
+
+__pycache__/
+*.old.py

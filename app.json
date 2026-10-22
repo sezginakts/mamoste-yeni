@@ -1,0 +1,71 @@
+{
+  "expo": {
+    "name": "Mamoste",
+    "slug": "ingapp",
+    "version": "1.0.0",
+    "orientation": "default",
+    "userInterfaceStyle": "light",
+    "scheme": "ingapp",
+    "backgroundColor": "#F1F5F9",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0F172A"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ingapp.cumle",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.ingapp.cumle",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0F172A"
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-audio",
+      "expo-asset",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Ödeve fotoğraf/video eklemek ve QR kodu okumak için kamera kullanılır.",
+          "recordAudioAndroid": false
+        }
+      ],
+      "expo-notifications",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Ödeve fotoğraf ya da video eklemek için galerin kullanılır.",
+          "cameraPermission": "Ödeve fotoğraf/video eklemek ve QR kodu okumak için kamera kullanılır.",
+          "microphonePermission": "Ödeve video çekerken ses kaydı için mikrofon kullanılır."
+        }
+      ],
+      "expo-web-browser"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "7f6d4c2b-a8a7-444c-9d32-5c21fbb39a0b"
+      },
+      "supabaseUrl": "https://gvvpmvwputfgffqizvkd.supabase.co",
+      "supabaseKey": "sb_publishable_Vwx8kA3eEiY0PzzoFu6z6g_ekelenF1"
+    },
+    "owner": "szgngst"
+  }
+}
