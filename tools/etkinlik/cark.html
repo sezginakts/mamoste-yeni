@@ -48,6 +48,9 @@ h1{margin:0;font-size:calc(var(--f)*2.1);font-weight:900;line-height:1;backgroun
 .doniyor .ampul:nth-child(odd){animation:yan .5s steps(1) infinite}
 .doniyor .ampul:nth-child(even){animation:yan .5s steps(1) infinite .25s}
 @keyframes yan{0%{fill:#FFF7D6}50%{fill:#FBBF24}}
+.savur{position:absolute;left:50%;bottom:-1%;transform:translateX(-50%);background:rgba(255,255,255,.92);border-radius:99px;padding:.8vmin 2.2vmin;font-weight:800;font-size:calc(var(--f)*.55);color:var(--soluk);white-space:nowrap;box-shadow:0 .4vmin 1.4vmin rgba(15,23,42,.12);pointer-events:none;transition:opacity .4s}
+.savur.gizli{opacity:0}.savur.uyari{color:var(--mercan);opacity:1;animation:sallaOrta .45s}
+@keyframes sallaOrta{0%,100%{transform:translateX(-50%)}25%,75%{transform:translateX(calc(-50% - 1.2vmin))}50%{transform:translateX(calc(-50% + 1.2vmin))}}
 .sag{width:min(40vw,62vmin);display:flex;flex-direction:column;gap:1.6vmin;padding:2.4vmin 2.4vmin 2.4vmin 0;min-height:0}
 .ust{display:flex;align-items:center;gap:1vmin}
 .etiket{flex:1;font-weight:900;font-size:calc(var(--f)*.55);color:var(--gok);background:#fff;border-radius:99px;padding:.7vmin 1.6vmin;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -149,7 +152,7 @@ h1{margin:0;font-size:calc(var(--f)*2.1);font-weight:900;line-height:1;backgroun
     </div>
     <div class="dilimler"><b>10–50 puan: soru</b><b>×2 çift puan</b><b>🎁 hediye +25</b><b>⏭ pas</b><b>💥 puanın yarısı gider</b></div>
     <button id="basla" class="buyuk">Başla ▶</button>
-    <div class="not">Çarkı <b>ÇEVİR</b> düğmesiyle ya da çarkı parmakla hızlıca kaydırarak döndür. Seçenekli sorular kendiliğinden puanlanır; açık uçlu sorularda öğretmen <b>✓ Doğru / ✗ Yanlış</b> der. Büyük dilimlerde sorular zorlaşır!</div>
+    <div class="not">Çarkı <b>ÇEVİR</b> düğmesiyle döndür ya da tahtada <b>parmağınla tutup savur</b>: ne kadar hızlı savurursan o kadar uzun döner, iki yöne de çalışır. Seçenekli sorular kendiliğinden puanlanır; açık uçlu sorularda öğretmen <b>✓ Doğru / ✗ Yanlış</b> der. Büyük dilimlerde sorular zorlaşır!</div>
   </div>
 </section>
 
@@ -158,6 +161,7 @@ h1{margin:0;font-size:calc(var(--f)*2.1);font-weight:900;line-height:1;backgroun
     <div class="cark-kap">
       <svg class="ibre" id="ibre" viewBox="0 0 40 52"><path d="M20 50 L4 12 A17 17 0 1 1 36 12 Z" fill="#E2574C" stroke="#fff" stroke-width="3"/><circle cx="20" cy="17" r="6" fill="#fff"/></svg>
       <svg id="cark" viewBox="-100 -100 200 200"></svg>
+      <div class="savur" id="savur">👆 Çarkı parmağınla savur</div>
     </div>
   </div>
   <div class="sag">
@@ -251,7 +255,7 @@ let takimlar=[],sira=0,cevirme=0,toplam=0,aci=0,donuyor=false,soruBekliyor=false
 function basla(){
   ac();const n=+AYAR.takim;takimlar=TAKIM.slice(0,n).map(t=>({...t,puan:0}));
   sira=0;cevirme=0;toplam=n*(+AYAR.tur);sorulan=[];
-  $('etiket').textContent=document.title;ekran('oyun');panelCiz();
+  $('etiket').textContent=document.title;$('savur').classList.remove('gizli');ekran('oyun');panelCiz();
 }
 function ekran(id){document.querySelectorAll('.ekran').forEach(e=>e.classList.toggle('aktif',e.id===id))}
 function panelCiz(){
@@ -269,25 +273,61 @@ function puanEkle(i,p){
 }
 
 // --- çevirme ---
-function cevir(hiz){
-  if(donuyor||soruBekliyor)return;ac();donuyor=true;$('cark').parentNode.classList.add('doniyor');panelCiz();
-  const tur=4+Math.random()*2+(hiz?Math.min(hiz,3):0),hedef=aci+tur*360+Math.random()*360;
-  const bas=aci,sure=4200+Math.random()*1200,t0=performance.now();let sonDilim=Math.floor(bas/ACI);
-  const ease=x=>1-Math.pow(1-x,4);
-  function adim(t){const x=Math.min(1,(t-t0)/sure);aci=bas+(hedef-bas)*ease(x);
-    $('dg').setAttribute('transform',`rotate(${aci})`);$('amp').setAttribute('transform',`rotate(${aci})`);
-    const d=Math.floor(aci/ACI);if(d!==sonDilim){sonDilim=d;ses.tik();const ib=$('ibre');ib.classList.remove('vur');void ib.offsetWidth;ib.classList.add('vur')}
+// Çarkı aci'ya çevirir; dilim değişince tık sesi ve ibre vuruşu
+let sonDilim=0;
+function carkKoy(a){
+  aci=a;$('dg').setAttribute('transform',`rotate(${aci})`);$('amp').setAttribute('transform',`rotate(${aci})`);
+  const d=Math.floor(aci/ACI);if(d!==sonDilim){sonDilim=d;ses.tik();const ib=$('ibre');ib.classList.remove('vur');void ib.offsetWidth;ib.classList.add('vur')}
+}
+// fark derece (eksi = saat yönünün tersi), sure ms, k: yavaşlama eğrisi (büyük = sona doğru daha uzun süzülür)
+function don(fark,sure,k){
+  ac();donuyor=true;$('cark').parentNode.classList.add('doniyor');panelCiz();ipucuGizle();
+  const bas=aci,t0=performance.now(),ease=x=>1-Math.pow(1-x,k);sonDilim=Math.floor(bas/ACI);
+  function adim(t){const x=Math.min(1,Math.max(0,(t-t0)/sure));carkKoy(bas+fark*ease(x));
     if(x<1)requestAnimationFrame(adim);else{donuyor=false;$('cark').parentNode.classList.remove('doniyor');durdu()}}
   requestAnimationFrame(adim);
 }
+// ÇEVİR düğmesi / Boşluk: saat yönünde 4-7 tur
+function cevir(){if(donuyor||soruBekliyor||SR)return;don((4+Math.random()*2)*360+Math.random()*360,4200+Math.random()*1200,4)}
 function altDilim(){const a=((360-(aci%360))%360+360)%360;return DILIM[Math.floor(a/ACI)%N]}
 
-// Sürükleyerek / fırlatarak çevirme
+// Parmakla / kalemle / fareyle savurma: çark parmağı takip eder, bırakınca hızı ve yönüyle döner.
+// Yavaş bırakılırsa dönmez (çarkı istenen dilime elle getirmek olmasın); en zayıf savuruş da en az 2 tur döndürür.
 let SR=null;
-$('cark').addEventListener('pointerdown',e=>{if(donuyor||soruBekliyor)return;SR={y:e.clientY,x:e.clientX,t:performance.now()};e.preventDefault()});
-document.addEventListener('pointerup',e=>{if(!SR)return;const dt=(performance.now()-SR.t)/1000,d=Math.hypot(e.clientX-SR.x,e.clientY-SR.y);SR=null;
-  if(d>40&&dt<.8)cevir(d/Math.max(dt,.08)/1500)});
-document.addEventListener('pointercancel',()=>SR=null);
+const merkezAci=e=>{const r=$('cark').getBoundingClientRect();return Math.atan2(e.clientX-(r.left+r.width/2),-(e.clientY-(r.top+r.height/2)))*180/Math.PI};
+$('cark').addEventListener('pointerdown',e=>{
+  if(donuyor||soruBekliyor||SR)return;e.preventDefault();ac();
+  try{$('cark').setPointerCapture(e.pointerId)}catch(_){}
+  const r=$('cark').getBoundingClientRect(),uzak=Math.hypot(e.clientX-(r.left+r.width/2),e.clientY-(r.top+r.height/2));
+  if(uzak<r.width*.09)return; // tam merkeze dokununca açı anlamsız
+  SR={id:e.pointerId,son:merkezAci(e),toplam:0,iz:[{t:performance.now(),a:aci}]};sonDilim=Math.floor(aci/ACI);
+  $('cark').style.cursor='grabbing';$('cark').parentNode.classList.add('doniyor');
+});
+$('cark').addEventListener('pointermove',e=>{
+  if(!SR||e.pointerId!==SR.id)return;
+  const a=merkezAci(e);let d=a-SR.son;if(d>180)d-=360;if(d<-180)d+=360;SR.son=a;SR.toplam+=d;
+  carkKoy(aci+d);const t=performance.now();SR.iz.push({t,a:aci});while(SR.iz.length>2&&t-SR.iz[0].t>120)SR.iz.shift();
+});
+function birak(e){
+  if(!SR||e.pointerId!==SR.id)return;const s=SR;SR=null;$('cark').style.cursor='';
+  const t=performance.now(),iz=s.iz.filter(p=>t-p.t<=150);
+  const ilk=iz[0]||s.iz[s.iz.length-1],son=s.iz[s.iz.length-1];
+  const hiz=(son.a-ilk.a)/Math.max((t-ilk.t)/1000,.016); // derece/saniye, işaret yönü verir
+  if(Math.abs(hiz)>=180&&Math.abs(s.toplam)>=8){
+    const yon=Math.sign(hiz),v=Math.min(Math.abs(hiz),3000);
+    const yol=Math.min(8*360,Math.max(2*360,v*1.6))*(.85+Math.random()*.3);
+    don(yon*yol,Math.min(7000,Math.max(2500,yol*3/v*1000)),3);
+  }else{
+    $('cark').parentNode.classList.remove('doniyor');
+    if(Math.abs(s.toplam)>=8)ipucuGoster('Daha hızlı savur! 💨');
+  }
+}
+$('cark').addEventListener('pointerup',birak);
+$('cark').addEventListener('pointercancel',birak);
+$('cark').addEventListener('lostpointercapture',birak);
+let ipucuZ=null;
+function ipucuGoster(t){const el=$('savur');el.textContent=t;el.classList.add('uyari');clearTimeout(ipucuZ);ipucuZ=setTimeout(()=>{el.classList.remove('uyari');el.textContent='👆 Çarkı parmağınla savur'},1800)} // .uyari gizliyken de görünür
+function ipucuGizle(){$('savur').classList.add('gizli')}
 
 // --- dilim sonucu ---
 function durdu(){
@@ -376,7 +416,7 @@ function konfeti(n){const k=$('konfeti');const r=['#E2574C','#0D9488','#0284C7',
     c.style.animationDuration=(1.4+Math.random()*1.6)+'s';c.style.animationDelay=(Math.random()*.4)+'s';c.style.transform=`rotate(${Math.random()*360}deg)`;k.appendChild(c);setTimeout(()=>c.remove(),3600)}}
 
 // --- düğmeler ---
-$('basla').onclick=basla;$('cevirBtn').onclick=()=>cevir(0);
+$('basla').onclick=basla;$('cevirBtn').onclick=()=>cevir();
 $('tekrarBtn').onclick=basla;$('ayarBtn').onclick=()=>ekran('giris');
 $('cikBtn').onclick=()=>$('onay').classList.add('acik');
 $('hayirBtn').onclick=()=>$('onay').classList.remove('acik');
@@ -387,7 +427,7 @@ if(!(document.documentElement.requestFullscreen||document.documentElement.webkit
 $('tamBtn').onclick=()=>{const d=document.documentElement;if(document.fullscreenElement||document.webkitFullscreenElement){(document.exitFullscreen||document.webkitExitFullscreen).call(document)}else{(d.requestFullscreen||d.webkitRequestFullscreen).call(d)}};
 // Klavye: Boşluk = çevir, Enter = devam
 document.addEventListener('keydown',e=>{if(!$('oyun').classList.contains('aktif'))return;
-  if(e.key===' '&&!soruBekliyor){e.preventDefault();cevir(0)}
+  if(e.key===' '&&!soruBekliyor){e.preventDefault();cevir()}
   else if(e.key==='Enter'&&$('devamBtn')){e.preventDefault();$('devamBtn').click()}});
 if(window.speechSynthesis)try{speechSynthesis.getVoices()}catch(e){}
 </script>
