@@ -1,5 +1,7 @@
 // Öğretmen girişi: e-posta + şifre (Giriş yap / Kayıt ol), beni hatırla, şifremi unuttum, Google ile devam et.
-import React, { useState } from 'react';
+// Şifremi unuttum / şifrem yok: sıfırlama e-postası gider; linke dokunmak ya da linki buraya yapıştırmak
+// yeni şifre ekranını açar. İlk sürümde e-posta linkiyle açılan hesapların şifresi yoktur, şifreyi bu yolla koyarlar.
+import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacing, font, radius } from '../../theme';
@@ -8,13 +10,15 @@ import { useAuth } from '../../context/AuthContext';
 
 const trError = (m) =>
   /invalid login credentials/i.test(m)
-    ? 'E-posta ya da şifre hatalı. Bu e-postayla hesap açmadıysan "Kayıt ol"dan aç; şifreni hatırlamıyorsan "Şifremi unuttum"a dokun.'
+    ? 'E-posta ya da şifre hatalı. Hesabını ilk sürümde e-posta linkiyle açtıysan şifren yok: "Şifremi unuttum / şifrem yok"a dokunup şifre belirle.'
     : /already registered|already been registered/i.test(m)
       ? 'Bu e-postayla zaten bir hesap var. "Giriş yap"tan gir.'
       : /email not confirmed/i.test(m)
         ? 'E-posta adresin henüz onaylanmadı. Gelen onay e-postasındaki linke dokun.'
         : /password should be|at least 6|weak/i.test(m)
           ? 'Şifre en az 6 karakter olmalı.'
+          : /expired|invalid.*(token|otp)|token.*invalid|otp/i.test(m)
+            ? 'Link geçersiz ya da süresi dolmuş. Yeni link iste ve en son gelen e-postadaki linki kullan.'
           : /provider is not enabled|unsupported provider/i.test(m)
             ? 'Google ile giriş henüz açılmadı.'
             : /rate|too many|seconds/i.test(m)
@@ -36,6 +40,13 @@ export default function TeacherSignInScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [info, setInfo] = useState(null);
+  const [sent, setSent] = useState(false); // sıfırlama e-postası gitti → link yapıştırma alanı
+  const [link, setLink] = useState('');
+
+  // Beni hatırla ile saklanan e-posta hazır gelsin.
+  useEffect(() => {
+    if (auth.lastEmail && !email) setEmail(auth.lastEmail);
+  }, [auth.lastEmail]);
 
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
   const ok =
@@ -62,7 +73,8 @@ export default function TeacherSignInScreen() {
         if (r.needsConfirm) setInfo('Hesabın açıldı. E-postana gelen onay linkine dokun, sonra giriş yap.');
       } else {
         await auth.resetPassword(email);
-        setInfo(`${email.trim()} adresine şifre sıfırlama linki gönderdik. Linke bu cihazda dokun.`);
+        setSent(true);
+        setInfo(`${email.trim()} adresine link gönderdik (gelmezse spam klasörüne bak).`);
       }
     });
 
@@ -71,7 +83,10 @@ export default function TeacherSignInScreen() {
     setError(null);
     setInfo(null);
     setPw2('');
+    setSent(false);
+    setLink('');
   };
+  const useLink = () => run(() => auth.verifyLink(link, email, remember));
 
   const input = (props) => (
     <TextInput
@@ -89,7 +104,7 @@ export default function TeacherSignInScreen() {
         <Text style={{ fontSize: 44 }}>👩‍🏫</Text>
         <Text style={[st.title, { color: colors.text }]}>{mode === 'forgot' ? 'Şifremi unuttum' : 'Öğretmen girişi'}</Text>
         <Text style={[st.sub, { color: colors.textMuted }]}>
-          {mode === 'forgot' ? 'E-posta adresine şifre sıfırlama linki göndereceğiz.' : 'Mamoste hesabınla gir ya da yeni hesap aç.'}
+          {mode === 'forgot' ? 'E-postana bir link göndereceğiz; o linkle yeni şifreni belirleyeceksin. Şifren hiç yoksa da bu yolu kullan.' : 'Mamoste hesabınla gir ya da yeni hesap aç.'}
         </Text>
 
         {mode !== 'forgot' ? (
@@ -141,24 +156,46 @@ export default function TeacherSignInScreen() {
               </Pressable>
               {mode === 'in' ? (
                 <Pressable onPress={() => go('forgot')} hitSlop={6}>
-                  <Text style={{ color: colors.accent, fontWeight: '700' }}>Şifremi unuttum</Text>
+                  <Text style={{ color: colors.accent, fontWeight: '700' }}>Şifremi unuttum / şifrem yok</Text>
                 </Pressable>
               ) : null}
             </View>
           </>
         ) : null}
 
+        {mode === 'forgot' && sent ? (
+          <View style={[st.steps, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={{ color: colors.text, fontWeight: '900', marginBottom: 6 }}>Sonraki adım</Text>
+            <Text style={{ color: colors.textMuted, lineHeight: 21 }}>
+              <Text style={{ color: colors.accent, fontWeight: '900' }}>1. </Text>E-postadaki linke dokunma: telefonda basılı tut, “Bağlantıyı kopyala”yı seç (bilgisayarda sağ tık → “Bağlantı adresini kopyala”).{'\n'}
+              <Text style={{ color: colors.accent, fontWeight: '900' }}>2. </Text>Aşağıya yapıştır, “Linkle devam et”e dokun, yeni şifreni belirle.{'\n'}
+              Link bir kez kullanılır; dokunduysan ve açılmadıysa yeni link iste.
+            </Text>
+            {input({ value: link, onChangeText: setLink, placeholder: 'Linki buraya yapıştır', accessibilityLabel: 'E-postadaki link', style: { marginTop: spacing.sm } })}
+            <Pressable onPress={useLink} disabled={busy || !link.trim()} style={[st.btn, { backgroundColor: colors.primary }, (busy || !link.trim()) && { opacity: 0.4 }]}>
+              <Text style={st.btnT}>Linkle devam et</Text>
+            </Pressable>
+          </View>
+        ) : null}
+
         {error ? <Text style={[st.msg, { color: colors.danger }]}>{error}</Text> : null}
         {info ? <Text style={[st.msg, { color: colors.primary }]}>{info}</Text> : null}
 
         <Pressable onPress={submit} disabled={busy || !ok} style={[st.btn, { backgroundColor: colors.accent }, (busy || !ok) && { opacity: 0.4 }]}>
-          {busy ? <ActivityIndicator color="#fff" /> : <Text style={st.btnT}>{mode === 'in' ? 'Giriş yap' : mode === 'up' ? 'Hesap aç' : 'Sıfırlama linki gönder'}</Text>}
+          {busy ? <ActivityIndicator color="#fff" /> : <Text style={st.btnT}>{mode === 'in' ? 'Giriş yap' : mode === 'up' ? 'Hesap aç' : sent ? 'Linki yeniden gönder' : 'Link gönder'}</Text>}
         </Pressable>
 
         {mode === 'forgot' ? (
-          <Pressable onPress={() => go('in')} style={{ marginTop: spacing.md }}>
-            <Text style={{ color: colors.accent, fontWeight: '700' }}>‹ Girişe dön</Text>
-          </Pressable>
+          <>
+            {!sent ? (
+              <Pressable onPress={() => setSent(true)} style={{ marginTop: spacing.md }}>
+                <Text style={{ color: colors.accent, fontWeight: '700' }}>Link zaten geldi, yapıştıracağım</Text>
+              </Pressable>
+            ) : null}
+            <Pressable onPress={() => go('in')} style={{ marginTop: spacing.md }}>
+              <Text style={{ color: colors.accent, fontWeight: '700' }}>‹ Girişe dön</Text>
+            </Pressable>
+          </>
         ) : auth.googleEnabled ? (
           <>
             <View style={st.orRow}>
@@ -207,4 +244,5 @@ const st = StyleSheet.create({
   google: { flexDirection: 'row', justifyContent: 'center', gap: spacing.sm, borderWidth: 1 },
   gMark: { fontSize: 18, fontWeight: '900', color: '#4285F4' },
   note: { fontSize: font.tiny, textAlign: 'center', marginTop: spacing.xl },
+  steps: { width: '100%', borderWidth: 1, borderRadius: radius.md, padding: spacing.md, marginTop: spacing.md },
 });

@@ -1,7 +1,11 @@
 // Öğretmen girişi (Supabase Auth): e-posta + şifre, Google ile giriş, "beni hatırla", şifremi unuttum.
 //   * Beni hatırla kapalıysa oturum yalnızca uygulama açık kaldığı sürece geçerli; sonraki açılışta çıkış yapılır.
+//   * Beni hatırla açıksa son e-posta da saklanır, giriş ekranında hazır gelir.
 //   * Şifre sıfırlama ve Google dönüşü linkle gelir (ingapp://auth#access_token=…); burada oturuma çevrilir.
 //     Sıfırlama linkinden gelindiyse `recovery` true olur ve uygulama yeni şifre ekranını açar.
+//   * Link uygulamaya dönemezse (Expo Go, başka cihaz, sunucudaki yönlendirme ayarı) e-postadaki link
+//     kopyalanıp uygulamaya yapıştırılır: `verifyLink` içindeki token ile oturum kurar (verifyOtp).
+//     İlk sürümde hesaplar e-posta linkiyle (şifresiz) açıldı; bu hesaplar şifreyi bu yolla belirler.
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { Linking, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -9,6 +13,7 @@ import Constants from 'expo-constants';
 import { supabase, cloudEnabled, authProviders } from '../lib/supabase';
 
 const REMEMBER_KEY = '@ingapp/auth/remember';
+const EMAIL_KEY = '@ingapp/auth/email';
 // Yönetici: rol ve branş seçimine geri dönebilir (başkalarında seçim kalıcıdır).
 const ADMIN_EMAILS = ['szgngst@gmail.com'];
 const isWeb = Platform.OS === 'web' && typeof window !== 'undefined';
@@ -61,6 +66,13 @@ export function AuthProvider({ children }) {
   const [loaded, setLoaded] = useState(!cloudEnabled);
   const [recovery, setRecovery] = useState(false);
   const [googleEnabled, setGoogleEnabled] = useState(false); // sunucuda Google girişi açık mı
+  const [lastEmail, setLastEmail] = useState('');
+
+  useEffect(() => {
+    AsyncStorage.getItem(EMAIL_KEY)
+      .then((e) => e && setLastEmail(e))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!supabase) return undefined;
@@ -113,6 +125,11 @@ export function AuthProvider({ children }) {
       return data;
     };
     const setRemember = (on) => AsyncStorage.setItem(REMEMBER_KEY, on ? '1' : '0');
+    const keepEmail = (email, on) => {
+      const e = email.trim().toLowerCase();
+      setLastEmail(on ? e : '');
+      return on ? AsyncStorage.setItem(EMAIL_KEY, e) : AsyncStorage.removeItem(EMAIL_KEY);
+    };
     return {
       loaded,
       cloudEnabled,
@@ -120,6 +137,7 @@ export function AuthProvider({ children }) {
       user: session ? session.user : null,
       recovery,
       googleEnabled,
+      lastEmail,
       // Geliştirme sırasında giriş ekranı atlandığı için (App.js) oturumsuz geliştirici de yönetici sayılır.
       isAdmin: session
         ? ADMIN_EMAILS.includes(String(session.user.email || '').toLowerCase())
@@ -128,6 +146,7 @@ export function AuthProvider({ children }) {
       signIn: async (email, password, remember = true) => {
         await setRemember(remember);
         must(await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password }));
+        await keepEmail(email, remember);
       },
       // E-posta onayı kapalıysa hesap hemen açılır ve giriş yapılır; açıksa { needsConfirm: true } döner.
       signUp: async (email, password, remember = true) => {
@@ -142,6 +161,30 @@ export function AuthProvider({ children }) {
       },
       resetPassword: async (email) => {
         must(await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), { redirectTo: redirectUrl() }));
+      },
+      // E-postadaki linki (ya da 6 haneli kodu) yapıştırarak giriş: link açılmasa da çalışır.
+      // Kabul edilenler: …/auth/v1/verify?token=…&type=recovery · …#access_token=… · 123456 (e-posta gerekir).
+      verifyLink: async (text, email, remember = true) => {
+        const raw = String(text || '').trim();
+        if (!raw) throw new Error('Linki yapıştır.');
+        await setRemember(remember);
+        let type = 'recovery';
+        if (/access_token=|code=/.test(raw)) {
+          const r = await sessionFromUrl(raw);
+          if (!r) throw new Error('Token has expired or is invalid');
+          type = r.type || type;
+        } else if (/^\d{6,10}$/.test(raw)) {
+          if (!email) throw new Error('Kodla giriş için e-posta adresini de yaz.');
+          must(await supabase.auth.verifyOtp({ email: email.trim().toLowerCase(), token: raw, type: 'recovery' }));
+        } else {
+          const q = params((raw.split('?')[1] || '').split('#')[0]);
+          const token = q.token || q.token_hash;
+          if (!token) throw new Error('Bu link tanınmadı. E-postadaki linkin tamamını kopyala.');
+          type = q.type || type;
+          must(await supabase.auth.verifyOtp({ token_hash: token, type }));
+        }
+        if (email) await keepEmail(email, remember);
+        if (type === 'recovery') setRecovery(true);
       },
       updatePassword: async (password) => {
         must(await supabase.auth.updateUser({ password }));
@@ -167,7 +210,7 @@ export function AuthProvider({ children }) {
 
       signOut: () => supabase && supabase.auth.signOut(),
     };
-  }, [loaded, session, recovery, googleEnabled]);
+  }, [loaded, session, recovery, googleEnabled, lastEmail]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
