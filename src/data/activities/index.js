@@ -25,6 +25,15 @@ export const ACTIVITY_TYPES = {
     branches: ['ingilizce'],
     engine: () => require('./cumleEngine.js').default,
   },
+  // Kaynağı tools/etkinlik/cark.html; değişince `node tools/etkinlik/derle.js`.
+  // Havuz: [["soru", "örnek cevap", "emoji", seviye, ["seçenek", …] (isteğe bağlı; doğru cevap aynen içinde)], …]
+  cark: {
+    icon: '🎡',
+    name: 'Çarkıfelek',
+    desc: '2-4 takım sırayla çarkı çevirir; gelen puana göre soru cevaplar. Büyük dilimde zor soru, ayrıca ×2, hediye, pas ve iflas dilimleri.',
+    branches: ['ingilizce'],
+    engine: () => require('./carkEngine.js').default,
+  },
 };
 
 const DKAB_IMZA = 'Hazırlayan: <b>Ejder AKÇİÇEK</b> · Din Kültürü ve Ahlak Bilgisi Öğretmeni';
@@ -40,6 +49,10 @@ const LIST = {
     { type: 'cumle', grade: 6, unit: 1, unitName: 'School Life', pool: () => require('./ingilizce/cumle6_u1.js').default },
     { type: 'cumle', grade: 7, unit: 1, unitName: 'Appearance and Personality', pool: () => require('./ingilizce/cumle7_u1.js').default },
     { type: 'cumle', grade: 8, unit: 1, unitName: 'Friendship', pool: () => require('./ingilizce/cumle8_u1.js').default },
+    { type: 'cark', grade: 5, unit: 1, unitName: 'School Life', pool: () => require('./ingilizce/cark5_u1.js').default },
+    { type: 'cark', grade: 6, unit: 1, unitName: 'School Life', pool: () => require('./ingilizce/cark6_u1.js').default },
+    { type: 'cark', grade: 7, unit: 1, unitName: 'Appearance and Personality', pool: () => require('./ingilizce/cark7_u1.js').default },
+    { type: 'cark', grade: 8, unit: 1, unitName: 'Friendship', pool: () => require('./ingilizce/cark8_u1.js').default },
   ],
   'teknoloji-tasarim': [],
   turkce: [],

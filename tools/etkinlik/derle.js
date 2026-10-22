@@ -1,9 +1,12 @@
 // Etkinlik motorlarını (tek dosyalık HTML) uygulamanın içe aktarabileceği JS modülüne çevirir.
-// Kullanım: node tools/etkinlik/derle.js   (cumle.html değişince yeniden çalıştır)
+// Kullanım: node tools/etkinlik/derle.js   (cumle.html / cark.html değişince yeniden çalıştır)
 const fs = require('fs');
 const path = require('path');
 
-const MOTORLAR = [{ kaynak: 'cumle.html', hedef: '../../src/data/activities/cumleEngine.js' }];
+const MOTORLAR = [
+  { kaynak: 'cumle.html', hedef: '../../src/data/activities/cumleEngine.js' },
+  { kaynak: 'cark.html', hedef: '../../src/data/activities/carkEngine.js' },
+];
 
 for (const m of MOTORLAR) {
   const html = fs.readFileSync(path.join(__dirname, m.kaynak), 'utf8');
