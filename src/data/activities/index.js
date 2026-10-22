@@ -16,6 +16,15 @@ export const ACTIVITY_TYPES = {
     desc: 'Harf çemberi: her harfte bir ipucu, iki seçenek. Doğru, yanlış ve pas hakkıyla süreli yarışma.',
     engine: () => require('./pasaparolaEngine.js').default,
   },
+  // Kaynağı tools/etkinlik/cumle.html; değişince `node tools/etkinlik/derle.js`.
+  // Havuz: [["cümle.", "emoji", "Türkçe anlamı", seviye, "fazladan kelime (isteğe bağlı)"], …]
+  cumle: {
+    icon: '🧩',
+    name: 'Cümle Kur',
+    desc: 'Karışık kelimelere dokun ya da sürükle, resimdeki cümleyi kur. Tek oyuncu ya da iki takım; doğru cümle sesli okunur.',
+    branches: ['ingilizce'],
+    engine: () => require('./cumleEngine.js').default,
+  },
 };
 
 const DKAB_IMZA = 'Hazırlayan: <b>Ejder AKÇİÇEK</b> · Din Kültürü ve Ahlak Bilgisi Öğretmeni';
@@ -26,7 +35,12 @@ const LIST = {
     { type: 'pasaparola', grade: 10, unit: 1, unitName: "İslam'da Varlık ve Bilgi", imza: DKAB_IMZA, pool: () => require('./din/pasaparola10_u1.js').default },
   ],
   // Diğer branşların içeriği eklenecek (yukarıdaki açıklamaya bak).
-  ingilizce: [],
+  ingilizce: [
+    { type: 'cumle', grade: 5, unit: 1, unitName: 'School Life', pool: () => require('./ingilizce/cumle5_u1.js').default },
+    { type: 'cumle', grade: 6, unit: 1, unitName: 'School Life', pool: () => require('./ingilizce/cumle6_u1.js').default },
+    { type: 'cumle', grade: 7, unit: 1, unitName: 'Appearance and Personality', pool: () => require('./ingilizce/cumle7_u1.js').default },
+    { type: 'cumle', grade: 8, unit: 1, unitName: 'Friendship', pool: () => require('./ingilizce/cumle8_u1.js').default },
+  ],
   'teknoloji-tasarim': [],
   turkce: [],
   matematik: [],

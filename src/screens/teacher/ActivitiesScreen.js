@@ -1,4 +1,4 @@
-// Etkinlikler: branşın sınıf oyunları, türe göre (Pasaparola …).
+// Etkinlikler: branşın sınıf oyunları, türe göre (Pasaparola, Cümle Kur …). Türün `branches` listesi varsa yalnız o branşlarda görünür.
 //   ▶ Oyna  → uygulama içinde tam ekran
 //   ⬇ İndir → tek dosyalık .html (WhatsApp/Dosyalar ile gönder; flash belleğe at, akıllı tahtada çift tıkla)
 // "Akıllı tahta" kısayolundan açılınca (params.board) üstte tahtada kullanma adımları görünür.
@@ -53,7 +53,9 @@ export default function ActivitiesScreen({ navigation, route }) {
           </Card>
         ) : null}
 
-        {Object.entries(ACTIVITY_TYPES).map(([type, t]) => {
+        {Object.entries(ACTIVITY_TYPES)
+          .filter(([, t]) => !t.branches || t.branches.includes(branchId))
+          .map(([type, t]) => {
           const games = list.filter((a) => a.type === type).sort((a, b) => a.grade - b.grade || a.unit - b.unit);
           return (
             <View key={type}>
