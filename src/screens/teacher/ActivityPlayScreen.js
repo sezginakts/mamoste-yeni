@@ -81,11 +81,9 @@ export default function ActivityPlayScreen({ route, navigation }) {
               })
             : null}
         </ScrollView>
-        {t.screen ? null : (
-          <Pressable onPress={download} disabled={busy} style={st.dl} accessibilityLabel="Akıllı tahta için indir">
-            {busy ? <ActivityIndicator color="#fff" size="small" /> : <Text style={{ color: '#fff', fontWeight: '800' }}>⬇ İndir</Text>}
-          </Pressable>
-        )}
+        <Pressable onPress={download} disabled={busy} style={st.dl} accessibilityLabel="Akıllı tahta için indir">
+          {busy ? <ActivityIndicator color="#fff" size="small" /> : <Text style={{ color: '#fff', fontWeight: '800' }}>⬇ İndir</Text>}
+        </Pressable>
       </View>
       {Platform.OS === 'web' ? (
         <iframe key={act.id} title={act.id} srcDoc={html} allow="autoplay; fullscreen" style={{ flex: 1, width: '100%', height: '100%', border: 0, backgroundColor: BG }} />

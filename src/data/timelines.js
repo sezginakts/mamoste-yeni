@@ -1,14 +1,17 @@
-// ZAMAN ŞERİDİ — akıllı tahta etkinliği için olay setleri ve sınıf düzeyine göre zorluk.
+// ZAMAN ŞERİDİ — olay setleri ve sınıf düzeyine göre zorluk. Oyun: tools/etkinlik/zaman.html (HTML motoru),
+// Etkinlikler'de Sosyal Bilgiler 5–7 ve İnkılap Tarihi 8. Oynanan olaylar cihazda hatırlanır, sonraki turlarda
+// önce görülmemiş olaylar gelir; bu yüzden setler geniş tutulur.
 //
-// Her olay: { e: olay, i: kart görseli (emoji), d: tarih (yalnızca kontrolden sonra görünür), v: sıralama değeri }
-//   kind 'year' → v = yıl (MÖ eksi)      ör. MÖ 3200 → -3200
-//   kind 'date' → v = yyyymmdd            ör. 29 Ekim 1923 → 19231029
-//   kind 'day'  → v = aaGG (yıl içi gün)  ör. 23 Nisan → 423
-// Tarihi tartışmalı/yaklaşık olaylar "~" ile yazılır ve komşusundan çok uzak tutulur ki sıra tartışmalı olmasın.
-// Aynı değere sahip iki olay aynı sete konmaz (sıra belirsiz kalır).
-//
+// Her olay: [olay, görsel (emoji), kartta tarih (yalnızca kontrolden sonra görünür), sıralama değeri]
+//   kind 'year' → değer = yıl (MÖ eksi)      ör. MÖ 3200 → -3200
+//   kind 'date' → değer = yyyymmdd            ör. 29 Ekim 1923 → 19231029 (yalnız yıl biliniyorsa yyyy0101)
+//   kind 'day'  → değer = aaGG (yıl içi gün)  ör. 23 Nisan → 423
+// Tarihi tartışmalı/yaklaşık olaylar "~" ya da yüzyıl olarak yazılır ve komşusundan uzak tutulur ki sıra
+// tartışmalı olmasın. Aynı değere sahip iki olay aynı sete konmaz (sıra belirsiz kalır).
 // color: uygulamanın üç renginden biri (mercan, gök mavisi, turkuaz; theme.js → BRAND).
-// grades: setin önerildiği sınıf düzeyleri (seçimde öne çıkar, diğer düzeylerde de açılabilir).
+// grades: setin oynandığı sınıf düzeyleri.
+
+const S = (rows) => rows.map(([e, i, d, v]) => ({ e, i, d, v }));
 
 export const TIMELINE_SETS = [
   {
@@ -18,52 +21,86 @@ export const TIMELINE_SETS = [
     emoji: '🗓️',
     grades: [5],
     kind: 'day',
-    note: 'Yıl içinde sıralama: ay ve gün bilgisini kullanma.',
-    items: [
-      { e: 'Çanakkale Zaferi ve Şehitleri Anma Günü', i: '⚓', d: '18 Mart', v: 318 },
-      { e: 'Ulusal Egemenlik ve Çocuk Bayramı', i: '🎈', d: '23 Nisan', v: 423 },
-      { e: 'Atatürk’ü Anma, Gençlik ve Spor Bayramı', i: '🏃', d: '19 Mayıs', v: 519 },
-      { e: 'Demokrasi ve Millî Birlik Günü', i: '🤝', d: '15 Temmuz', v: 715 },
-      { e: 'Zafer Bayramı', i: '🏆', d: '30 Ağustos', v: 830 },
-      { e: 'Cumhuriyet Bayramı', i: '🇹🇷', d: '29 Ekim', v: 1029 },
-      { e: 'Atatürk’ü Anma Günü', i: '🕯️', d: '10 Kasım', v: 1110 },
-      { e: 'Öğretmenler Günü', i: '👩‍🏫', d: '24 Kasım', v: 1124 },
-    ],
+    note: 'Yıl içinde sıralama: ay ve gün bilgisini kullan.',
+    items: S([
+      ['Yılbaşı', '🎆', '1 Ocak', 101],
+      ['Dünya Kadınlar Günü', '👩', '8 Mart', 308],
+      ['İstiklal Marşı’nın Kabulü ve Mehmet Akif Ersoy’u Anma Günü', '📜', '12 Mart', 312],
+      ['Tıp Bayramı', '🩺', '14 Mart', 314],
+      ['Çanakkale Zaferi ve Şehitleri Anma Günü', '⚓', '18 Mart', 318],
+      ['Nevruz', '🌷', '21 Mart', 321],
+      ['Dünya Su Günü', '💧', '22 Mart', 322],
+      ['Dünya Sağlık Günü', '🏥', '7 Nisan', 407],
+      ['Ulusal Egemenlik ve Çocuk Bayramı', '🎈', '23 Nisan', 423],
+      ['Emek ve Dayanışma Günü', '🛠️', '1 Mayıs', 501],
+      ['Atatürk’ü Anma, Gençlik ve Spor Bayramı', '🏃', '19 Mayıs', 519],
+      ['Dünya Çevre Günü', '🌍', '5 Haziran', 605],
+      ['Denizcilik ve Kabotaj Bayramı', '⛵', '1 Temmuz', 701],
+      ['Demokrasi ve Millî Birlik Günü', '🤝', '15 Temmuz', 715],
+      ['Zafer Bayramı', '🏆', '30 Ağustos', 830],
+      ['Türk Dil Bayramı', '🔤', '26 Eylül', 926],
+      ['Hayvanları Koruma Günü', '🐾', '4 Ekim', 1004],
+      ['Dünya Gıda Günü', '🍞', '16 Ekim', 1016],
+      ['Cumhuriyet Bayramı', '🇹🇷', '29 Ekim', 1029],
+      ['Atatürk’ü Anma Günü', '🕯️', '10 Kasım', 1110],
+      ['Öğretmenler Günü', '👩‍🏫', '24 Kasım', 1124],
+      ['Dünya Engelliler Günü', '♿', '3 Aralık', 1203],
+      ['İnsan Hakları Günü', '⚖️', '10 Aralık', 1210],
+    ]),
   },
   {
     id: 'icatlar',
     color: '#0284C7',
-    title: 'Yazıdan internete',
+    title: 'Buluşlar ve icatlar',
     emoji: '💡',
     grades: [5, 6],
     kind: 'year',
-    note: 'İletişim ve ulaşımdaki büyük adımlar; MÖ ile MS’yi ayırma.',
-    items: [
-      { e: 'Sümerler yazıyı kullanmaya başladı', i: '📜', d: 'MÖ ~3200', v: -3200 },
-      { e: 'Gutenberg matbaası', i: '📖', d: '~1450', v: 1450 },
-      { e: 'Telefonun icadı (Bell)', i: '☎️', d: '1876', v: 1876 },
-      { e: 'İlk motorlu uçak uçuşu (Wright Kardeşler)', i: '✈️', d: '1903', v: 1903 },
-      { e: 'Türkiye’de ilk televizyon yayını', i: '📺', d: '1968', v: 1968 },
-      { e: 'İnsan ilk kez Ay’a ayak bastı', i: '🚀', d: '1969', v: 1969 },
-      { e: 'Türkiye internete bağlandı', i: '🌐', d: '1993', v: 1993 },
-    ],
+    note: 'İletişim, ulaşım ve bilimde büyük adımlar; MÖ ile MS’yi ayır.',
+    items: S([
+      ['Sümerler yazıyı kullanmaya başladı', '📜', 'MÖ ~3200', -3200],
+      ['Kâğıdın Çin’de geliştirilmesi', '📃', '~105', 105],
+      ['Gutenberg matbaası', '📖', '~1450', 1450],
+      ['Galileo teleskopla gökyüzünü inceledi', '🔭', '1609', 1609],
+      ['James Watt’ın buhar makinesi', '⚙️', '1769', 1769],
+      ['Volta’nın ilk pili', '🔋', '1800', 1800],
+      ['İlk kalıcı fotoğraf (Niépce)', '📷', '~1826', 1826],
+      ['Morse ile uzak şehre ilk telgraf mesajı', '📠', '1844', 1844],
+      ['Telefonun icadı (Bell)', '☎️', '1876', 1876],
+      ['Edison’un ampulü', '💡', '1879', 1879],
+      ['İlk benzinli otomobil (Benz)', '🚗', '1886', 1886],
+      ['İlk motorlu uçak uçuşu (Wright Kardeşler)', '✈️', '1903', 1903],
+      ['Penisilinin bulunması (Fleming)', '💊', '1928', 1928],
+      ['İlk yapay uydu Sputnik', '🛰️', '1957', 1957],
+      ['İlk yerli otomobil Devrim', '🚙', '1961', 1961],
+      ['Türkiye’de ilk televizyon yayını', '📺', '1968', 1968],
+      ['İnsan ilk kez Ay’a ayak bastı', '🚀', '1969', 1969],
+      ['Dünya Çapında Ağ (World Wide Web)', '🌐', '1991', 1991],
+      ['Türkiye internete bağlandı', '🖥️', '1993', 1993],
+      ['Türkiye’de ilk cep telefonu görüşmesi', '📱', '1994', 1994],
+      ['İlk iPhone akıllı telefon', '📲', '2007', 2007],
+    ]),
   },
   {
     id: 'anadolu',
     color: '#0D9488',
-    title: 'Anadolu’nun ilk izleri',
+    title: 'Anadolu ve Mezopotamya',
     emoji: '🏺',
     grades: [5, 6],
     kind: 'year',
-    note: 'Anadolu ve Mezopotamya’da ilk yerleşmeler ve medeniyetler.',
-    items: [
-      { e: 'Göbeklitepe’nin yapılmaya başlanması', i: '🗿', d: 'MÖ ~9600', v: -9600 },
-      { e: 'Çatalhöyük’te yerleşik hayat', i: '🏘️', d: 'MÖ ~7400', v: -7400 },
-      { e: 'Sümerlerde yazının bulunuşu', i: '📜', d: 'MÖ ~3200', v: -3200 },
-      { e: 'Mısırlılar ile Hititler arasında Kadeş Antlaşması', i: '🕊️', d: 'MÖ ~1259', v: -1259 },
-      { e: 'Lidyalılar parayı kullanmaya başladı', i: '💰', d: 'MÖ 7. yüzyıl', v: -650 },
-      { e: 'Miladi takvimin başlangıcı', i: '📅', d: 'MS 1', v: 1 },
-    ],
+    note: 'Çok eski tarihler: MÖ’de sayı büyüdükçe olay daha eskidir.',
+    items: S([
+      ['Göbeklitepe’nin yapılmaya başlanması', '🗿', 'MÖ ~9600', -9600],
+      ['Çatalhöyük’te yerleşik hayat', '🏘️', 'MÖ ~7400', -7400],
+      ['Sümerlerde yazının bulunuşu', '📜', 'MÖ ~3200', -3200],
+      ['Asurlu tüccarlarla Anadolu’da yazının kullanılması (Kültepe)', '✉️', 'MÖ 20. yüzyıl', -1950],
+      ['Hammurabi Kanunları', '⚖️', 'MÖ 18. yüzyıl', -1760],
+      ['Hitit Devleti’nin kurulması', '🏛️', 'MÖ 17. yüzyıl', -1650],
+      ['Mısırlılar ile Hititler arasında Kadeş Antlaşması', '🕊️', 'MÖ 13. yüzyıl', -1270],
+      ['Urartu Devleti’nin kurulması', '🏔️', 'MÖ 9. yüzyıl', -860],
+      ['Frig Kralı Midas dönemi', '👑', 'MÖ 8. yüzyıl', -720],
+      ['Lidyalılar parayı kullanmaya başladı', '💰', 'MÖ 7. yüzyıl', -630],
+      ['Miladi takvimin başlangıcı', '📅', 'MS 1', 1],
+    ]),
   },
   {
     id: 'turk',
@@ -73,89 +110,143 @@ export const TIMELINE_SETS = [
     grades: [6, 7],
     kind: 'year',
     note: 'MÖ-MS geçişi, yüzyıl hesabı, birbirine yakın tarihler.',
-    items: [
-      { e: 'Asya Hun Devleti’nin güçlenmesi (Mete Han)', i: '🏹', d: 'MÖ 209', v: -209 },
-      { e: 'Göktürk Devleti’nin kuruluşu', i: '🐺', d: '552', v: 552 },
-      { e: 'Hicret', i: '🐪', d: '622', v: 622 },
-      { e: 'Kül Tigin Yazıtı’nın dikilmesi', i: '✍️', d: '732', v: 732 },
-      { e: 'Talas Savaşı', i: '⚔️', d: '751', v: 751 },
-      { e: 'Dandanakan Savaşı', i: '🛡️', d: '1040', v: 1040 },
-      { e: 'Kutadgu Bilig’in yazılması', i: '📖', d: '1069', v: 1069 },
-      { e: 'Malazgirt Meydan Muharebesi', i: '🐎', d: '1071', v: 1071 },
-      { e: 'Miryokefalon Savaşı', i: '🗡️', d: '1176', v: 1176 },
-      { e: 'Kösedağ Savaşı', i: '⛰️', d: '1243', v: 1243 },
-    ],
+    items: S([
+      ['Asya Hun Devleti’nin güçlenmesi (Mete Han)', '🏹', 'MÖ 209', -209],
+      ['Hunların Avrupa’ya gelişi (Kavimler Göçü)', '🧳', '375', 375],
+      ['Avrupa Hun hükümdarı Attila’nın ölümü', '👑', '453', 453],
+      ['Göktürk Devleti’nin kuruluşu', '🐺', '552', 552],
+      ['Hz. Muhammed’in doğumu', '🌙', '571', 571],
+      ['Hicret', '🐪', '622', 622],
+      ['Kül Tigin Yazıtı’nın dikilmesi', '✍️', '732', 732],
+      ['Uygur Devleti’nin kuruluşu', '⛺', '744', 744],
+      ['Talas Savaşı', '⚔️', '751', 751],
+      ['Dandanakan Savaşı (Büyük Selçuklu)', '🛡️', '1040', 1040],
+      ['Kutadgu Bilig’in yazılması', '📖', '1069', 1069],
+      ['Malazgirt Meydan Muharebesi', '🐎', '1071', 1071],
+      ['Divânu Lügati’t-Türk’ün yazılmaya başlanması', '📚', '1072', 1072],
+      ['Türkiye Selçuklu Devleti’nin kuruluşu', '🏯', '1075', 1075],
+      ['I. Haçlı Seferi', '✝️', '1096', 1096],
+      ['Miryokefalon Savaşı', '🗡️', '1176', 1176],
+      ['Kösedağ Savaşı', '⛰️', '1243', 1243],
+      ['Mevlânâ’nın vefatı', '🌀', '1273', 1273],
+    ]),
   },
   {
     id: 'osmanli',
     color: '#0284C7',
-    title: 'Beylikten dünya gücüne Osmanlı',
+    title: 'Osmanlı Devleti',
     emoji: '🏰',
     grades: [7],
     kind: 'year',
-    note: 'Kuruluş ve yükselme dönemi; yüzyıllara göre gruplama.',
-    items: [
-      { e: 'Osmanlı Beyliği’nin kuruluşu', i: '🌱', d: '1299', v: 1299 },
-      { e: 'Bursa’nın fethi', i: '🕌', d: '1326', v: 1326 },
-      { e: 'Rumeli’ye geçiş (Çimpe Kalesi)', i: '⛵', d: '1353', v: 1353 },
-      { e: 'I. Kosova Savaşı', i: '⚔️', d: '1389', v: 1389 },
-      { e: 'Ankara Savaşı', i: '🐘', d: '1402', v: 1402 },
-      { e: 'İstanbul’un fethi', i: '🏰', d: '1453', v: 1453 },
-      { e: 'Çaldıran Savaşı', i: '🐎', d: '1514', v: 1514 },
-      { e: 'Mohaç Meydan Muharebesi', i: '🛡️', d: '1526', v: 1526 },
-      { e: 'Preveze Deniz Savaşı', i: '⚓', d: '1538', v: 1538 },
-      { e: 'II. Viyana Kuşatması', i: '🧱', d: '1683', v: 1683 },
-      { e: 'Karlofça Antlaşması', i: '📜', d: '1699', v: 1699 },
-    ],
+    note: 'Kuruluştan yenileşmeye; yüzyıllara göre gruplama.',
+    items: S([
+      ['Osmanlı Beyliği’nin kuruluşu', '🌱', '1299', 1299],
+      ['Bursa’nın fethi', '🏙️', '1326', 1326],
+      ['Rumeli’ye geçiş (Çimpe Kalesi)', '⛵', '1353', 1353],
+      ['I. Kosova Savaşı', '⚔️', '1389', 1389],
+      ['Niğbolu Savaşı', '🛡️', '1396', 1396],
+      ['Ankara Savaşı', '🐘', '1402', 1402],
+      ['Varna Savaşı', '🌊', '1444', 1444],
+      ['II. Kosova Savaşı', '🏹', '1448', 1448],
+      ['İstanbul’un fethi', '🏰', '1453', 1453],
+      ['Otlukbeli Savaşı', '🏇', '1473', 1473],
+      ['Çaldıran Savaşı', '🐎', '1514', 1514],
+      ['Mercidabık Savaşı', '🏜️', '1516', 1516],
+      ['Ridaniye Savaşı (Mısır Seferi)', '🐪', '1517', 1517],
+      ['Belgrad’ın fethi', '🏯', '1521', 1521],
+      ['Rodos’un fethi', '🗼', '1522', 1522],
+      ['Mohaç Meydan Muharebesi', '🗡️', '1526', 1526],
+      ['I. Viyana Kuşatması', '⛺', '1529', 1529],
+      ['Preveze Deniz Savaşı', '⚓', '1538', 1538],
+      ['Süleymaniye Camii’nin tamamlanması', '🕌', '1557', 1557],
+      ['Kanuni Sultan Süleyman’ın vefatı', '👑', '1566', 1566],
+      ['Kıbrıs’ın fethi', '🏝️', '1571', 1571],
+      ['Mimar Sinan’ın vefatı', '📐', '1588', 1588],
+      ['II. Viyana Kuşatması', '🧱', '1683', 1683],
+      ['Karlofça Antlaşması', '📄', '1699', 1699],
+      ['Pasarofça Antlaşması', '✍️', '1718', 1718],
+      ['İbrahim Müteferrika matbaasına izin', '📖', '1727', 1727],
+      ['Küçük Kaynarca Antlaşması', '🖋️', '1774', 1774],
+      ['Nizam-ı Cedit ordusu', '🎖️', '1793', 1793],
+      ['Sened-i İttifak', '🤝', '1808', 1808],
+      ['Yeniçeri Ocağı’nın kaldırılması', '🚫', '1826', 1826],
+      ['Tanzimat Fermanı', '📜', '1839', 1839],
+      ['Islahat Fermanı', '📃', '1856', 1856],
+      ['I. Meşrutiyet', '🏛️', '1876', 1876],
+    ]),
   },
   {
     id: 'avrupa',
     color: '#0D9488',
-    title: 'Avrupa’da değişim, Osmanlı’da yenileşme',
+    title: 'Dünyada ve Avrupa’da değişim',
     emoji: '🌍',
     grades: [7],
     kind: 'year',
-    note: 'Dünyada ve Osmanlı’da aynı dönemde olanları ilişkilendirme.',
-    items: [
-      { e: 'İstanbul’un fethi', i: '🏰', d: '1453', v: 1453 },
-      { e: 'Ümit Burnu’na ulaşıldı (B. Dias)', i: '🧭', d: '1488', v: 1488 },
-      { e: 'Kolomb Amerika kıtasına ulaştı', i: '⛵', d: '1492', v: 1492 },
-      { e: 'Hindistan deniz yolu (Vasco da Gama)', i: '🗺️', d: '1498', v: 1498 },
-      { e: 'Luther’in 95 Tezi (Reform)', i: '⛪', d: '1517', v: 1517 },
-      { e: 'İbrahim Müteferrika matbaasına izin', i: '📖', d: '1727', v: 1727 },
-      { e: 'James Watt’ın geliştirdiği buhar makinesi', i: '⚙️', d: '1769', v: 1769 },
-      { e: 'Fransız İhtilali', i: '🇫🇷', d: '1789', v: 1789 },
-      { e: 'Tanzimat Fermanı', i: '📜', d: '1839', v: 1839 },
-      { e: 'I. Meşrutiyet', i: '🏛️', d: '1876', v: 1876 },
-    ],
+    note: 'Keşifler, Reform, bilim ve devrimler; aynı dönemde Osmanlı’da olanlarla ilişkilendir.',
+    items: S([
+      ['Magna Carta', '📜', '1215', 1215],
+      ['Gutenberg matbaası', '📖', '~1450', 1450],
+      ['İstanbul’un fethi', '🏰', '1453', 1453],
+      ['Ümit Burnu’na ulaşıldı (B. Dias)', '🧭', '1488', 1488],
+      ['Kolomb Amerika kıtasına ulaştı', '⛵', '1492', 1492],
+      ['Hindistan deniz yolu (Vasco da Gama)', '🗺️', '1498', 1498],
+      ['Luther’in 95 Tezi (Reform)', '⛪', '1517', 1517],
+      ['Macellan dünya turuna çıktı', '🌍', '1519', 1519],
+      ['Kopernik’in Güneş merkezli evren kitabı', '☀️', '1543', 1543],
+      ['Galileo teleskopla gökyüzünü inceledi', '🔭', '1609', 1609],
+      ['Newton’un hareket ve çekim yasaları kitabı', '🍎', '1687', 1687],
+      ['James Watt’ın buhar makinesi', '⚙️', '1769', 1769],
+      ['ABD Bağımsızlık Bildirgesi', '🗽', '1776', 1776],
+      ['Fransız İhtilali', '🇫🇷', '1789', 1789],
+      ['İlk buharlı yolcu demiryolu (İngiltere)', '🚂', '1825', 1825],
+      ['Tanzimat Fermanı', '📜', '1839', 1839],
+    ]),
   },
   {
     id: 'millimucadele',
     color: '#E2574C',
-    title: 'I. Dünya Savaşı’ndan Cumhuriyet’e',
+    title: 'I. Dünya Savaşı ve Millî Mücadele',
     emoji: '🇹🇷',
     grades: [8],
     kind: 'date',
-    note: 'Aynı yıl içindeki olayları ay ve güne göre sıralama.',
-    items: [
-      { e: 'I. Dünya Savaşı başladı', i: '💣', d: '28 Temmuz 1914', v: 19140728 },
-      { e: 'Çanakkale Deniz Zaferi', i: '⚓', d: '18 Mart 1915', v: 19150318 },
-      { e: 'Mondros Ateşkes Antlaşması', i: '✍️', d: '30 Ekim 1918', v: 19181030 },
-      { e: 'Mustafa Kemal Samsun’a çıktı', i: '⛴️', d: '19 Mayıs 1919', v: 19190519 },
-      { e: 'Amasya Genelgesi', i: '📣', d: '22 Haziran 1919', v: 19190622 },
-      { e: 'Erzurum Kongresi', i: '🏔️', d: '23 Temmuz 1919', v: 19190723 },
-      { e: 'Sivas Kongresi', i: '👥', d: '4 Eylül 1919', v: 19190904 },
-      { e: 'Misak-ı Millî’nin kabulü', i: '📜', d: '28 Ocak 1920', v: 19200128 },
-      { e: 'TBMM’nin açılışı', i: '🏛️', d: '23 Nisan 1920', v: 19200423 },
-      { e: 'Sevr Antlaşması', i: '📄', d: '10 Ağustos 1920', v: 19200810 },
-      { e: 'I. İnönü Muharebesi', i: '🛡️', d: '6 Ocak 1921', v: 19210106 },
-      { e: 'Sakarya Meydan Muharebesi', i: '⚔️', d: '23 Ağustos 1921', v: 19210823 },
-      { e: 'Büyük Taarruz başladı', i: '🐎', d: '26 Ağustos 1922', v: 19220826 },
-      { e: 'Mudanya Ateşkes Antlaşması', i: '🕊️', d: '11 Ekim 1922', v: 19221011 },
-      { e: 'Saltanatın kaldırılması', i: '👑', d: '1 Kasım 1922', v: 19221101 },
-      { e: 'Lozan Barış Antlaşması', i: '🤝', d: '24 Temmuz 1923', v: 19230724 },
-      { e: 'Cumhuriyet’in ilanı', i: '🇹🇷', d: '29 Ekim 1923', v: 19231029 },
-    ],
+    note: 'Aynı yıl içindeki olayları ay ve güne göre sırala.',
+    items: S([
+      ['Mustafa Kemal’in doğumu', '👶', '1881', 18810101],
+      ['Trablusgarp Savaşı başladı', '🏜️', '29 Eylül 1911', 19110929],
+      ['I. Balkan Savaşı başladı', '⛰️', '8 Ekim 1912', 19121008],
+      ['I. Dünya Savaşı başladı', '💣', '28 Temmuz 1914', 19140728],
+      ['Sarıkamış Harekâtı başladı', '❄️', '22 Aralık 1914', 19141222],
+      ['Çanakkale Deniz Zaferi', '⚓', '18 Mart 1915', 19150318],
+      ['Anafartalar Zaferi', '🎖️', '9–10 Ağustos 1915', 19150810],
+      ['Mondros Ateşkes Antlaşması', '✍️', '30 Ekim 1918', 19181030],
+      ['İzmir’in işgali', '🚢', '15 Mayıs 1919', 19190515],
+      ['Mustafa Kemal Samsun’a çıktı', '⛴️', '19 Mayıs 1919', 19190519],
+      ['Havza Genelgesi', '📢', '28 Mayıs 1919', 19190528],
+      ['Amasya Genelgesi', '📣', '22 Haziran 1919', 19190622],
+      ['Erzurum Kongresi', '🏔️', '23 Temmuz 1919', 19190723],
+      ['Sivas Kongresi', '👥', '4 Eylül 1919', 19190904],
+      ['Temsil Heyeti Ankara’ya geldi', '🚉', '27 Aralık 1919', 19191227],
+      ['Misak-ı Millî’nin kabulü', '📜', '28 Ocak 1920', 19200128],
+      ['İstanbul’un işgali', '🏙️', '16 Mart 1920', 19200316],
+      ['TBMM’nin açılışı', '🏛️', '23 Nisan 1920', 19200423],
+      ['Sevr Antlaşması', '📄', '10 Ağustos 1920', 19200810],
+      ['Gümrü Antlaşması', '🖋️', '3 Aralık 1920', 19201203],
+      ['I. İnönü Muharebesi', '🛡️', '6–10 Ocak 1921', 19210106],
+      ['İstiklal Marşı’nın kabulü', '🎼', '12 Mart 1921', 19210312],
+      ['II. İnönü Muharebesi', '🛡️', '23 Mart–1 Nisan 1921', 19210323],
+      ['Kütahya-Eskişehir Savaşları', '🚂', '10–24 Temmuz 1921', 19210710],
+      ['Sakarya Meydan Muharebesi', '⚔️', '23 Ağustos–13 Eylül 1921', 19210823],
+      ['Mustafa Kemal’e Gazi unvanı ve mareşallik verildi', '🎖️', '19 Eylül 1921', 19210919],
+      ['Kars Antlaşması', '🤝', '13 Ekim 1921', 19211013],
+      ['Ankara Antlaşması (Fransa ile)', '📑', '20 Ekim 1921', 19211020],
+      ['Büyük Taarruz başladı', '🐎', '26 Ağustos 1922', 19220826],
+      ['Başkomutanlık Meydan Muharebesi', '🏆', '30 Ağustos 1922', 19220830],
+      ['İzmir’in kurtuluşu', '🌅', '9 Eylül 1922', 19220909],
+      ['Mudanya Ateşkes Antlaşması', '🕊️', '11 Ekim 1922', 19221011],
+      ['Saltanatın kaldırılması', '👑', '1 Kasım 1922', 19221101],
+      ['Lozan Barış Antlaşması', '🌐', '24 Temmuz 1923', 19230724],
+      ['Cumhuriyet’in ilanı', '🇹🇷', '29 Ekim 1923', 19231029],
+    ]),
   },
   {
     id: 'inkilaplar',
@@ -165,106 +256,45 @@ export const TIMELINE_SETS = [
     grades: [8],
     kind: 'date',
     note: 'İnkılapların sırası ve birbirine yakın tarihler.',
-    items: [
-      { e: 'Saltanatın kaldırılması', i: '👑', d: '1 Kasım 1922', v: 19221101 },
-      { e: 'Ankara’nın başkent olması', i: '🏙️', d: '13 Ekim 1923', v: 19231013 },
-      { e: 'Cumhuriyet’in ilanı', i: '🇹🇷', d: '29 Ekim 1923', v: 19231029 },
-      { e: 'Halifeliğin kaldırılması', i: '🕌', d: '3 Mart 1924', v: 19240303 },
-      { e: 'Şapka Kanunu', i: '🎩', d: '25 Kasım 1925', v: 19251125 },
-      { e: 'Türk Medeni Kanunu’nun kabulü', i: '⚖️', d: '17 Şubat 1926', v: 19260217 },
-      { e: 'Harf İnkılabı (Yeni Türk harfleri)', i: '🔤', d: '1 Kasım 1928', v: 19281101 },
-      { e: 'Soyadı Kanunu', i: '🏷️', d: '21 Haziran 1934', v: 19340621 },
-      { e: 'Kadınlara milletvekili seçme ve seçilme hakkı', i: '🗳️', d: '5 Aralık 1934', v: 19341205 },
-      { e: 'Atatürk’ün vefatı', i: '🕯️', d: '10 Kasım 1938', v: 19381110 },
-    ],
+    items: S([
+      ['Saltanatın kaldırılması', '👑', '1 Kasım 1922', 19221101],
+      ['Ankara’nın başkent olması', '🏙️', '13 Ekim 1923', 19231013],
+      ['Cumhuriyet’in ilanı', '🇹🇷', '29 Ekim 1923', 19231029],
+      ['Halifeliğin kaldırılması', '🕌', '3 Mart 1924', 19240303],
+      ['1924 Anayasası’nın kabulü', '📘', '20 Nisan 1924', 19240420],
+      ['Şapka Kanunu', '🎩', '25 Kasım 1925', 19251125],
+      ['Tekke ve zaviyelerin kapatılması', '🚪', '30 Kasım 1925', 19251130],
+      ['Uluslararası saat ve takvimin kabulü', '🕰️', '26 Aralık 1925', 19251226],
+      ['Türk Medeni Kanunu’nun kabulü', '⚖️', '17 Şubat 1926', 19260217],
+      ['Harf İnkılabı (Yeni Türk harfleri)', '🔤', '1 Kasım 1928', 19281101],
+      ['Millet Mektepleri’nin açılması', '🏫', '1 Ocak 1929', 19290101],
+      ['Kadınlara belediye seçimlerinde seçme ve seçilme hakkı', '🗳️', '3 Nisan 1930', 19300403],
+      ['Ölçüler Kanunu (metre, kilogram)', '📏', '26 Mart 1931', 19310326],
+      ['Türk Tarihi Tetkik Cemiyeti’nin kuruluşu', '📚', '12 Nisan 1931', 19310412],
+      ['Türk Dili Tetkik Cemiyeti’nin kuruluşu', '🔠', '12 Temmuz 1932', 19320712],
+      ['Soyadı Kanunu', '🏷️', '21 Haziran 1934', 19340621],
+      ['Kadınlara milletvekili seçme ve seçilme hakkı', '👩‍⚖️', '5 Aralık 1934', 19341205],
+      ['Hafta tatilinin pazar günü olması', '📅', '27 Mayıs 1935', 19350527],
+      ['Montrö Boğazlar Sözleşmesi', '⚓', '20 Temmuz 1936', 19360720],
+      ['Atatürk’ün vefatı', '🕯️', '10 Kasım 1938', 19381110],
+    ]),
   },
 ];
 
+// Bir düzeyde oynanan setler (zaman.html'e havuz olarak gider).
+export const setsForGrade = (g) => TIMELINE_SETS.filter((s) => s.grades.includes(g));
+
 // Sınıf düzeyine göre zorluk. Tarihler HİÇBİR düzeyde sıralamadan önce görünmez (yarışmada kopya olmasın);
 // öğrenci olayın kendisinden sıralar. Kronolojik düşünme kademeli gelişir:
-//  5: az kart, birbirinden uzak olaylar (sadece "önce/sonra"); öğretmen ipucu açabilir.
-//  6: daha çok kart, MÖ/MS karışık, olaylar rastgele; ipucu açılabilir.
-//  7: rastgele ve daha yakın olaylar; ipucu olarak yüzyıl (yüzyıl hesabı bu düzeyin becerisi).
-//  8: birbirine en yakın olaylar (aynı yıl içinde ay/gün); ipucu yok.
+//  5: az kart, birbirinden uzak olaylar (sadece "önce/sonra").
+//  6: daha çok kart, MÖ/MS karışık, olaylar rastgele.
+//  7: rastgele ve daha yakın olaylar (yüzyıl hesabı bu düzeyin becerisi).
+//  8: birbirine en yakın olaylar (aynı yıl içinde ay/gün).
+// hint: oyundaki 💡 İpucu (bir kartı doğru yerine koyar, tur puanı düşer); 8. düzeyde yok.
+// count oyunun girişindeki kart sayısının varsayılanıdır; öğretmen 4–7 arası değiştirebilir.
 export const GRADE_LEVELS = {
   5: { count: 4, hint: true, pick: 'spread', label: 'Kolay', desc: '4 olay · birbirinden uzak olaylar' },
   6: { count: 5, hint: true, pick: 'random', label: 'Orta', desc: '5 olay · MÖ/MS karışık' },
   7: { count: 6, hint: true, pick: 'random', label: 'Zor', desc: '6 olay · yakın tarihler' },
   8: { count: 7, hint: false, pick: 'close', label: 'Çok zor', desc: '7 olay · en yakın tarihler · ipucu yok' },
 };
-export const GRADES = [5, 6, 7, 8];
-
-const MONTHS = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
-
-// Tarih gizliyken gösterilecek ipucu: yıl → yüzyıl, tam tarih → yıl, yıl içi gün → ay.
-export function hintOf(item, kind) {
-  if (kind === 'date') return String(Math.floor(item.v / 10000));
-  if (kind === 'day') return MONTHS[Math.floor(item.v / 100) - 1] || '';
-  const y = item.v;
-  if (y <= -1000) return `MÖ ${Math.ceil(-y / 1000)}. binyıl`;
-  if (y < 0) return `MÖ ${Math.ceil(-y / 100)}. yüzyıl`;
-  return `${Math.ceil(y / 100)}. yüzyıl`;
-}
-
-// "1453 | İstanbul'un fethi", "MÖ 3200 | Yazı", "29.10.1923 | Cumhuriyet" satırlarından set kurar.
-export function parseCustomLines(text) {
-  const rows = [];
-  for (const raw of String(text || '').split(/\r?\n/)) {
-    const line = raw.trim();
-    if (!line) continue;
-    const m = line.match(/^(.+?)\s*[|;\t]\s*(.+)$/) || line.match(/^((?:MÖ|MS|M\.Ö\.|M\.S\.)?\s*-?\d[\d.\/]*)\s+[-–:]?\s*(.+)$/i);
-    if (!m) continue;
-    const d = m[1].trim();
-    const e = m[2].trim();
-    const full = d.match(/^(\d{1,2})[./](\d{1,2})[./](\d{3,4})$/);
-    if (full) {
-      rows.push({ e, d, v: +full[3] * 10000 + +full[2] * 100 + +full[1], date: true });
-      continue;
-    }
-    const y = d.match(/^(MÖ|M\.Ö\.|MS|M\.S\.)?\s*(-?\d{1,5})$/i);
-    if (!y) continue;
-    const bc = y[1] && /^M\.?Ö/i.test(y[1]);
-    const n = parseInt(y[2], 10);
-    rows.push({ e, d: bc ? `MÖ ${Math.abs(n)}` : d, v: bc ? -Math.abs(n) : n, date: false });
-  }
-  const anyDate = rows.some((r) => r.date);
-  // Tarih ve yıl karışıksa yılı yılın başına koy ki karşılaştırılabilsin.
-  const items = rows.map((r) => ({ e: r.e, d: r.d, v: anyDate && !r.date ? r.v * 10000 : r.v }));
-  return { kind: anyDate ? 'date' : 'year', items };
-}
-
-// Set'ten düzeye göre olay seç. Aynı değerdeki olaylardan biri alınır (sıra belirsiz kalmasın).
-export function pickItems(set, count, pick) {
-  const seen = new Set();
-  const sorted = [...set.items].sort((a, b) => a.v - b.v).filter((x) => (seen.has(x.v) ? false : (seen.add(x.v), true)));
-  const n = Math.min(count, sorted.length);
-  if (n >= sorted.length) return sorted;
-  if (pick === 'spread') {
-    // Eşit aralıklı indeksler + küçük kaydırma → olaylar birbirinden uzak.
-    const step = (sorted.length - 1) / (n - 1);
-    const idx = Array.from({ length: n }, (_, i) => Math.round(i * step));
-    for (let i = 1; i < n - 1; i++) {
-      const j = idx[i] + (Math.random() < 0.5 ? -1 : 1);
-      if (Math.random() < 0.5 && j > idx[i - 1] && j < idx[i + 1]) idx[i] = j;
-    }
-    return idx.map((i) => sorted[i]);
-  }
-  if (pick === 'close') {
-    // Ardışık bir pencere: birbirine en yakın olaylar.
-    const start = Math.floor(Math.random() * (sorted.length - n + 1));
-    return sorted.slice(start, start + n);
-  }
-  const all = sorted.map((_, i) => i);
-  for (let i = all.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [all[i], all[j]] = [all[j], all[i]];
-  }
-  return all.slice(0, n).sort((a, b) => a - b).map((i) => sorted[i]);
-}
-
-// Sınıf adından düzey tahmini: "6-A", "7/B", "8 C" → 6, 7, 8.
-export function gradeFromClassName(name) {
-  const m = String(name || '').match(/^\s*(\d{1,2})/);
-  const g = m ? parseInt(m[1], 10) : null;
-  return GRADES.includes(g) ? g : null;
-}

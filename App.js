@@ -42,8 +42,6 @@ import { AuthProvider, useAuth } from './src/context/AuthContext';
 import TeacherSignInScreen from './src/screens/teacher/TeacherSignInScreen';
 import ActivitiesScreen from './src/screens/teacher/ActivitiesScreen';
 import ActivityPlayScreen from './src/screens/teacher/ActivityPlayScreen';
-import TimelineScreen from './src/screens/teacher/TimelineScreen';
-import MapGameScreen from './src/screens/teacher/MapGameScreen';
 
 // Geliştirmede girişi atlamak için true yap (sunucu özellikleri — ödev gönderme, eşitleme — o zaman çalışmaz).
 const SKIP_TEACHER_LOGIN = false;
@@ -197,8 +195,6 @@ function RootNavigator() {
             <Stack.Screen name="Board" component={BoardScreen} options={{ orientation: 'default' }} />
             <Stack.Screen name="Activities" component={ActivitiesScreen} />
             <Stack.Screen name="ActivityPlay" component={ActivityPlayScreen} options={{ orientation: 'default', gestureEnabled: false }} />
-            <Stack.Screen name="Timeline" component={TimelineScreen} options={{ orientation: 'default' }} />
-            <Stack.Screen name="MapGame" component={MapGameScreen} options={{ orientation: 'default' }} />
           </>
         ) : (
           <>

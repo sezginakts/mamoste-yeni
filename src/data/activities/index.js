@@ -11,8 +11,6 @@
 // Branş kimlikleri: data/branches.js (ingilizce, teknoloji-tasarim, turkce, matematik, fen, sosyal, inkilap, din, gorsel, muzik, beden, bilisim).
 
 // Etkinlik türleri. Yeni bir oyun türü eklenirse motoru (HTML) buraya bağlanır.
-// `screen` olan türler HTML değil, uygulamanın kendi ekranıdır (Oyna → o ekran, sınıf düzeyiyle);
-// tek dosya olarak indirilemez, akıllı tahtada web sürümünden (npm run web) açılır.
 export const ACTIVITY_TYPES = {
   pasaparola: {
     icon: '🔤',
@@ -67,21 +65,23 @@ export const ACTIVITY_TYPES = {
     branches: ['teknoloji-tasarim'],
     engine: () => require('./logoEngine.js').default,
   },
-  // Uygulama ekranı: src/screens/teacher/TimelineScreen.js · olaylar ve düzey zorluğu src/data/timelines.js
+  // Kaynağı tools/etkinlik/zaman.html; değişince `node tools/etkinlik/derle.js`.
+  // Havuz: { sinif, seviye, setler } — olaylar ve düzey zorluğu src/data/timelines.js (oynananlar cihazda hatırlanır).
   zaman: {
     icon: '🕰️',
     name: 'Zaman Şeridi',
-    desc: 'Görselli olay kartlarını soldan sağa doğru sıraya diz. Tarihler kontrol edilmeden görünmez; doğru yerdekilerin tarihi açılır, yanlışlar yeniden denenir. Öğretmen kendi olaylarını da ekleyebilir.',
+    desc: 'Görselli olay kartlarını şeritte soldan sağa, eskiden yeniye diz. Tarihler sıralanmadan görünmez; doğru yerdekilerin tarihi açılır. Tek oyuncu ya da iki takım; öğretmen kendi olaylarını da yazabilir.',
     branches: ['sosyal', 'inkilap'],
-    screen: 'Timeline',
+    engine: () => require('./zamanEngine.js').default,
   },
-  // Uygulama ekranı: src/screens/teacher/MapGameScreen.js · yerler ve düzey zorluğu src/data/mapFeatures.js
+  // Kaynağı tools/etkinlik/harita.html; değişince `node tools/etkinlik/derle.js`.
+  // Havuz: haritaHavuzu.js — harita geometrisi (turkeyMap.js) + düzeyin yerleri ve zorluğu (mapFeatures.js).
   harita: {
     icon: '🗺️',
     name: 'Türkiye Haritası',
-    desc: 'Önce İller (81 il, plaka), sonra dağlar, akarsular, göller, ovalar, platolar, madenler, ticaret ve ulaşım. Keşfet, Hangisi? ve Bul kipleri; doğru yer ve uzaklık haritada gösterilir.',
+    desc: 'Önce İller (81 il, plaka), sonra dağlar, akarsular, göller, ovalar, platolar, madenler, ticaret ve ulaşım. Keşfet ile öğren; Hangisi? ve Haritada bul ile tek oyuncu ya da iki takım yarış.',
     branches: ['sosyal'],
-    screen: 'MapGame',
+    engine: () => require('./haritaEngine.js').default,
   },
   hikaye: {
     icon: '📖',
@@ -90,6 +90,12 @@ export const ACTIVITY_TYPES = {
     branches: ['turkce'],
     engine: () => require('./hikayeEngine.js').default,
   },
+};
+
+// Zaman Şeridi havuzu: düzeyin olay setleri + zorluk ayarı.
+const zamanHavuzu = (g) => {
+  const { setsForGrade, GRADE_LEVELS } = require('../timelines');
+  return { sinif: g, seviye: GRADE_LEVELS[g], setler: setsForGrade(g) };
 };
 
 const DKAB_IMZA = 'Hazırlayan: <b>Ejder AKÇİÇEK</b> · Din Kültürü ve Ahlak Bilgisi Öğretmeni';
@@ -125,14 +131,14 @@ const LIST = {
   ],
   fen: [],
   sosyal: [
-    { type: 'zaman', grade: 5, unit: null, unitName: 'Önemli günler · icatlar · Anadolu’nun ilk izleri' },
-    { type: 'zaman', grade: 6, unit: null, unitName: 'İlk Türk devletleri ve Türk-İslam tarihi' },
-    { type: 'zaman', grade: 7, unit: null, unitName: 'Osmanlı · Avrupa’da değişim' },
-    { type: 'harita', grade: 5, unit: null, unitName: '20 il ve temel yeryüzü şekilleri' },
-    { type: 'harita', grade: 6, unit: null, unitName: '45 il ve Türkiye’nin fiziki-ekonomik coğrafyası' },
-    { type: 'harita', grade: 7, unit: null, unitName: '81 il ve tüm yerler' },
+    { type: 'zaman', grade: 5, unit: null, unitName: 'Önemli günler · icatlar · Anadolu', pool: () => zamanHavuzu(5) },
+    { type: 'zaman', grade: 6, unit: null, unitName: 'Türk-İslam tarihi · icatlar · Anadolu', pool: () => zamanHavuzu(6) },
+    { type: 'zaman', grade: 7, unit: null, unitName: 'Osmanlı · Avrupa · Türk-İslam tarihi', pool: () => zamanHavuzu(7) },
+    { type: 'harita', grade: 5, unit: null, unitName: '20 il ve temel yeryüzü şekilleri', pool: () => require('./haritaHavuzu').default(5) },
+    { type: 'harita', grade: 6, unit: null, unitName: '45 il ve Türkiye’nin fiziki-ekonomik coğrafyası', pool: () => require('./haritaHavuzu').default(6) },
+    { type: 'harita', grade: 7, unit: null, unitName: '81 il ve tüm yerler', pool: () => require('./haritaHavuzu').default(7) },
   ],
-  inkilap: [{ type: 'zaman', grade: 8, unit: null, unitName: 'Milli Mücadele · Atatürk ilke ve inkılapları' }],
+  inkilap: [{ type: 'zaman', grade: 8, unit: null, unitName: 'Millî Mücadele · Atatürk ilke ve inkılapları', pool: () => zamanHavuzu(8) }],
   gorsel: [],
   muzik: [],
   beden: [],

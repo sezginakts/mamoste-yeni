@@ -28,7 +28,7 @@ export default function ActivitiesScreen({ navigation, route }) {
     .filter((g) => g.items.length);
   const cols = width >= 900 ? 3 : width >= 560 ? 2 : 1;
 
-  const open = (g) => (g.t.screen ? navigation.navigate(g.t.screen, {}) : navigation.navigate('ActivityPlay', { type: g.type }));
+  const open = (g) => navigation.navigate('ActivityPlay', { type: g.type });
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
