@@ -1,4 +1,4 @@
-// Etkinlikler: branşın sınıf oyunları, türe göre (Pasaparola, Cümle Kur …). Türün `branches` listesi varsa yalnız o branşlarda görünür.
+// Etkinlikler: branşın sınıf oyunları, türe göre (Pasaparola, Cümle Kur, Çarkıfelek, Denklem Terazisi …). Türün `branches` listesi varsa yalnız o branşlarda görünür.
 //   ▶ Oyna  → uygulama içinde tam ekran
 //   ⬇ İndir → tek dosyalık .html (WhatsApp/Dosyalar ile gönder; flash belleğe at, akıllı tahtada çift tıkla)
 // "Akıllı tahta" kısayolundan açılınca (params.board) üstte tahtada kullanma adımları görünür.
@@ -69,10 +69,10 @@ export default function ActivitiesScreen({ navigation, route }) {
                       <Text style={{ color: colors.accent, fontWeight: '800', fontSize: 9 }}>SINIF</Text>
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={{ color: colors.text, fontWeight: '900', fontSize: font.body }}>{a.unit}. Ünite</Text>
-                      <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: 2 }} numberOfLines={2}>{a.unitName}</Text>
+                      <Text style={{ color: colors.text, fontWeight: '900', fontSize: font.body }}>{a.unit ? `${a.unit}. Ünite` : a.unitName}</Text>
+                      {a.unit ? <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: 2 }} numberOfLines={2}>{a.unitName}</Text> : null}
                       <View style={st.btns}>
-                        <Pressable onPress={() => navigation.navigate('ActivityPlay', { id: a.id })} style={[st.btn, { backgroundColor: colors.accent }]} accessibilityLabel={`${a.unit}. ünite oyununu oyna`}>
+                        <Pressable onPress={() => navigation.navigate('ActivityPlay', { id: a.id })} style={[st.btn, { backgroundColor: colors.accent }]} accessibilityLabel={`${a.unit ? `${a.unit}. ünite` : a.unitName} oyununu oyna`}>
                           <Text style={st.btnT}>▶ Oyna</Text>
                         </Pressable>
                         <Pressable onPress={() => download(a)} disabled={busy === a.id} style={[st.btn, { backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.accent }]} accessibilityLabel="Akıllı tahta için indir">

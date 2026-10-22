@@ -34,6 +34,15 @@ export const ACTIVITY_TYPES = {
     branches: ['ingilizce'],
     engine: () => require('./carkEngine.js').default,
   },
+  // Kaynağı tools/etkinlik/terazi.html; değişince `node tools/etkinlik/derle.js`.
+  // Havuz soru listesi değil: { seviyeler: [1-5] } — denklemler oyunda rastgele üretilir.
+  terazi: {
+    icon: '⚖️',
+    name: 'Denklem Terazisi',
+    desc: 'Kefelerde x kutuları, küpler ve balonlar. İki kefeye aynı şeyi yaparak teraziyi dengede tut, x\'i yalnız bırak. Denklemler her oyunda yeniden üretilir.',
+    branches: ['matematik'],
+    engine: () => require('./teraziEngine.js').default,
+  },
 };
 
 const DKAB_IMZA = 'Hazırlayan: <b>Ejder AKÇİÇEK</b> · Din Kültürü ve Ahlak Bilgisi Öğretmeni';
@@ -56,7 +65,10 @@ const LIST = {
   ],
   'teknoloji-tasarim': [],
   turkce: [],
-  matematik: [],
+  matematik: [
+    { type: 'terazi', grade: 7, unit: null, unitName: 'Birinci Dereceden Denklemler', pool: () => require('./matematik/terazi7.js').default },
+    { type: 'terazi', grade: 8, unit: null, unitName: 'Doğrusal Denklemler', pool: () => require('./matematik/terazi8.js').default },
+  ],
   fen: [],
   sosyal: [],
   inkilap: [],
@@ -66,7 +78,8 @@ const LIST = {
   bilisim: [],
 };
 
-const withId = (branchId) => (a) => ({ ...a, branchId, id: `${branchId}-${a.type}-${a.grade}-u${a.unit}` });
+// unit: null → ünite numarası yok (oyun bir konuya bağlı); listede ve dosya adında konu adı görünür.
+const withId = (branchId) => (a) => ({ ...a, branchId, id: `${branchId}-${a.type}-${a.grade}-${a.unit ? `u${a.unit}` : 'genel'}` });
 export const activitiesFor = (branchId) => (LIST[branchId] || []).map(withId(branchId));
 export const activityById = (id) =>
   Object.keys(LIST)

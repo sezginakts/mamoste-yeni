@@ -7,7 +7,7 @@ const esc = (t) => String(t || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').
 
 export function activityTitle(act) {
   const branch = BRANCH_BY_ID[act.branchId];
-  return `${act.grade}. Sınıf ${branch ? branch.name : ''} · ${act.unit}. Ünite: ${act.unitName}`;
+  return `${act.grade}. Sınıf ${branch ? branch.name : ''} · ${act.unit ? `${act.unit}. Ünite: ` : ''}${act.unitName}`;
 }
 
 export function buildHtml(act) {
@@ -26,6 +26,6 @@ export function buildHtml(act) {
 // "Pasaparola - 10. Sınıf Din Kültürü ve Ahlak Bilgisi - 1. Ünite.html"
 export function fileName(act) {
   const branch = BRANCH_BY_ID[act.branchId];
-  const name = `${ACTIVITY_TYPES[act.type].name} - ${act.grade}. Sınıf ${branch ? branch.name : ''} - ${act.unit}. Ünite`;
+  const name = `${ACTIVITY_TYPES[act.type].name} - ${act.grade}. Sınıf ${branch ? branch.name : ''} - ${act.unit ? `${act.unit}. Ünite` : act.unitName}`;
   return `${name.replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, ' ').trim()}.html`;
 }
