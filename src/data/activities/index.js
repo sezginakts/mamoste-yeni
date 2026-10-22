@@ -10,7 +10,7 @@
 
 // Etkinlik türleri. Yeni bir oyun türü eklenirse motoru (HTML) buraya bağlanır.
 // `screen` olan türler HTML değil, uygulamanın kendi ekranıdır (Oyna → o ekran, sınıf düzeyiyle);
-// tek dosya olarak indirilemez, akıllı tahtada web sürümünden (npm run web) açılır. Satırdaki `params` ekrana geçer (ör. açılacak konu).
+// tek dosya olarak indirilemez, akıllı tahtada web sürümünden (npm run web) açılır.
 export const ACTIVITY_TYPES = {
   pasaparola: {
     icon: '🔤',
@@ -114,13 +114,13 @@ const LIST = {
   fen: [],
   sosyal: [
     { type: 'zaman', grade: 5, unit: null, unitName: 'Önemli günler · icatlar · Anadolu’nun ilk izleri' },
-    { type: 'zaman', grade: 6, unit: null, unitName: 'İlk Türk devletleri ve Türk-İslam tarihi', params: { set: 'turk' } },
-    { type: 'zaman', grade: 7, unit: null, unitName: 'Osmanlı · Avrupa’da değişim', params: { set: 'osmanli' } },
+    { type: 'zaman', grade: 6, unit: null, unitName: 'İlk Türk devletleri ve Türk-İslam tarihi' },
+    { type: 'zaman', grade: 7, unit: null, unitName: 'Osmanlı · Avrupa’da değişim' },
     { type: 'harita', grade: 5, unit: null, unitName: '20 il ve temel yeryüzü şekilleri' },
     { type: 'harita', grade: 6, unit: null, unitName: '45 il ve Türkiye’nin fiziki-ekonomik coğrafyası' },
     { type: 'harita', grade: 7, unit: null, unitName: '81 il ve tüm yerler' },
   ],
-  inkilap: [{ type: 'zaman', grade: 8, unit: null, unitName: 'Milli Mücadele · Atatürk ilke ve inkılapları', params: { set: 'millimucadele' } }],
+  inkilap: [{ type: 'zaman', grade: 8, unit: null, unitName: 'Milli Mücadele · Atatürk ilke ve inkılapları' }],
   gorsel: [],
   muzik: [],
   beden: [],

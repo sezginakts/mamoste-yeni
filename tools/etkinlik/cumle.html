@@ -232,8 +232,18 @@ const ses={
   saat:()=>ton(1200,0,.04,'square',.04),
   final:()=>[523,659,784,659,784,1047,1319].forEach((f,i)=>ton(f,i*.12,.4,'triangle',.15))
 };
-function konus(t){try{const s=window.speechSynthesis;if(!s||sessiz)return;s.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='en-US';u.rate=.88;
-  const v=(s.getVoices()||[]).find(v=>/^en[-_](US|GB)/i.test(v.lang));if(v)u.voice=v;s.speak(u)}catch(e){}}
+// En doğal İngilizce sesi seç: önce sinirsel/doğal sesler (Microsoft … Online (Natural), Google US English,
+// Samantha, Premium/Enhanced); eski masaüstü sesleri (David, Zira, Mark, compact) en sona. Ses listesi geç
+// yüklendiği için voiceschanged ile yeniden seçilir.
+let SES=null;
+function sesSec(){try{const vs=(speechSynthesis.getVoices()||[]).filter(v=>/^en[-_]/i.test(v.lang));if(!vs.length)return null;
+  const puan=v=>{const n=(v.name+' '+(v.voiceURI||'')).toLowerCase();let p=/^en[-_]us/i.test(v.lang)?30:/^en[-_]gb/i.test(v.lang)?25:10;
+    [['natural',90],['neural',90],['online',50],['google us english',70],['google uk english',60],['google',40],['samantha',60],['premium',60],['enhanced',55],['aria',40],['jenny',40],['ava',40],['guy',30],['allison',30]].forEach(([k,s])=>{if(n.includes(k))p+=s});
+    if(/\b(david|zira|mark|hazel|george|susan)\b|compact|eloquence|espeak/.test(n))p-=40;if(v.localService===false)p+=10;return p};
+  return vs.slice().sort((a,b)=>puan(b)-puan(a))[0]}catch(e){return null}}
+if(window.speechSynthesis){SES=sesSec();try{speechSynthesis.addEventListener('voiceschanged',()=>{SES=sesSec()})}catch(e){}}
+function konus(t){try{const s=window.speechSynthesis;if(!s||sessiz)return;s.cancel();if(!SES)SES=sesSec();const u=new SpeechSynthesisUtterance(t);
+  u.lang=SES?SES.lang:'en-US';u.rate=.95;u.pitch=1;if(SES)u.voice=SES;s.speak(u)}catch(e){}}
 if(!window.speechSynthesis)$('dinleBtn').style.display='none';
 
 // --- ayarlar ---

@@ -12,7 +12,8 @@ const MOTORLAR = [
 ];
 
 for (const m of MOTORLAR) {
-  const html = fs.readFileSync(path.join(__dirname, m.kaynak), 'utf8');
+  // Windows'ta git CRLF ile çıkarabilir; çıktı her makinede aynı olsun diye LF'e çevrilir.
+  const html = fs.readFileSync(path.join(__dirname, m.kaynak), 'utf8').replace(/\r\n/g, '\n');
   const js =
     `// Otomatik üretildi (tools/etkinlik/${m.kaynak} → node tools/etkinlik/derle.js). Elle düzenleme.\n` +
     `// Yer tutucular: /*__HAVUZ__*/ __BASLIK__ __ALT__ __IMZA__ __ANAHTAR__ (build.js doldurur).\n` +

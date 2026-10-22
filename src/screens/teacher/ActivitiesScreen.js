@@ -1,105 +1,97 @@
-// Etkinlikler: branşın sınıf oyunları, türe göre (Pasaparola, Cümle Kur, Çarkıfelek, Denklem Terazisi …). Türün `branches` listesi varsa yalnız o branşlarda görünür.
-//   ▶ Oyna  → uygulama içinde tam ekran
-//   ⬇ İndir → tek dosyalık .html (WhatsApp/Dosyalar ile gönder; flash belleğe at, akıllı tahtada çift tıkla)
+// Etkinlikler: branşın oyunları kart olarak. Karta dokun → oyun açılır (sınıf düzeyi oyunun içinden değişir,
+// son seçilen hatırlanır). İçeriği olmayan oyun türleri gösterilmez. Türün `branches` listesi varsa yalnız o branşlarda.
 // "Akıllı tahta" kısayolundan açılınca (params.board) üstte tahtada kullanma adımları görünür.
-import React, { useState } from 'react';
-import { View, Text, ScrollView, Pressable, Alert, Platform, ActivityIndicator, StyleSheet } from 'react-native';
-import { spacing, font, radius } from '../../theme';
+import React from 'react';
+import { View, Text, ScrollView, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
+import { spacing, font, radius, BRAND_CYCLE } from '../../theme';
 import { useTheme } from '../../context/ThemeContext';
 import { useRole } from '../../context/RoleContext';
 import { activitiesFor, ACTIVITY_TYPES } from '../../data/activities';
-import { exportActivity } from '../../teacher/activityExport';
-import { Header, Card, SectionTitle } from '../../teacher/ui';
+import { Header, Card } from '../../teacher/ui';
+
+const gradeRange = (gs) => {
+  const u = [...new Set(gs)].sort((a, b) => a - b);
+  if (!u.length) return '';
+  const run = u.every((g, i) => !i || g === u[i - 1] + 1);
+  return `${u.length > 1 && run ? `${u[0]}–${u[u.length - 1]}` : u.join(', ')}. sınıf`;
+};
 
 export default function ActivitiesScreen({ navigation, route }) {
-  const { colors } = useTheme();
+  const { colors, shadow } = useTheme();
   const { branchId, branch } = useRole();
+  const { width } = useWindowDimensions();
   const board = !!(route.params && route.params.board);
   const list = activitiesFor(branchId);
-  const [busy, setBusy] = useState(null);
+  const games = Object.entries(ACTIVITY_TYPES)
+    .filter(([, t]) => !t.branches || t.branches.includes(branchId))
+    .map(([type, t]) => ({ type, t, items: list.filter((a) => a.type === type) }))
+    .filter((g) => g.items.length);
+  const cols = width >= 900 ? 3 : width >= 560 ? 2 : 1;
 
-  const download = async (a) => {
-    setBusy(a.id);
-    try {
-      await exportActivity(a);
-    } catch (e) {
-      const msg = 'Dosya hazırlanamadı. Tekrar dene.';
-      if (Platform.OS === 'web') window.alert(msg);
-      else Alert.alert('İndirilemedi', msg);
-      console.warn('etkinlik indirme', e);
-    } finally {
-      setBusy(null);
-    }
-  };
+  const open = (g) => (g.t.screen ? navigation.navigate(g.t.screen, {}) : navigation.navigate('ActivityPlay', { type: g.type }));
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Header title={board ? 'Akıllı Tahta' : 'Etkinlikler'} subtitle={branch ? `${branch.emoji} ${branch.name}` : ''} onBack={() => navigation.goBack()} />
       <ScrollView contentContainerStyle={{ padding: spacing.md, paddingBottom: spacing.xxl }}>
         {board ? (
-          <Card style={{ borderLeftWidth: 4, borderLeftColor: colors.accent }}>
+          <Card style={{ borderLeftWidth: 4, borderLeftColor: colors.accent, marginBottom: spacing.md }}>
             <Text style={{ color: colors.text, fontWeight: '900', fontSize: font.body, marginBottom: 6 }}>🖥️ Akıllı tahtada nasıl açılır?</Text>
             {[
-              'Etkinliğin yanındaki ⬇ İndir’e dokun.',
+              'Oyunu aç, üstteki ⬇ İndir’e dokun.',
               'Dosyayı kendine WhatsApp’tan gönder ya da Dosyalar’a / bilgisayarına kaydet.',
               'Dosyayı flash belleğe at, flash’ı akıllı tahtaya tak.',
               'Dosyaya çift tıkla: tarayıcıda açılır. İnternet gerekmez.',
-            ].map((t, i) => (
+            ].map((tx, i) => (
               <Text key={i} style={{ color: colors.textMuted, fontSize: font.small, lineHeight: 21 }}>
                 <Text style={{ color: colors.accent, fontWeight: '900' }}>{i + 1}. </Text>
-                {t}
+                {tx}
               </Text>
             ))}
           </Card>
         ) : null}
 
-        {Object.entries(ACTIVITY_TYPES)
-          .filter(([, t]) => !t.branches || t.branches.includes(branchId))
-          .map(([type, t]) => {
-          const games = list.filter((a) => a.type === type).sort((a, b) => a.grade - b.grade || a.unit - b.unit);
-          return (
-            <View key={type}>
-              <SectionTitle>{`${t.icon} ${t.name.toLocaleUpperCase('tr')}`}</SectionTitle>
-              <Text style={{ color: colors.textMuted, fontSize: font.small, marginBottom: spacing.sm }}>{t.desc}</Text>
-              {t.screen ? (
-                <Text style={{ color: colors.textFaint, fontSize: font.tiny, marginBottom: spacing.sm }}>Uygulama içinde oynanır; akıllı tahtada web sürümünden açılır (dosya olarak indirilemez).</Text>
-              ) : null}
-              {games.length ? (
-                games.map((a) => (
-                  <Card key={a.id} style={st.row}>
-                    <View style={[st.icon, { backgroundColor: colors.accent + '1F' }]}>
-                      <Text style={{ color: colors.accent, fontWeight: '900', fontSize: font.h3 }}>{a.grade}</Text>
-                      <Text style={{ color: colors.accent, fontWeight: '800', fontSize: 9 }}>SINIF</Text>
+        {games.length ? (
+          <View style={st.grid}>
+            {games.map((g, i) => {
+              const c = BRAND_CYCLE[i % BRAND_CYCLE.length];
+              return (
+                <Pressable
+                  key={g.type}
+                  onPress={() => open(g)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${g.t.name} oyununu aç`}
+                  style={({ pressed }) => [st.card, shadow, { width: `${100 / cols}%` }, pressed && { opacity: 0.9 }]}
+                >
+                  <View style={[st.inner, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <View style={[st.art, { backgroundColor: c + '1F' }]}>
+                      <Text style={{ fontSize: 52 }}>{g.t.icon}</Text>
                     </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ color: colors.text, fontWeight: '900', fontSize: font.body }}>{a.unit ? `${a.unit}. Ünite` : a.unitName}</Text>
-                      {a.unit ? <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: 2 }} numberOfLines={2}>{a.unitName}</Text> : null}
-                      <View style={st.btns}>
-                        <Pressable onPress={() => (t.screen ? navigation.navigate(t.screen, { grade: a.grade, ...(a.params || {}) }) : navigation.navigate('ActivityPlay', { id: a.id }))} style={[st.btn, { backgroundColor: colors.accent }]} accessibilityLabel={`${a.unit ? `${a.unit}. ünite` : a.unitName} oyununu oyna`}>
-                          <Text style={st.btnT}>▶ Oyna</Text>
-                        </Pressable>
-                        {t.screen ? null : (
-                          <Pressable onPress={() => download(a)} disabled={busy === a.id} style={[st.btn, { backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.accent }]} accessibilityLabel="Akıllı tahta için indir">
-                            {busy === a.id ? <ActivityIndicator color={colors.accent} /> : <Text style={[st.btnT, { color: colors.accent }]}>⬇ İndir</Text>}
-                          </Pressable>
-                        )}
+                    <View style={{ padding: spacing.md, gap: 6, flex: 1 }}>
+                      <Text style={{ color: colors.text, fontWeight: '900', fontSize: font.h3 }}>{g.t.name}</Text>
+                      <Text style={{ color: colors.textMuted, fontSize: font.small, lineHeight: 20 }} numberOfLines={3}>
+                        {g.t.desc}
+                      </Text>
+                      <View style={st.foot}>
+                        <Text style={{ color: c, fontWeight: '800', fontSize: font.small }}>{gradeRange(g.items.map((a) => a.grade))}</Text>
+                        <View style={[st.play, { backgroundColor: c }]}>
+                          <Text style={st.playT}>▶ Oyna</Text>
+                        </View>
                       </View>
                     </View>
-                  </Card>
-                ))
-              ) : (
-                <Card style={[st.row, { borderStyle: 'dashed' }]}>
-                  <Text style={{ fontSize: 22 }}>⏳</Text>
-                  <Text style={{ color: colors.textMuted, fontSize: font.small, flex: 1 }}>
-                    {branch ? `${branch.name} için` : 'Bu ders için'} {t.name} içeriği hazırlanıyor. Eklendiğinde burada görünecek.
-                  </Text>
-                </Card>
-              )}
-            </View>
-          );
-        })}
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : (
+          <Card style={{ flexDirection: 'row', gap: spacing.md, alignItems: 'center' }}>
+            <Text style={{ fontSize: 22 }}>⏳</Text>
+            <Text style={{ color: colors.textMuted, fontSize: font.small, flex: 1 }}>{branch ? `${branch.name} için` : 'Bu ders için'} oyunlar hazırlanıyor. Eklendiğinde burada görünecek.</Text>
+          </Card>
+        )}
         <Text style={{ color: colors.textFaint, fontSize: font.tiny, marginTop: spacing.md }}>
-          Etkinlikler internetsiz çalışır. İndirilen dosya tek başına çalışır; akıllı tahtada, bilgisayarda ya da telefonda tarayıcıda açılır.
+          Oyunlar internetsiz çalışır. Sınıf düzeyini oyunun içinden değiştirebilirsin; son seçtiğin hatırlanır.
         </Text>
       </ScrollView>
     </View>
@@ -107,9 +99,11 @@ export default function ActivitiesScreen({ navigation, route }) {
 }
 
 const st = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
-  icon: { width: 52, height: 52, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
-  btns: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
-  btn: { flex: 1, borderRadius: radius.md, paddingVertical: 9, alignItems: 'center', justifyContent: 'center', minHeight: 40 },
-  btnT: { color: '#fff', fontWeight: '900', fontSize: font.small },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -spacing.sm / 2 },
+  card: { padding: spacing.sm / 2 },
+  inner: { borderRadius: radius.lg, borderWidth: 1, overflow: 'hidden', flex: 1 },
+  art: { height: 110, alignItems: 'center', justifyContent: 'center' },
+  foot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto', paddingTop: 6 },
+  play: { borderRadius: radius.pill, paddingHorizontal: 16, paddingVertical: 8 },
+  playT: { color: '#fff', fontWeight: '900', fontSize: font.small },
 });
