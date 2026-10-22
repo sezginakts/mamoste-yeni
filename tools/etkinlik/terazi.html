@@ -142,10 +142,38 @@ h1{margin:0;font-size:calc(var(--f)*1.5);font-weight:900;line-height:1.05;backgr
 #konfeti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:40}
 #konfeti i{position:absolute;top:-4vmin;width:1.4vmin;height:2.2vmin;border-radius:.3vmin;animation:dus linear forwards}
 @keyframes dus{to{transform:translateY(110vh) rotate(720deg)}}
+/* y kutusu, mod araçları */
+.o.y{border-radius:calc(var(--u)*.18);background:linear-gradient(160deg,#2DD4BF,#0D9488);color:#fff;font-style:italic;font-size:calc(var(--u)*.55);
+  box-shadow:inset 0 calc(var(--u)*-.08) 0 rgba(0,0,0,.18),0 calc(var(--u)*.05) calc(var(--u)*.12) rgba(15,23,42,.25);font-family:Georgia,"Times New Roman",serif}
+.o.x.deger{font-style:normal;font-family:"Segoe UI",Arial,sans-serif;font-size:calc(var(--u)*.42)}
+.denklem i.yy{color:var(--turkuaz)}
+.verilen{display:none;font-family:Georgia,serif;font-weight:900;font-size:calc(var(--f)*.8);color:#0F766E;background:#F0FDFA;border:.3vmin solid #99F6E4;border-radius:99px;padding:.3vmin 1.8vmin}
+.verilen.var{display:inline-block}
+.verilen small{font-family:"Segoe UI",Arial,sans-serif;font-size:.55em;color:var(--soluk);margin-left:.4em}
+.cubuk{display:none}.cubuk.aktif{display:contents}
+.adim{display:inline-flex;align-items:center;gap:.6vmin;background:#fff;border-radius:99px;padding:.5vmin;box-shadow:0 .6vmin 0 #CBD5E1;font-weight:900}
+.adim span.ad{padding:0 .4vmin 0 1.2vmin;font-family:Georgia,serif;font-style:italic;font-size:calc(var(--f)*.7);color:var(--gok)}
+.adim span.ad.y{color:var(--turkuaz)}
+.adim b{min-width:2.4em;text-align:center;font-size:calc(var(--f)*.85);font-family:Georgia,serif}
+.araclar-alt .adim button{box-shadow:none;background:var(--zemin);width:6vmin;height:6vmin;min-width:34px;min-height:34px;padding:0;justify-content:center;font-size:calc(var(--f)*.8)}
+.araclar-alt button.ana{background:var(--turkuaz);color:#fff;box-shadow:0 .6vmin 0 #0F766E}
+.araclar-alt button.ana.hazir{animation:nabiz2 1s ease-in-out infinite}
+@keyframes nabiz2{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+.denenen{display:inline-flex;gap:.6vmin;flex-wrap:wrap}
+.denenen i{font-style:normal;font-weight:900;font-size:calc(var(--f)*.5);background:#FEF2F2;color:var(--mercan);border-radius:99px;padding:.4vmin 1.2vmin}
+.secenekler-bul{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.2vmin;width:min(96vw,120vmin)}
+.araclar-alt .secenekler-bul button{justify-content:center;font-family:Georgia,serif;font-size:calc(var(--f)*.85);padding:1.4vmin 2vmin}
+.araclar-alt .secenekler-bul button i{color:var(--gok)}.araclar-alt .secenekler-bul button i.yy{color:var(--turkuaz)}
+.araclar-alt .secenekler-bul button.yanlis{background:var(--mercan);color:#fff;box-shadow:0 .6vmin 0 #B4382E;opacity:.55}
+.araclar-alt .secenekler-bul button.dogru{background:var(--turkuaz);color:#fff;box-shadow:0 .6vmin 0 #0F766E}
+.araclar-alt .secenekler-bul button.yanlis i,.araclar-alt .secenekler-bul button.dogru i{color:#fff}
+.mod-aciklama{grid-column:1/-1;font-size:calc(var(--f)*.55);color:var(--yazi);background:var(--zemin);border-radius:2vmin;padding:1.2vmin 2vmin;line-height:1.45;width:100%;text-align:left}
+.ayarlar .sec.dort button{font-size:calc(var(--f)*.52)}
 @media (orientation:portrait){
   :root{--f:clamp(15px,4.4vmin,30px)}
   .ayarlar{grid-template-columns:1fr}.etiket{display:none}
   .denklem{font-size:calc(var(--f)*1.3)}
+  .secenekler-bul{grid-template-columns:1fr}
 }
 </style></head><body>
 <div id="arka"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span><span class="blob b4"></span></div>
@@ -157,14 +185,15 @@ h1{margin:0;font-size:calc(var(--f)*1.5);font-weight:900;line-height:1.05;backgr
     <h1>Teraziyi Dengede Tut, <i style="font-family:Georgia,serif">x</i>'i Bul!</h1>
     <div class="alt">__ALT__</div>
     __IMZA__
-    <div class="lejant"><span><b class="o x">x</b> bilinmeyen</span><span><b class="o bir">1</b> bir birim</span><span><b class="o balon" style="animation:none">−1</b> eksi bir (balon yukarı çeker)</span></div>
+    <div class="lejant"><span><b class="o x">x</b> bilinmeyen</span><span><b class="o y">y</b> değeri verilen</span><span><b class="o bir">1</b> bir birim</span><span><b class="o balon" style="animation:none">−1</b> eksi bir (yukarı çeker)</span></div>
     <div class="ayarlar">
+      <div class="ayar genis"><span>Oyun türü</span><div class="sec dort" data-k="oyun"><button data-v="coz">🧮 Çöz</button><button data-v="kur">✏️ Kendin kur</button><button data-v="tahmin">🎯 Tahmin et</button><button data-v="bul">🔎 Denklemi bul</button></div></div>
+      <div class="mod-aciklama" id="modAciklama"></div>
       <div class="ayar"><span>Oyuncu</span><div class="sec" data-k="mod"><button data-v="tek">👤 Tek</button><button data-v="takim">👥 İki takım</button></div></div>
-      <div class="ayar"><span>Denklem sayısı</span><div class="sec" data-k="tur"><button data-v="5">5</button><button data-v="8">8</button><button data-v="10">10</button></div></div>
-      <div class="ayar"><span>Zorluk</span><div class="sec" data-k="zor"><button data-v="kolay">Kolay</button><button data-v="orta">Orta</button><button data-v="zor">Zor</button><button data-v="karisik">Artan</button></div></div>
+      <div class="ayar"><span>Tur sayısı</span><div class="sec" data-k="tur"><button data-v="5">5</button><button data-v="8">8</button><button data-v="10">10</button></div></div>
+      <div class="ayar" id="zorAyar"><span>Zorluk</span><div class="sec" data-k="zor"><button data-v="kolay">Kolay</button><button data-v="orta">Orta</button><button data-v="zor">Zor</button><button data-v="karisik">Artan</button></div></div>
     </div>
     <button id="basla" class="buyuk">Başla ▶</button>
-    <div class="not">Kefedeki bir nesneye dokun: kefeden çıkar, terazi eğilir. <b>Diğer kefeye de aynısını yap</b>, terazi yeniden dengelensin. Küp veya balon eklemek için alttan seç, sonra kefeye dokun (küp + balon = 0, birbirini yok eder). Dengedeyken iki kefeyi birlikte bölebilirsin. Kefelerin birinde yalnız bir <b><i>x</i></b> kalınca bulmuş olursun!</div>
   </div>
 </section>
 
@@ -175,7 +204,7 @@ h1{margin:0;font-size:calc(var(--f)*1.5);font-weight:900;line-height:1.05;backgr
     <div class="skorlar" id="skorlar"></div>
     <div class="araclar"><button id="sesBtn" title="Ses">🔊</button><button id="tamBtn" title="Tam ekran">⛶</button><button id="cikBtn" title="Ana ekran">✕</button></div>
   </header>
-  <div class="denklem-satir"><div class="sira" id="sira"></div><div class="denklem" id="denklem"></div></div>
+  <div class="denklem-satir"><div class="sira" id="sira"></div><div class="denklem" id="denklem"></div><div class="verilen" id="verilen"></div></div>
   <div class="durum" id="durum"></div>
   <div class="sahne"><div class="terazi" id="terazi">
     <div class="olcek" id="olcek"></div><div class="ibre" id="ibre"></div>
@@ -185,13 +214,39 @@ h1{margin:0;font-size:calc(var(--f)*1.5);font-weight:900;line-height:1.05;backgr
     <div class="kefe sag" id="kefe1" data-k="1"><svg class="ip" id="ip1"></svg><div class="balonlar" id="balon1"></div><div class="icerik" id="icerik1"></div><div class="tabak"></div><div class="vurgu"></div></div>
   </div></div>
   <div class="araclar-alt" id="araclarAlt">
-    <button id="kupBtn" title="Kefeye küp ekle"><b class="o bir">1</b> ekle</button>
-    <button id="balonBtn" title="Kefeye balon ekle"><b class="o balon">−1</b> ekle</button>
-    <span class="ayrac"></span>
-    <span id="bolucu" style="display:contents"></span>
-    <button id="geriBtn">↶ Geri al</button>
-    <button id="ipucuBtn">💡 İpucu</button>
-    <button id="bastanBtn">↺ Baştan</button>
+    <!-- Çöz -->
+    <span class="cubuk" data-asama="coz">
+      <button data-ekle="bir" title="Kefeye küp ekle"><b class="o bir">1</b> ekle</button>
+      <button data-ekle="balon" class="balonEkle" title="Kefeye balon ekle"><b class="o balon">−1</b> ekle</button>
+      <span class="ayrac"></span>
+      <span id="bolucu" style="display:contents"></span>
+      <button id="yerineBtn" class="ana" title="Her y'nin yerine değerini koy"><b class="o y">y</b> → değeri</button>
+      <button id="geriBtn">↶ Geri al</button>
+      <button id="ipucuBtn">💡 İpucu</button>
+      <button id="bastanBtn">↺ Baştan</button>
+    </span>
+    <!-- Kendin kur -->
+    <span class="cubuk" data-asama="kur">
+      <span class="adim" title="Gizli x"><span class="ad">x =</span><button id="kxEksi">−</button><b id="kxDeger"></b><button id="kxArti">+</button><button id="gozBtn" title="Gizli değeri göster/gizle">👁</button></span>
+      <span class="adim" title="y'nin değeri (herkes görür)"><span class="ad y">y =</span><button id="kyEksi">−</button><b id="kyDeger"></b><button id="kyArti">+</button></span>
+      <span class="ayrac"></span>
+      <button data-ekle="x"><b class="o x">x</b></button>
+      <button data-ekle="y"><b class="o y">y</b></button>
+      <button data-ekle="bir"><b class="o bir">1</b></button>
+      <button data-ekle="balon"><b class="o balon">−1</b></button>
+      <span class="ayrac"></span>
+      <button id="zarBtn" title="Gizli x ile rastgele bir denklem kur">🎲 Rastgele</button>
+      <button id="temizleBtn">🧹 Boşalt</button>
+      <button id="kurBaslaBtn" class="ana">▶ Çözmeye başla</button>
+    </span>
+    <!-- Tahmin et -->
+    <span class="cubuk" data-asama="tahmin">
+      <span class="adim"><span class="ad">x =</span><button id="tEksi">−</button><b id="tDeger"></b><button id="tArti">+</button></span>
+      <button id="deneBtn" class="ana">⚖️ Teraziye koy</button>
+      <span class="denenen" id="denenen"></span>
+    </span>
+    <!-- Denklemi bul -->
+    <span class="cubuk" data-asama="bul"><span class="secenekler-bul" id="seceneklerBul"></span></span>
   </div>
   <div class="sonuc" id="sonuc"><div class="sonuc-ic">
     <div class="sonuc-bas" id="sonucBas"></div>
@@ -216,8 +271,8 @@ h1{margin:0;font-size:calc(var(--f)*1.5);font-weight:900;line-height:1.05;backgr
 <script>
 /*__HAVUZ__*/
 // Havuz: { seviyeler: [...] } — denklemler oyunda rastgele üretilir.
-//  1: x + b = d   2: ax + b = d   3: ax + b = cx + d   4: ax − b = d (balon)   5: çözümü negatif olanlar
-const AY=(typeof HAVUZ!=='undefined'&&HAVUZ&&HAVUZ.seviyeler&&HAVUZ.seviyeler.length)?HAVUZ:{seviyeler:[1,2,3,4,5]};
+//  1: x + b = d   2: ax + b = d   3: ax + b = cx + d   4: ax − b = d (balon)   5: çözümü negatif   6: y'li (y'nin değeri verilir)
+const AY=(typeof HAVUZ!=='undefined'&&HAVUZ&&HAVUZ.seviyeler&&HAVUZ.seviyeler.length)?HAVUZ:{seviyeler:[1,2,3,4,5,6]};
 const SEV=AY.seviyeler.slice().sort((a,b)=>a-b);
 const TAKIM=[{ad:'Mercan',sinif:'m',renk:'var(--mercan)'},{ad:'Turkuaz',sinif:'t',renk:'var(--turkuaz)'}];
 const $=id=>document.getElementById(id);
@@ -225,6 +280,12 @@ const oku=(k,v)=>{try{const x=localStorage.getItem(k);return x?JSON.parse(x):v}c
 const yaz=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 const say=n=>n<0?'−'+(-n):String(n); // gerçek eksi işareti
 const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+function karistir(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+const kef=o=>Object.assign({x:0,y:0,bir:0,balon:0},o);
+const sabit=(s,n)=>{s.bir=Math.max(n,0);s.balon=Math.max(-n,0)};
+const net=s=>s.bir-s.balon;
+const toplamNesne=s=>s.x+s.y+s.bir+s.balon;
+const kopya=k=>k.map(s=>({...s}));
 
 // --- ses ---
 let AC=null,sessiz=oku('mamoste-terazi-sessiz',false);
@@ -238,36 +299,53 @@ const ses={
   egik:()=>{ton(180,0,.35,'triangle',.08);ton(150,.1,.35,'triangle',.06)},
   sifir:()=>[660,990].forEach((f,i)=>ton(f,i*.06,.15,'sine',.1)),
   bol:()=>[523,784].forEach((f,i)=>ton(f,i*.08,.2,'triangle',.12)),
+  yanlis:()=>{ton(220,0,.22,'sawtooth',.06);ton(165,.12,.3,'sawtooth',.06)},
   dogru:()=>[523,659,784,1047].forEach((f,i)=>ton(f,i*.09,.3,'triangle',.16)),
   final:()=>[523,659,784,659,784,1047,1319].forEach((f,i)=>ton(f,i*.12,.4,'triangle',.15))
 };
 
 // --- ayarlar ---
-const AYAR=Object.assign({mod:'tek',tur:'5',zor:'karisik'},oku('mamoste-terazi-ayar',{}));
+const AYAR=Object.assign({oyun:'coz',mod:'tek',tur:'5',zor:'karisik'},oku('mamoste-terazi-ayar',{}));
+const MOD_ACIKLAMA={
+  coz:'🧮 <b>Çöz:</b> Kefedeki bir nesneye dokun, kefeden çıkar — terazi eğilir. <b>Diğer kefeye de aynısını yap</b>. Küp + balon birbirini yok eder; dengedeyken iki kefeyi birlikte bölebilirsin. <b>y</b>\'nin değeri verilir: önce iki kefedeki y\'leri sadeleştir, kalanların yerine değerini koy. Bir kefede yalnız <b>x</b> kalınca kazanırsın!',
+  kur:'✏️ <b>Kendin kur:</b> Öğretmen ya da rakip takım <b>gizli x</b>\'i seçer (👁 ile gizlenir) ve kefelere x, y, küp, balon koyar. Terazi gizli değere göre eğilir; dengelenince denklem hazırdır. Sonra sıradaki takım çözer. İki takımda her tur bir takım kurar, öbürü çözer.',
+  tahmin:'🎯 <b>Tahmin et:</b> x kutularının içinde ne var? Bir sayı seç, <b>Teraziye koy</b>: kutular o sayı olur, terazi ona göre eğilir. Dengelenene kadar dene! İki takımda yanlış tahminde sıra karşı takıma geçer.',
+  bul:'🔎 <b>Denklemi bul:</b> Terazide ne görüyorsun? Kefelerdeki nesneleri say ve dört denklemden <b>terazideki denklemi</b> seç. İki takımda yanlış cevapta sıra karşı takıma geçer.'
+};
 document.querySelectorAll('.sec').forEach(sec=>{
-  const k=sec.dataset.k;const boya=()=>sec.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===AYAR[k]));
+  const k=sec.dataset.k;const boya=()=>{sec.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===AYAR[k]));if(k==='oyun')modCiz()};
   sec.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;AYAR[k]=b.dataset.v;yaz('mamoste-terazi-ayar',AYAR);boya();ses.koy()});boya();
 });
+function modCiz(){$('modAciklama').innerHTML=MOD_ACIKLAMA[AYAR.oyun]||'';$('zorAyar').style.opacity=AYAR.oyun==='kur'?.35:1}
 
 // --- denklem üretimi ---
-// Kefe: {x: x kutusu sayısı, bir: küp sayısı, balon: balon sayısı}; X: gizli çözüm
+// Kefe: {x, y, bir (küp), balon}; X: gizli çözüm, Y: verilen y değeri (yoksa null)
 function uret(sev){
-  let X,s0,s1,g=0;
-  do{g++;
-    if(sev===1){X=rnd(1,8);const b=rnd(1,6);s0={x:1,bir:b,balon:0};s1={x:0,bir:X+b,balon:0}}
-    else if(sev===2){const a=rnd(2,3);X=rnd(1,4);const b=rnd(0,5);s0={x:a,bir:b,balon:0};s1={x:0,bir:a*X+b,balon:0}}
-    else if(sev===3){const c=rnd(1,2),a=c+rnd(1,2);X=rnd(1,4);const b=rnd(0,4),d=(a-c)*X+b;s0={x:a,bir:b,balon:0};s1={x:c,bir:d,balon:0}}
-    else if(sev===4){const a=rnd(1,3);X=rnd(2,5);const b=rnd(1,4),d=a*X-b;s0={x:a,bir:0,balon:b};s1={x:0,bir:Math.max(d,0),balon:Math.max(-d,0)}}
-    else{ // çözüm negatif
-      if(Math.random()<.5){X=-rnd(1,4);const b=rnd(-X+1,8),d=X+b;s0={x:1,bir:b,balon:0};s1={x:0,bir:d,balon:0}}
-      else{const a=2;X=-rnd(1,3);const b=rnd(1,4),d=a*X-b;s0={x:a,bir:0,balon:b};s1={x:0,bir:0,balon:-d}}
+  let X,Y=null,s0,s1,g=0;
+  do{g++;Y=null;
+    if(sev===1){X=rnd(1,8);const b=rnd(1,6);s0=kef({x:1,bir:b});s1=kef({bir:X+b})}
+    else if(sev===2){const a=rnd(2,3);X=rnd(1,4);const b=rnd(0,5);s0=kef({x:a,bir:b});s1=kef({bir:a*X+b})}
+    else if(sev===3){const c=rnd(1,2),a=c+rnd(1,2);X=rnd(1,4);const b=rnd(0,4);s0=kef({x:a,bir:b});s1=kef({x:c,bir:(a-c)*X+b})}
+    else if(sev===4){const a=rnd(1,3);X=rnd(2,5);const b=rnd(1,4);s0=kef({x:a,balon:b});s1=kef();sabit(s1,a*X-b)}
+    else if(sev===5){
+      if(Math.random()<.5){X=-rnd(1,4);const b=rnd(-X+1,8);s0=kef({x:1,bir:b});s1=kef({bir:X+b})}
+      else{X=-rnd(1,3);const b=rnd(1,4);s0=kef({x:2,balon:b});s1=kef();sabit(s1,2*X-b)}
+    }else{ // 6: y'li — y'nin değeri verilir
+      X=rnd(1,4);Y=rnd(1,3);const c=rnd(0,1),a=c+rnd(1,2),p=rnd(1,2),q=rnd(0,2),b=rnd(0,3);
+      s0=kef({x:a,y:p,bir:b});s1=kef({x:c,y:q});sabit(s1,(a-c)*X+(p-q)*Y+b);
     }
-  }while(g<50&&(toplamNesne(s0)>14||toplamNesne(s1)>14||s1.bir+s1.balon+s1.x===0&&s0.x===1&&s0.bir+s0.balon===0));
-  // bazen x sağ kefede başlasın
+  }while(g<80&&(toplamNesne(s0)>14||toplamNesne(s1)>14));
   if(sev<=2&&Math.random()<.35)[s0,s1]=[s1,s0];
-  return{X,k:[s0,s1],sev};
+  return{X,Y,k:[s0,s1],sev};
 }
-const toplamNesne=s=>s.x+s.bir+s.balon;
+// Kendin kur → 🎲: seçilen gizli x (ve y) ile dengede rastgele bir denklem
+function rastgeleKur(X,Y){
+  let s0,s1,g=0;const yli=Math.random()<.5;
+  do{g++;const c=rnd(0,1),a=c+rnd(1,2),b=rnd(0,4)*(Math.random()<.25?-1:1),p=yli?rnd(1,2):0,q=yli?rnd(0,1):0;
+    s0=kef({x:a,y:p});sabit(s0,b);s1=kef({x:c,y:q});sabit(s1,(a-c)*X+(p-q)*Y+b);
+  }while(g<80&&(toplamNesne(s0)>14||toplamNesne(s1)>14));
+  return[s0,s1];
+}
 function seviyeListesi(n){
   const L=SEV,z=AYAR.zor;
   const sec=z==='kolay'?L.slice(0,2):z==='orta'?L.slice(1,3):z==='zor'?L.slice(-2):null;
@@ -275,31 +353,42 @@ function seviyeListesi(n){
 }
 
 // --- oyun durumu ---
-let liste=[],tur=0,puan=[0,0],sira=0,sonuclar=[],R=null,ekleTur=null;
+// R.asama: 'kur' (denklem kuruluyor) · 'coz' · 'tahmin' · 'bul'
+let liste=[],tur=0,puan=[0,0],sira=0,sonuclar=[],R=null,ekleTur=null,kurAyar={X:3,Y:2,gizli:true},tahminDeger=1;
 function basla(){
-  ac();const n=+AYAR.tur;liste=seviyeListesi(n).map(uret);tur=0;puan=[0,0];sira=0;sonuclar=[];
-  $('etiket').textContent=document.title;ekran('oyun');yeniTur();
+  ac();const n=+AYAR.tur;liste=AYAR.oyun==='kur'?Array(n).fill(null):seviyeListesi(n).map(uret);
+  tur=0;puan=[0,0];sira=0;sonuclar=[];$('etiket').textContent=document.title;ekran('oyun');yeniTur();
 }
 function ekran(id){document.querySelectorAll('.ekran').forEach(e=>e.classList.toggle('aktif',e.id===id));if(id==='oyun')requestAnimationFrame(yerlesim)}
-function kopya(k){return k.map(s=>({...s}))}
 function yeniTur(){
-  const q=liste[tur];R={q,k:kopya(q.k),gecmis:[],hamle:0,ipucu:0,bitti:false};ekleSec(null);
-  $('sonuc').classList.remove('acik');
-  $('balonBtn').style.display=R.k.some(s=>s.balon)||q.sev>=4?'':'none';
-  ilerlemeCiz();skorCiz();ciz(true);
+  const q=liste[tur];ekleTur=null;
+  if(!q){kurAyar.X=[1,2,3,4,5,6,-1,-2][rnd(0,7)];kurAyar.gizli=true;
+    R={q:null,X:kurAyar.X,Y:kurAyar.Y,k:[kef(),kef()],gecmis:[],hamle:0,ipucu:0,yanlis:0,bitti:false,asama:'kur'}}
+  else{R={q,X:q.X,Y:q.Y,k:kopya(q.k),gecmis:[],hamle:0,ipucu:0,yanlis:0,bitti:false,asama:AYAR.oyun,deneme:null,denenen:[]};
+    if(R.asama==='bul')R.secenek=bulSecenekleri(q.k);
+    if(R.asama==='tahmin'){tahminDeger=1;$('denenen').innerHTML=''}}
+  $('sonuc').classList.remove('acik');ekleSec(null);
+  ilerlemeCiz();skorCiz();ciz(true);if(R.asama==='bul')bulCiz();
 }
-const agirlik=s=>s.x*R.q.X+s.bir-s.balon;
+function xDeger(){return R.asama==='tahmin'&&R.deneme!=null?R.deneme:R.X}
+const agirlik=s=>s.x*xDeger()+s.y*(R.Y||0)+net(s);
 const dengede=()=>agirlik(R.k[0])===agirlik(R.k[1]);
+const yVar=()=>R.k.some(s=>s.y>0);
 
 // --- denklem yazımı ---
 function taraf(s){
   const p=[];if(s.x)p.push(`<i>${s.x>1?s.x:''}x</i>`);
-  const c=s.bir-s.balon;
-  if(c>0)p.push((p.length?'+ ':'')+c);else if(c<0)p.push((p.length?'− ':'−')+(-c));
+  if(s.y)p.push((p.length?'+ ':'')+`<i class="yy">${s.y>1?s.y:''}y</i>`);
+  const c=net(s);if(c>0)p.push((p.length?'+ ':'')+c);else if(c<0)p.push((p.length?'− ':'−')+(-c));
   return p.length?p.join(' '):'0';
 }
+const denklemMetni=k=>`${taraf(k[0])} = ${taraf(k[1])}`;
 let oncekiYazi=['',''];
 function denklemCiz(){
+  const v=$('verilen');
+  const yGoster=R.Y!=null&&(yVar()||(R.q&&R.q.k.some(s=>s.y))||R.asama==='kur');
+  v.classList.toggle('var',yGoster);v.innerHTML=`<i>y</i> = ${say(R.Y)}<small>${R.asama==='kur'?'herkes görür':'verildi'}</small>`;
+  if(R.asama==='bul'&&!R.bitti){$('denklem').innerHTML='<span class="t">?</span><span class="es">=</span><span class="t">?</span>';oncekiYazi=['',''];return}
   const y=[taraf(R.k[0]),taraf(R.k[1])],d=dengede();
   $('denklem').innerHTML=`<span class="t${y[0]!==oncekiYazi[0]?' yeni':''}">${y[0]}</span><span class="es${d?'':' degil'}">${d?'=':'≠'}</span><span class="t${y[1]!==oncekiYazi[1]?' yeni':''}">${y[1]}</span>`;
   oncekiYazi=y;
@@ -316,10 +405,11 @@ function yerlesim(){
   G={cx,py,l,K,S,tb,H,W};
   const kol=$('kol'),kh=Math.max(8,H*.03);Object.assign(kol.style,{left:(cx-l-K*.02)+'px',top:(py-kh/2)+'px',width:(2*l+K*.04)+'px',height:kh+'px'});
   const m=$('mil'),mr=Math.max(14,H*.055);Object.assign(m.style,{left:(cx-mr/2)+'px',top:(py-mr/2)+'px',width:mr+'px',height:mr+'px'});
-  const d=$('direk');Object.assign(d.style,{left:(cx-d.offsetWidth/2)+'px',top:py+'px',height:(Math.min(H*.95,py+S+tb+H*.06)-py)+'px'});
-  const tb2=$('taban');Object.assign(tb2.style,{left:(cx-genis*.11)+'px',width:(genis*.22)+'px',top:Math.min(H*.95,py+S+tb+H*.06)+'px'});
+  const alt=Math.min(H*.95,py+S+tb+H*.06);
+  const d=$('direk');Object.assign(d.style,{left:(cx-d.offsetWidth/2)+'px',top:py+'px',height:(alt-py)+'px'});
+  const tb2=$('taban');Object.assign(tb2.style,{left:(cx-genis*.11)+'px',width:(genis*.22)+'px',top:alt+'px'});
   const ib=$('ibre');Object.assign(ib.style,{left:(cx-ib.offsetWidth/2)+'px',top:py+'px',height:Math.min(H*.2,S*.4)+'px'});
-  const o=$('olcek');Object.assign(o.style,{left:(cx-H*.12)+'px',top:(py+H*.08)+'px',width:(H*.24)+'px',height:(H*.12)+'px',display:'none'});
+  $('olcek').style.display='none';
   [0,1].forEach(i=>{const k=$('kefe'+i);k.style.width=K+'px';k.style.height=(S+tb)+'px';
     const ic=$('icerik'+i);ic.style.bottom=(tb*.55)+'px';ic.style.height=(S*.86)+'px';
     k.querySelector('.tabak').style.height=tb+'px';
@@ -330,7 +420,7 @@ function yerlesim(){
 }
 function egim(anlik){
   if(!G||!R)return;const fark=agirlik(R.k[1])-agirlik(R.k[0]);
-  let th=fark===0?0:Math.sign(fark)*Math.min(13,4+Math.abs(fark)*1.6);
+  const th=fark===0?0:Math.sign(fark)*Math.min(13,4+Math.abs(fark)*1.6);
   const r=th*Math.PI/180,{cx,py,l,K}=G;
   const uc=[[cx-l*Math.cos(r),py-l*Math.sin(r)],[cx+l*Math.cos(r),py+l*Math.sin(r)]];
   const els=[$('kol'),$('ibre'),$('kefe0'),$('kefe1')];
@@ -342,28 +432,55 @@ function egim(anlik){
 window.addEventListener('resize',()=>{if($('oyun').classList.contains('aktif'))yerlesim()});
 
 // --- çizim ---
+function xEtiketi(){
+  if(R.asama==='tahmin')return R.deneme==null?'?':say(R.deneme);
+  if(R.bitti)return say(R.X);
+  return 'x';
+}
 function ciz(ilk,yeniler){
+  const xe=xEtiketi();
   [0,1].forEach(i=>{
     const s=R.k[i],ic=$('icerik'+i),bl=$('balon'+i);ic.innerHTML='';bl.innerHTML='';
-    const ekle=(kap,tur,etiket,j)=>{const b=document.createElement('b');b.className='o '+tur;b.textContent=etiket;b.dataset.tur=tur;b.dataset.k=i;
+    const ekle=(kap,tur,etiket,j)=>{const b=document.createElement('b');b.className='o '+tur+(tur==='x'&&etiket!=='x'?' deger':'');b.textContent=etiket;b.dataset.tur=tur;b.dataset.k=i;
       if(yeniler&&yeniler.k===i&&yeniler.tur===tur&&j>=s[tur]-yeniler.n)b.classList.add('gel');kap.appendChild(b)};
-    for(let j=0;j<s.x;j++)ekle(ic,'x','x',j);
+    for(let j=0;j<s.x;j++)ekle(ic,'x',xe,j);
+    for(let j=0;j<s.y;j++)ekle(ic,'y','y',j);
     for(let j=0;j<s.bir;j++)ekle(ic,'bir','1',j);
     for(let j=0;j<s.balon;j++)ekle(bl,'balon','−1',j);
   });
-  denklemCiz();durumCiz();bolucuCiz();egim(!!ilk);
-  $('geriBtn').disabled=!R.gecmis.length||R.bitti;$('bastanBtn').disabled=!R.gecmis.length||R.bitti;$('ipucuBtn').disabled=R.bitti;
-  $('kupBtn').disabled=R.bitti;$('balonBtn').disabled=R.bitti;
+  denklemCiz();durumCiz();cubukCiz();egim(!!ilk);
 }
-function durumCiz(mesaj){
+function cubukCiz(){
+  document.querySelectorAll('.cubuk').forEach(c=>c.classList.toggle('aktif',c.dataset.asama===R.asama));
+  const b=R.bitti;
+  if(R.asama==='coz'){
+    bolucuCiz();
+    $('geriBtn').disabled=!R.gecmis.length||b;$('bastanBtn').disabled=!R.gecmis.length||b;$('ipucuBtn').disabled=b;
+    document.querySelectorAll('.cubuk[data-asama=coz] [data-ekle]').forEach(x=>x.disabled=b);
+    const balonlu=R.k.some(s=>s.balon)||(R.q&&R.q.k.some(s=>s.balon))||(R.q&&R.q.sev>=4)||R.X<0;
+    document.querySelector('.cubuk[data-asama=coz] .balonEkle').style.display=balonlu?'':'none';
+    $('yerineBtn').style.display=yVar()&&!b?'':'none';
+  }else if(R.asama==='kur'){
+    $('kxDeger').textContent=kurAyar.gizli?'●':say(R.X);$('kyDeger').textContent=say(R.Y);
+    const h=kurHazir();$('kurBaslaBtn').disabled=!h.tamam;$('kurBaslaBtn').classList.toggle('hazir',h.tamam);
+  }else if(R.asama==='tahmin'){
+    $('tDeger').textContent=say(tahminDeger);['tEksi','tArti','deneBtn'].forEach(id=>$(id).disabled=b);
+  }
+}
+function durumCiz(mesaj,sinif){
   const d=$('durum');
-  if(mesaj){d.textContent=mesaj;d.className='durum';return}
+  if(mesaj!=null){d.textContent=mesaj;d.className='durum'+(sinif?' '+sinif:'');return}
+  if(R.bitti){d.textContent='';return}
+  if(R.asama==='kur'){const h=kurHazir();d.textContent=h.mesaj;d.className='durum '+(h.tamam?'iyi':'kotu');return}
+  if(R.asama==='bul'){d.textContent='🔎 Kefeleri say: terazideki denklem hangisi?';d.className='durum';return}
+  if(R.asama==='tahmin'){
+    if(R.deneme==null){d.textContent='🎯 x kutularında hangi sayı var? Bir sayı seç ve teraziye koy.';d.className='durum';return}
+    d.textContent=R.deneme>R.X?`⬇️ x = ${say(R.deneme)} olunca terazi dengede değil. Daha KÜÇÜK bir sayı dene!`:`⬆️ x = ${say(R.deneme)} olunca terazi dengede değil. Daha BÜYÜK bir sayı dene!`;d.className='durum kotu';return}
   if(dengede()){d.textContent='⚖️ Terazi dengede';d.className='durum iyi'}
   else{const agir=agirlik(R.k[0])>agirlik(R.k[1])?'Sol':'Sağ';d.textContent=`⚠️ ${agir} kefe ağır basıyor! Diğer kefeye de aynısını yap.`;d.className='durum kotu'}
 }
 function bolenler(){
-  if(!dengede())return[];const v=[...R.k[0].x?[R.k[0].x]:[],...R.k[0].bir?[R.k[0].bir]:[],...R.k[0].balon?[R.k[0].balon]:[],
-    ...R.k[1].x?[R.k[1].x]:[],...R.k[1].bir?[R.k[1].bir]:[],...R.k[1].balon?[R.k[1].balon]:[]];
+  if(!dengede())return[];const v=R.k.flatMap(s=>[s.x,s.y,s.bir,s.balon]).filter(n=>n>0);
   if(!v.length)return[];const out=[];for(let k=2;k<=9;k++)if(v.every(n=>n%k===0))out.push(k);return out;
 }
 function bolucuCiz(){
@@ -375,38 +492,49 @@ function bolucuCiz(){
 function kaydet(){R.gecmis.push(kopya(R.k));R.hamle++}
 function sonra(oncekiDenge){
   const d=dengede();
+  if(R.asama==='kur'){if(d&&!oncekiDenge)ses.denge();else if(!d&&oncekiDenge)ses.egik();return}
   if(d&&!oncekiDenge)ses.denge();else if(!d&&oncekiDenge)ses.egik();
-  if(d&&cozuldu())basari();
+  if(R.asama==='coz'&&d&&cozuldu())basari();
 }
 function cikar(i,tur,el){
-  if(R.bitti)return;const od=dengede();kaydet();R.k[i][tur]--;ses.al();
+  if(R.bitti||!(R.asama==='coz'||R.asama==='kur'))return;const od=dengede();kaydet();R.k[i][tur]--;ses.al();
   if(el){const kl=el.cloneNode(true);const r=el.getBoundingClientRect();Object.assign(kl.style,{position:'fixed',left:r.left+'px',top:r.top+'px',margin:0,zIndex:30});kl.classList.add('git');document.body.appendChild(kl);setTimeout(()=>kl.remove(),350)}
   ciz();sonra(od);
 }
 function koy(i,tur){
-  if(R.bitti)return;const od=dengede();kaydet();const s=R.k[i];
-  const karsit=tur==='bir'?'balon':'bir';
-  if(s[karsit]>0){s[karsit]--;ses.sifir();ciz();poof(i)}
+  if(R.bitti)return;const s=R.k[i];
+  if(R.asama==='kur'&&toplamNesne(s)>=16){durumCiz('Bu kefe doldu (en çok 16 nesne).','kotu');return}
+  const od=dengede();kaydet();
+  const karsit=tur==='bir'?'balon':tur==='balon'?'bir':null;
+  if(karsit&&s[karsit]>0){s[karsit]--;ses.sifir();ciz();poof(i)}
   else{s[tur]++;ses.koy();ciz(false,{k:i,tur,n:1})}
   sonra(od);
 }
 function poof(i){const k=$('kefe'+i),r=k.getBoundingClientRect(),p=document.createElement('div');p.className='poof';p.textContent='1 + (−1) = 0';
   p.style.left=(r.left+r.width/2-60)+'px';p.style.top=(r.top+r.height*.4)+'px';p.style.position='fixed';document.body.appendChild(p);setTimeout(()=>p.remove(),950)}
 function bol(k){
-  if(R.bitti||!dengede())return;kaydet();R.k.forEach(s=>{s.x/=k;s.bir/=k;s.balon/=k});ses.bol();ciz();durumCiz(`➗ İki kefe de ${k}'ye bölündü — terazi yine dengede.`);
+  if(R.bitti||!dengede())return;kaydet();R.k.forEach(s=>{s.x/=k;s.y/=k;s.bir/=k;s.balon/=k});ses.bol();ciz();durumCiz(`➗ İki kefe de ${k}'ye bölündü — terazi yine dengede.`,'iyi');
   setTimeout(()=>{if(!R.bitti)durumCiz()},1800);if(cozuldu())basari();
+}
+// Her y'nin yerine verilen değeri koy (iki kefede birden → denge bozulmaz)
+function yerineKoy(){
+  if(R.bitti||!yVar()||R.Y==null)return;const od=dengede();kaydet();
+  R.k.forEach(s=>{const n=net(s)+s.y*R.Y;s.y=0;sabit(s,n)});ses.bol();ciz();
+  durumCiz(`🔁 Her y yerine ${say(R.Y)} kondu (y = ${say(R.Y)}).`,'iyi');setTimeout(()=>{if(!R.bitti)durumCiz()},1800);sonra(od);
 }
 function geriAl(){if(!R.gecmis.length||R.bitti)return;const od=dengede();R.k=R.gecmis.pop();ses.al();ciz();sonra(od)}
 function bastan(){if(R.bitti||!R.gecmis.length)return;R.k=kopya(R.q.k);R.gecmis=[];ses.al();ciz()}
 function cozuldu(){
-  const [a,b]=R.k;const yalniz=s=>s.x===1&&s.bir===0&&s.balon===0;
-  return dengede()&&((yalniz(a)&&b.x===0)||(yalniz(b)&&a.x===0));
+  const [a,b]=R.k;const yalniz=s=>s.x===1&&s.y===0&&s.bir===0&&s.balon===0;const xsiz=s=>s.x===0&&s.y===0;
+  return dengede()&&((yalniz(a)&&xsiz(b))||(yalniz(b)&&xsiz(a)));
 }
 function ipucu(){
   if(R.bitti)return;R.ipucu++;ses.koy();
   const [a,b]=R.k;let m;
   if(!dengede())m='Terazi dengede değil: son yaptığını öbür kefeye de yap (ya da ↶ Geri al).';
-  else if(a.x&&b.x){const n=Math.min(a.x,b.x);m=`İki kefede de x var. Her iki kefeden ${n} tane x çıkar.`}
+  else if(a.y&&b.y)m=`İki kefede de y var. Her iki kefeden ${Math.min(a.y,b.y)} tane y çıkar.`;
+  else if(a.y||b.y)m=`y = ${say(R.Y)} verildi. "y → değeri" düğmesine bas: her y'nin yerine ${say(R.Y)} gelsin.`;
+  else if(a.x&&b.x)m=`İki kefede de x var. Her iki kefeden ${Math.min(a.x,b.x)} tane x çıkar.`;
   else{
     const xi=a.x?0:1,xs=R.k[xi],ot=R.k[1-xi];
     if(xs.bir){m=ot.bir>=xs.bir?`x'in yanındaki ${xs.bir} küpü at: her iki kefeden ${xs.bir} küp çıkar.`:`Öbür kefede yeterli küp yok. Her iki kefeye ${xs.bir} balon ekle (küp + balon = 0).`}
@@ -417,38 +545,114 @@ function ipucu(){
   durumCiz('💡 '+m);
 }
 
-// --- ekleme modu: önce küp/balon seç, sonra kefeye dokun ---
-function ekleSec(t){ekleTur=ekleTur===t?null:t;$('kupBtn').classList.toggle('secili',ekleTur==='bir');$('balonBtn').classList.toggle('secili',ekleTur==='balon');$('terazi').classList.toggle('ekleniyor',!!ekleTur);
-  if(ekleTur)durumCiz(`👆 Şimdi ${ekleTur==='bir'?'küpü':'balonu'} koymak istediğin kefeye dokun.`);else if(R&&!R.bitti)durumCiz()}
+// --- ekleme: önce nesneyi seç, sonra kefeye dokun ---
+function ekleSec(t){ekleTur=t&&ekleTur===t?null:t;
+  document.querySelectorAll('[data-ekle]').forEach(b=>b.classList.toggle('secili',b.dataset.ekle===ekleTur));$('terazi').classList.toggle('ekleniyor',!!ekleTur);
+  if(!R)return;const ad={x:'x kutusunu',y:'y kutusunu',bir:'küpü',balon:'balonu'}[ekleTur];
+  if(ekleTur)durumCiz(`👆 Şimdi ${ad} koymak istediğin kefeye dokun.`);else if(!R.bitti)durumCiz()}
+document.querySelectorAll('[data-ekle]').forEach(b=>b.onclick=()=>ekleSec(b.dataset.ekle));
 $('terazi').addEventListener('click',e=>{
   if(!R||R.bitti)return;const kefe=e.target.closest('.kefe');
-  if(ekleTur){if(kefe){koy(+kefe.dataset.k,ekleTur)}return}
+  if(ekleTur){if(kefe)koy(+kefe.dataset.k,ekleTur);return}
   const o=e.target.closest('.o');if(o&&o.dataset.tur)cikar(+o.dataset.k,o.dataset.tur,o);
 });
 
+// --- Kendin kur ---
+function kurHazir(){
+  const [a,b]=R.k,gx=kurAyar.gizli?'gizli x':`x = ${say(R.X)}`;
+  if(!a.x&&!b.x)return{tamam:false,mesaj:'✏️ Kefelere en az bir x koy (alttan x\'i seç, kefeye dokun) ya da 🎲 Rastgele.'};
+  if(!dengede())return{tamam:false,mesaj:`⚖️ Terazi ${gx} iken dengede değil: küp/balon ekle ya da çıkar.`};
+  if(cozuldu())return{tamam:false,mesaj:'Bu zaten çözülmüş hâlde — biraz zorlaştır!'};
+  return{tamam:true,mesaj:'✅ Denklem hazır! ▶ Çözmeye başla.'};
+}
+function kurDegis(alan,d){
+  if(R.asama!=='kur')return;const sinir=alan==='X'?[-9,12]:[-5,9];let v=kurAyar[alan]+d;if(v===0)v+=d;
+  if(v<sinir[0]||v>sinir[1])return;const od=dengede();kurAyar[alan]=v;R[alan]=v;ses.koy();ciz();if(dengede()!==od)(dengede()?ses.denge:ses.egik)();
+}
+function kurBasla(){
+  if(R.asama!=='kur'||!kurHazir().tamam)return;
+  const yli=R.k.some(s=>s.y);R.q={X:R.X,Y:yli?R.Y:null,k:kopya(R.k),sev:0};R.Y=R.q.Y;R.asama='coz';R.gecmis=[];R.hamle=0;ekleSec(null);
+  if(AYAR.mod==='takim')skorCiz();ses.dogru();ciz();
+  durumCiz(`🔒 Denklem kuruldu! ${AYAR.mod==='takim'?TAKIM[sira].ad+' Takımı':'Şimdi'} gizli x'i bulsun.`,'iyi');setTimeout(()=>{if(!R.bitti)durumCiz()},2200);
+}
+$('kxEksi').onclick=()=>kurDegis('X',-1);$('kxArti').onclick=()=>kurDegis('X',1);
+$('kyEksi').onclick=()=>kurDegis('Y',-1);$('kyArti').onclick=()=>kurDegis('Y',1);
+$('gozBtn').onclick=()=>{kurAyar.gizli=!kurAyar.gizli;$('gozBtn').textContent=kurAyar.gizli?'👁':'🙈';ciz()};
+$('zarBtn').onclick=()=>{if(R.asama!=='kur')return;kaydet();R.k=rastgeleKur(R.X,R.Y);ses.bol();ciz()};
+$('temizleBtn').onclick=()=>{if(R.asama!=='kur')return;kaydet();R.k=[kef(),kef()];ses.al();ciz()};
+$('kurBaslaBtn').onclick=kurBasla;
+
+// --- Tahmin et ---
+function tahminDegis(d){if(R.asama!=='tahmin'||R.bitti)return;tahminDeger=Math.max(-12,Math.min(15,tahminDeger+d));ses.koy();cubukCiz()}
+function dene(){
+  if(R.asama!=='tahmin'||R.bitti)return;R.deneme=tahminDeger;ciz();
+  if(dengede()){basari();return}
+  R.yanlis++;ses.egik();R.denenen.push(tahminDeger);
+  $('denenen').innerHTML=R.denenen.map(v=>`<i>${say(v)} ${v>R.X?'↓':'↑'}</i>`).join('');
+  if(AYAR.mod==='takim'){sira=1-sira;skorCiz();setTimeout(()=>{if(!R.bitti)durumCiz(`Sıra ${TAKIM[sira].ad} Takımı'nda!`,'kotu')},1600)}
+}
+$('tEksi').onclick=()=>tahminDegis(-1);$('tArti').onclick=()=>tahminDegis(1);$('deneBtn').onclick=dene;
+
+// --- Denklemi bul ---
+function bulSecenekleri(k){
+  const dogru=denklemMetni(k),ayna=`${taraf(k[1])} = ${taraf(k[0])}`;
+  const gor=new Set([dogru,ayna]),out=[dogru];
+  const degis=[
+    kk=>{const s=kk[rnd(0,1)];sabit(s,net(s)+(Math.random()<.5?1:-1))},
+    kk=>{const s=kk[rnd(0,1)];sabit(s,net(s)+(Math.random()<.5?2:-2))},
+    kk=>{const s=kk[rnd(0,1)];if(s.x>1&&Math.random()<.5)s.x--;else s.x++},
+    kk=>{const s=kk[rnd(0,1)];const n=net(s);sabit(s,n?-n:rnd(1,3))},
+    kk=>{const a=net(kk[0]);sabit(kk[0],net(kk[1]));sabit(kk[1],a)},
+    kk=>{const t=kk[0].x;kk[0].x=kk[1].x;kk[1].x=t},
+    kk=>{const s=kk[rnd(0,1)];if(s.y)s.y+=Math.random()<.5&&s.y>1?-1:1;else{const n=net(s);sabit(s,n+1)}}
+  ];
+  let g=0;while(out.length<4&&g<300){g++;const kk=kopya(k);degis[rnd(0,degis.length-1)](kk);if(!kk[0].x&&!kk[1].x)continue;
+    const m=denklemMetni(kk),am=`${taraf(kk[1])} = ${taraf(kk[0])}`;if(gor.has(m))continue;gor.add(m);gor.add(am);out.push(m)}
+  return{dogru,liste:karistir(out)};
+}
+function bulCiz(){
+  const el=$('seceneklerBul');el.innerHTML='';
+  R.secenek.liste.forEach(m=>{const b=document.createElement('button');b.innerHTML=m;b.onclick=()=>bulSec(b,m);el.appendChild(b)});
+}
+function bulSec(b,m){
+  if(R.bitti||b.classList.contains('yanlis'))return;
+  if(m===R.secenek.dogru){b.classList.add('dogru');basari();return}
+  b.classList.add('yanlis');R.yanlis++;ses.yanlis();durumCiz('❌ Olmadı! Kefelerdeki x\'leri, küpleri ve balonları tekrar say.','kotu');
+  if(AYAR.mod==='takim'){sira=1-sira;skorCiz();setTimeout(()=>{if(!R.bitti)durumCiz(`Sıra ${TAKIM[sira].ad} Takımı'nda!`,'kotu')},1400)}
+}
+
 // --- tur sonu ---
-function turPuani(){return Math.max(4,10-3*R.ipucu)}
+function turPuani(){
+  if(R.asama==='tahmin')return Math.max(2,10-2*R.yanlis);
+  if(R.asama==='bul')return Math.max(4,10-3*R.yanlis);
+  return Math.max(4,10-3*R.ipucu);
+}
 function basari(){
-  R.bitti=true;ekleSec(null);const p=turPuani();puan[AYAR.mod==='takim'?sira:0]+=p;sonuclar[tur]=R.ipucu?'y':'d';
+  R.bitti=true;ekleSec(null);const p=turPuani();puan[AYAR.mod==='takim'?sira:0]+=p;sonuclar[tur]=(R.ipucu||R.yanlis)?'y':'d';
   ses.dogru();konfeti();ciz();
-  const xEl=document.querySelector('.kefe .o.x');if(xEl){xEl.classList.add('x-acil');setTimeout(()=>{xEl.textContent=say(R.q.X);xEl.style.fontStyle='normal'},400)}
+  document.querySelectorAll('.kefe .o.x').forEach(x=>x.classList.add('x-acil'));
   durumCiz('');
   const q=R.q,ilk=q.k;
-  const yerine=s=>{const p=[];if(s.x)p.push(s.x>1?`${s.x}·${q.X<0?`(${say(q.X)})`:q.X}`:say(q.X));const c=s.bir-s.balon;if(c>0)p.push((p.length?'+ ':'')+c);else if(c<0)p.push((p.length?'− ':'−')+(-c));return p.length?p.join(' '):'0'};
+  const yerine=s=>{const p=[];if(s.x)p.push(s.x>1?`${s.x}·${q.X<0?`(${say(q.X)})`:q.X}`:say(q.X));
+    if(s.y)p.push((p.length?'+ ':'')+(s.y>1?`${s.y}·${q.Y<0?`(${say(q.Y)})`:q.Y}`:say(q.Y)));
+    const c=net(s);if(c>0)p.push((p.length?'+ ':'')+c);else if(c<0)p.push((p.length?'− ':'−')+(-c));return p.length?p.join(' '):'0'};
+  const deger=s=>s.x*q.X+s.y*(q.Y||0)+net(s);
   $('sonucBas').textContent=['Harika!','Süper!','Mükemmel!','Bravo!'][Math.floor(Math.random()*4)]+` +${p}`;
-  $('sonucCozum').innerHTML=`<i>x</i> = ${say(q.X)}`;
-  $('sonucSaglama').textContent=`Sağlama: ${yerine(ilk[0])} = ${yerine(ilk[1])} → ${say(agirlikIlk(ilk[0]))} = ${say(agirlikIlk(ilk[1]))} ✓  ·  ${R.hamle} hamle`;
+  $('sonucCozum').innerHTML=R.asama==='bul'?`${R.secenek.dogru} &nbsp;→&nbsp; <i>x</i> = ${say(q.X)}`:`<i>x</i> = ${say(q.X)}`;
+  const ek=R.asama==='coz'?`${R.hamle} hamle`:R.asama==='tahmin'?`${R.yanlis+1}. denemede`:`${R.yanlis+1}. seçimde`;
+  $('sonucSaglama').textContent=`Sağlama: ${yerine(ilk[0])} = ${yerine(ilk[1])} → ${say(deger(ilk[0]))} = ${say(deger(ilk[1]))} ✓  ·  ${ek}`;
   $('sonrakiBtn').textContent=tur+1<liste.length?'Sonraki ▶':'Sonuçlar 🏆';
   ilerlemeCiz();skorCiz();setTimeout(()=>$('sonuc').classList.add('acik'),900);
 }
-const agirlikIlk=s=>s.x*R.q.X+s.bir-s.balon;
 function sonraki(){tur++;if(AYAR.mod==='takim')sira=1-sira;if(tur>=liste.length){bitis();return}yeniTur()}
 function ilerlemeCiz(){const el=$('ilerleme');el.innerHTML='';liste.forEach((q,i)=>{const d=document.createElement('i');d.className=sonuclar[i]||(i===tur?'s':'');el.appendChild(d)})}
 function skorCiz(){
   const el=$('skorlar');el.innerHTML='';const s=$('sira');
   if(AYAR.mod==='takim'){
     TAKIM.forEach((t,i)=>{const d=document.createElement('div');d.className='skor '+t.sinif+(i===sira&&R&&!R.bitti?' sirada':'');d.innerHTML=`<small>${t.ad}</small>${puan[i]}`;el.appendChild(d)});
-    s.textContent=`Sıra: ${TAKIM[sira].ad}`;s.style.background=TAKIM[sira].renk;s.classList.add('var');
+    if(R&&R.asama==='kur'){const kuran=TAKIM[1-sira];s.textContent=`✏️ ${kuran.ad} kuruyor → ${TAKIM[sira].ad} çözecek`;s.style.background=kuran.renk}
+    else{s.textContent=`Sıra: ${TAKIM[sira].ad}`;s.style.background=TAKIM[sira].renk}
+    s.classList.add('var');
   }else{const d=document.createElement('div');d.className='skor g';d.innerHTML=`<small>PUAN</small>${puan[0]}`;el.appendChild(d);s.classList.remove('var')}
 }
 function bitis(){
@@ -460,7 +664,7 @@ function bitis(){
     const oran=puan[0]/(liste.length*10),yil=oran>=.9?3:oran>=.7?2:oran>=.4?1:0;
     bas.textContent=['Biraz daha pratik!','Güzel!','Çok iyi!','Denklem ustası!'][yil];y.innerHTML='⭐'.repeat(yil)+'<b>☆</b>'.repeat(3-yil);
     const d=document.createElement('div');d.innerHTML=`${puan[0]}<small>/ ${liste.length*10} puan</small>`;sk.appendChild(d);
-    const d2=document.createElement('div');d2.innerHTML=`${sonuclar.filter(x=>x==='d').length}<small>ipucusuz çözüm</small>`;sk.appendChild(d2);
+    const d2=document.createElement('div');d2.innerHTML=`${sonuclar.filter(x=>x==='d').length}<small>yardımsız çözüm</small>`;sk.appendChild(d2);
   }
 }
 function konfeti(n){const k=$('konfeti');const r=['#E2574C','#0D9488','#0284C7','#D99A1E','#FDE68A'];
@@ -469,8 +673,7 @@ function konfeti(n){const k=$('konfeti');const r=['#E2574C','#0D9488','#0284C7',
 
 // --- düğmeler ---
 $('basla').onclick=basla;$('sonrakiBtn').onclick=sonraki;
-$('kupBtn').onclick=()=>ekleSec('bir');$('balonBtn').onclick=()=>ekleSec('balon');
-$('geriBtn').onclick=geriAl;$('bastanBtn').onclick=bastan;$('ipucuBtn').onclick=ipucu;
+$('geriBtn').onclick=geriAl;$('bastanBtn').onclick=bastan;$('ipucuBtn').onclick=ipucu;$('yerineBtn').onclick=yerineKoy;
 $('tekrarBtn').onclick=basla;$('ayarBtn').onclick=()=>ekran('giris');
 $('cikBtn').onclick=()=>$('onay').classList.add('acik');
 $('hayirBtn').onclick=()=>$('onay').classList.remove('acik');
@@ -479,9 +682,11 @@ function sesCiz(){$('sesBtn').textContent=sessiz?'🔇':'🔊'}sesCiz();
 $('sesBtn').onclick=()=>{sessiz=!sessiz;yaz('mamoste-terazi-sessiz',sessiz);sesCiz()};
 if(!(document.documentElement.requestFullscreen||document.documentElement.webkitRequestFullscreen))$('tamBtn').style.display='none';
 $('tamBtn').onclick=()=>{const d=document.documentElement;if(document.fullscreenElement||document.webkitFullscreenElement){(document.exitFullscreen||document.webkitExitFullscreen).call(document)}else{(d.requestFullscreen||d.webkitRequestFullscreen).call(d)}};
-document.addEventListener('keydown',e=>{if(!$('oyun').classList.contains('aktif'))return;
+document.addEventListener('keydown',e=>{if(!$('oyun').classList.contains('aktif')||!R)return;
   if((e.ctrlKey||e.metaKey)&&e.key==='z'){e.preventDefault();geriAl()}
-  else if(e.key==='Enter'&&R&&R.bitti){e.preventDefault();sonraki()}
+  else if(e.key==='Enter'){e.preventDefault();if(R.bitti)sonraki();else if(R.asama==='tahmin')dene();else if(R.asama==='kur')kurBasla()}
+  else if(R.asama==='tahmin'&&(e.key==='ArrowUp'||e.key==='ArrowRight'))tahminDegis(1)
+  else if(R.asama==='tahmin'&&(e.key==='ArrowDown'||e.key==='ArrowLeft'))tahminDegis(-1)
   else if(e.key==='Escape')ekleSec(null)});
 </script>
 </body></html>

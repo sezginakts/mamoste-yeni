@@ -35,11 +35,11 @@ export const ACTIVITY_TYPES = {
     engine: () => require('./carkEngine.js').default,
   },
   // Kaynağı tools/etkinlik/terazi.html; değişince `node tools/etkinlik/derle.js`.
-  // Havuz soru listesi değil: { seviyeler: [1-5] } — denklemler oyunda rastgele üretilir.
+  // Havuz soru listesi değil: { seviyeler: [1-6] } — denklemler oyunda rastgele üretilir (6: y'li).
   terazi: {
     icon: '⚖️',
     name: 'Denklem Terazisi',
-    desc: 'Kefelerde x kutuları, küpler ve balonlar. İki kefeye aynı şeyi yaparak teraziyi dengede tut, x\'i yalnız bırak. Denklemler her oyunda yeniden üretilir.',
+    desc: 'Kefelerde x, y, küp ve balon. Dört oyun: Çöz, Kendin kur (gizli x\'i öğretmen/takım seçer), Tahmin et, Denklemi bul. Denklemler her oyunda yeniden üretilir.',
     branches: ['matematik'],
     engine: () => require('./teraziEngine.js').default,
   },
