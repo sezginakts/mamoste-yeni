@@ -1,6 +1,7 @@
 // Etkinliği tam ekran oynat: oyunun HTML'i WebView'da, internetsiz. Sol üstteki ✕ ile çıkılır.
+// Web sürümünde (akıllı tahta tarayıcısı) react-native-webview çalışmaz; aynı HTML iframe içinde açılır.
 import React, { useMemo } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { activityById } from '../../data/activities';
@@ -14,18 +15,27 @@ export default function ActivityPlayScreen({ route, navigation }) {
   if (!act) return null;
   return (
     <View style={{ flex: 1, backgroundColor: '#0B1220', paddingTop: insets.top, paddingBottom: insets.bottom }}>
-      <WebView
-        originWhitelist={['*']}
-        // Kalıcı bir adres: oyunun hafızası (gösterilen sorular, geçmiş) localStorage'da saklanabilsin.
-        source={{ html, baseUrl: `https://mamoste.app/etkinlik/${act.id}/` }}
-        domStorageEnabled
-        javaScriptEnabled
-        allowsInlineMediaPlayback
-        mediaPlaybackRequiresUserAction={false}
-        setSupportMultipleWindows={false}
-        bounces={false}
-        style={{ flex: 1, backgroundColor: '#0B1220' }}
-      />
+      {Platform.OS === 'web' ? (
+        <iframe
+          title={act.id}
+          srcDoc={html}
+          allow="autoplay; fullscreen"
+          style={{ flex: 1, width: '100%', height: '100%', border: 0, backgroundColor: '#0B1220' }}
+        />
+      ) : (
+        <WebView
+          originWhitelist={['*']}
+          // Kalıcı bir adres: oyunun hafızası (gösterilen sorular, geçmiş) localStorage'da saklanabilsin.
+          source={{ html, baseUrl: `https://mamoste.app/etkinlik/${act.id}/` }}
+          domStorageEnabled
+          javaScriptEnabled
+          allowsInlineMediaPlayback
+          mediaPlaybackRequiresUserAction={false}
+          setSupportMultipleWindows={false}
+          bounces={false}
+          style={{ flex: 1, backgroundColor: '#0B1220' }}
+        />
+      )}
       <Pressable onPress={() => navigation.goBack()} hitSlop={10} style={[st.close, { top: insets.top + 8, left: insets.left + 8 }]} accessibilityLabel="Etkinlikten çık">
         <Text style={{ color: '#fff', fontSize: 18, fontWeight: '900' }}>✕</Text>
       </Pressable>
