@@ -13,3 +13,8 @@ voice_test.mp3
 
 __pycache__/
 *.old.py
+
+# Derlenmiş uygulama dosyaları (EAS çıktısı; depoya girmez, GitHub 100 MB sınırını aşar)
+*.apk
+*.aab
+*.ipa
