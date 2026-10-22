@@ -16,6 +16,8 @@ export function buildHtml(act) {
   return type
     .engine()
     .replace('/*__HAVUZ__*/', () => `const HAVUZ=${pool};`)
+    // Gömülü doğal sesler (varsa): { metin: mp3 base64 } — tools/etkinlik/sesler.mjs üretir.
+    .replace('/*__SESLER__*/', () => `const SESLER=${act.sesler ? JSON.stringify(act.sesler()) : '{}'};`)
     .replace('__BASLIK__', () => esc(`${type.name} · ${act.grade}. Sınıf`))
     .replace('__ALT__', () => esc(activityTitle(act)))
     .replace('__IMZA__', () => (act.imza ? `<div class="imza">${act.imza}</div>` : ''))

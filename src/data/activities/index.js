@@ -6,6 +6,8 @@
 //      Her satır: kural ("b" = cevap o harfle başlar, "i" = içinde o harf geçer), ipucu, doğru, yanlış, seviye (1 kolay · 2 orta · 3 zor).
 //      Harf başına birkaç soru olursa her oyunda farklıları gelir; gösterilenler cihazda hatırlanır.
 //   2. Aşağıda o branşın listesine bir satır ekle: { type: 'pasaparola', grade, unit, unitName, pool: () => require('./…').default }.
+// İngilizce oyunlarda okunan cümleler gömülü doğal sesle çalar: `sesler` → ingilizce/ses/<havuz>.js
+//   (havuz değişince `node tools/etkinlik/sesler.mjs` çalıştır).
 // Branş kimlikleri: data/branches.js (ingilizce, teknoloji-tasarim, turkce, matematik, fen, sosyal, inkilap, din, gorsel, muzik, beden, bilisim).
 
 // Etkinlik türleri. Yeni bir oyun türü eklenirse motoru (HTML) buraya bağlanır.
@@ -90,14 +92,14 @@ const LIST = {
   ],
   // Diğer branşların içeriği eklenecek (yukarıdaki açıklamaya bak).
   ingilizce: [
-    { type: 'cumle', grade: 5, unit: 1, unitName: 'School Life', pool: () => require('./ingilizce/cumle5_u1.js').default },
-    { type: 'cumle', grade: 6, unit: 1, unitName: 'School Life', pool: () => require('./ingilizce/cumle6_u1.js').default },
-    { type: 'cumle', grade: 7, unit: 1, unitName: 'Appearance and Personality', pool: () => require('./ingilizce/cumle7_u1.js').default },
-    { type: 'cumle', grade: 8, unit: 1, unitName: 'Friendship', pool: () => require('./ingilizce/cumle8_u1.js').default },
-    { type: 'cark', grade: 5, unit: 1, unitName: 'School Life', pool: () => require('./ingilizce/cark5_u1.js').default },
-    { type: 'cark', grade: 6, unit: 1, unitName: 'School Life', pool: () => require('./ingilizce/cark6_u1.js').default },
-    { type: 'cark', grade: 7, unit: 1, unitName: 'Appearance and Personality', pool: () => require('./ingilizce/cark7_u1.js').default },
-    { type: 'cark', grade: 8, unit: 1, unitName: 'Friendship', pool: () => require('./ingilizce/cark8_u1.js').default },
+    { type: 'cumle', grade: 5, unit: 1, unitName: 'School Life', pool: () => require('./ingilizce/cumle5_u1.js').default, sesler: () => require('./ingilizce/ses/cumle5_u1.js').default },
+    { type: 'cumle', grade: 6, unit: 1, unitName: 'School Life', pool: () => require('./ingilizce/cumle6_u1.js').default, sesler: () => require('./ingilizce/ses/cumle6_u1.js').default },
+    { type: 'cumle', grade: 7, unit: 1, unitName: 'Appearance and Personality', pool: () => require('./ingilizce/cumle7_u1.js').default, sesler: () => require('./ingilizce/ses/cumle7_u1.js').default },
+    { type: 'cumle', grade: 8, unit: 1, unitName: 'Friendship', pool: () => require('./ingilizce/cumle8_u1.js').default, sesler: () => require('./ingilizce/ses/cumle8_u1.js').default },
+    { type: 'cark', grade: 5, unit: 1, unitName: 'School Life', pool: () => require('./ingilizce/cark5_u1.js').default, sesler: () => require('./ingilizce/ses/cark5_u1.js').default },
+    { type: 'cark', grade: 6, unit: 1, unitName: 'School Life', pool: () => require('./ingilizce/cark6_u1.js').default, sesler: () => require('./ingilizce/ses/cark6_u1.js').default },
+    { type: 'cark', grade: 7, unit: 1, unitName: 'Appearance and Personality', pool: () => require('./ingilizce/cark7_u1.js').default, sesler: () => require('./ingilizce/ses/cark7_u1.js').default },
+    { type: 'cark', grade: 8, unit: 1, unitName: 'Friendship', pool: () => require('./ingilizce/cark8_u1.js').default, sesler: () => require('./ingilizce/ses/cark8_u1.js').default },
   ],
   'teknoloji-tasarim': [],
   turkce: [

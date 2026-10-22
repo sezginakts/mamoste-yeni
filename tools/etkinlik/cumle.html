@@ -204,6 +204,7 @@ h1{margin:0;font-size:calc(var(--f)*2.1);font-weight:900;line-height:1;backgroun
 
 <script>
 /*__HAVUZ__*/
+/*__SESLER__*/
 // Havuz: [cümle, resim (emoji), Türkçe anlamı, seviye 1-3, (isteğe bağlı) fazladan kelime]
 const ORNEK=[["Hello, my name is Elif.","👋","Merhaba, benim adım Elif.",1],["I am in the chess club.","♟️","Satranç kulübündeyim.",1,"on"],["Where is the science lab?","🔬","Fen laboratuvarı nerede?",2],["Please be quiet in the library.","🤫","Lütfen kütüphanede sessiz ol.",2,"loud"],["Raise your hand before you speak.","✋","Konuşmadan önce elini kaldır.",3,"after"]];
 const SORULAR=(typeof HAVUZ!=='undefined'&&HAVUZ&&HAVUZ.length)?HAVUZ:ORNEK;
@@ -242,9 +243,17 @@ function sesSec(){try{const vs=(speechSynthesis.getVoices()||[]).filter(v=>/^en[
     if(/\b(david|zira|mark|hazel|george|susan)\b|compact|eloquence|espeak/.test(n))p-=40;if(v.localService===false)p+=10;return p};
   return vs.slice().sort((a,b)=>puan(b)-puan(a))[0]}catch(e){return null}}
 if(window.speechSynthesis){SES=sesSec();try{speechSynthesis.addEventListener('voiceschanged',()=>{SES=sesSec()})}catch(e){}}
-function konus(t){try{const s=window.speechSynthesis;if(!s||sessiz)return;s.cancel();if(!SES)SES=sesSec();const u=new SpeechSynthesisUtterance(t);
-  u.lang=SES?SES.lang:'en-US';u.rate=.95;u.pitch=1;if(SES)u.voice=SES;s.speak(u)}catch(e){}}
-if(!window.speechSynthesis)$('dinleBtn').style.display='none';
+// Önce gömülü doğal ses (SESLER: tools/etkinlik/sesler.mjs, en-US-AriaNeural MP3). Yoksa cihazın İngilizce sesi;
+// cihazda İngilizce ses yoksa okunmaz (Türkçe sesle İngilizce okuyup yanlış telaffuz öğretmesin).
+let CALAN=null;
+const gomuluSes=t=>{try{return typeof SESLER!=='undefined'&&SESLER?SESLER[String(t).trim()]:null}catch(e){return null}};
+const sesVar=()=>{try{return(typeof SESLER!=='undefined'&&SESLER&&Object.keys(SESLER).length>0)||!!window.speechSynthesis}catch(e){return false}};
+function sus(){try{if(CALAN){CALAN.pause();CALAN=null}if(window.speechSynthesis)speechSynthesis.cancel()}catch(e){}}
+function konus(t){try{if(sessiz)return;sus();const b=gomuluSes(t);
+  if(b){CALAN=new Audio('data:audio/mpeg;base64,'+b);CALAN.play().catch(()=>{});return}
+  const s=window.speechSynthesis;if(!s)return;if(!SES)SES=sesSec();if(!SES)return;const u=new SpeechSynthesisUtterance(t);
+  u.lang=SES.lang;u.rate=.95;u.pitch=1;u.voice=SES;s.speak(u)}catch(e){}}
+if(!sesVar())$('dinleBtn').style.display='none';
 
 // --- ayarlar ---
 const AYAR=Object.assign({mod:'tek',tur:'10',sure:'0',tr:'1'},oku('mamoste-cumle-ayar',{}));
@@ -364,7 +373,7 @@ function sonucAc(kotu,bas){
   ilerlemeCiz();setTimeout(()=>$('sonuc').classList.add('acik'),kotu?150:600);
 }
 function sonraki(){
-  if(window.speechSynthesis)try{speechSynthesis.cancel()}catch(e){}
+  sus()
   tur++;if(AYAR.mod==='takim')sira=1-sira;
   if(tur>=liste.length){bitis();return}
   yeniTur();
@@ -449,7 +458,7 @@ $('cikBtn').onclick=()=>$('onay').classList.add('acik');
 $('hayirBtn').onclick=()=>$('onay').classList.remove('acik');
 $('evetBtn').onclick=()=>{$('onay').classList.remove('acik');zamanDur();ekran('giris')};
 function sesCiz(){$('sesBtn').textContent=sessiz?'🔇':'🔊'}sesCiz();
-$('sesBtn').onclick=()=>{sessiz=!sessiz;yaz('mamoste-cumle-sessiz',sessiz);sesCiz();if(sessiz&&window.speechSynthesis)try{speechSynthesis.cancel()}catch(e){}};
+$('sesBtn').onclick=()=>{sessiz=!sessiz;yaz('mamoste-cumle-sessiz',sessiz);sesCiz();if(sessiz)sus()};
 const tamEkranVar=!!(document.documentElement.requestFullscreen||document.documentElement.webkitRequestFullscreen);
 if(!tamEkranVar)$('tamBtn').style.display='none';
 $('tamBtn').onclick=()=>{const d=document.documentElement;if(document.fullscreenElement||document.webkitFullscreenElement){(document.exitFullscreen||document.webkitExitFullscreen).call(document)}else{(d.requestFullscreen||d.webkitRequestFullscreen).call(d)}};
