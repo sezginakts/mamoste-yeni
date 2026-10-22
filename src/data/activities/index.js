@@ -52,6 +52,15 @@ export const ACTIVITY_TYPES = {
     branches: ['turkce'],
     engine: () => require('./fiilimsiEngine.js').default,
   },
+  // Kaynağı tools/etkinlik/hikaye.html; değişince `node tools/etkinlik/derle.js`.
+  // Havuz: { baslangiclar, kelimeler, gorevler, sinif } — tek içerik dosyası, sınıf düzeyi görevleri seçer.
+  hikaye: {
+    icon: '📖',
+    name: 'Hikâye Zinciri',
+    desc: 'Sınıf ya da takımlar sırayla hikâyeye cümle ekler: makaranın verdiği kelimeyi kullan, dil görevini yap. Son cümleden sonra başlık konur; hikâyeler cihazda saklanır.',
+    branches: ['turkce'],
+    engine: () => require('./hikayeEngine.js').default,
+  },
 };
 
 const DKAB_IMZA = 'Hazırlayan: <b>Ejder AKÇİÇEK</b> · Din Kültürü ve Ahlak Bilgisi Öğretmeni';
@@ -75,6 +84,10 @@ const LIST = {
   'teknoloji-tasarim': [],
   turkce: [
     { type: 'fiilimsi', grade: 8, unit: null, unitName: 'Fiilimsiler', pool: () => require('./turkce/fiilimsi8.js').default },
+    { type: 'hikaye', grade: 5, unit: null, unitName: 'Yaratıcı Yazma', pool: () => ({ ...require('./turkce/hikaye.js').default, sinif: 5 }) },
+    { type: 'hikaye', grade: 6, unit: null, unitName: 'Yaratıcı Yazma', pool: () => ({ ...require('./turkce/hikaye.js').default, sinif: 6 }) },
+    { type: 'hikaye', grade: 7, unit: null, unitName: 'Yaratıcı Yazma', pool: () => ({ ...require('./turkce/hikaye.js').default, sinif: 7 }) },
+    { type: 'hikaye', grade: 8, unit: null, unitName: 'Yaratıcı Yazma', pool: () => ({ ...require('./turkce/hikaye.js').default, sinif: 8 }) },
   ],
   matematik: [
     { type: 'terazi', grade: 7, unit: null, unitName: 'Birinci Dereceden Denklemler', pool: () => require('./matematik/terazi7.js').default },
