@@ -75,7 +75,7 @@ export default function ActivitiesScreen({ navigation, route }) {
                       <Text style={{ color: colors.text, fontWeight: '900', fontSize: font.body }}>{a.unit ? `${a.unit}. Ünite` : a.unitName}</Text>
                       {a.unit ? <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: 2 }} numberOfLines={2}>{a.unitName}</Text> : null}
                       <View style={st.btns}>
-                        <Pressable onPress={() => (t.screen ? navigation.navigate(t.screen, { grade: a.grade }) : navigation.navigate('ActivityPlay', { id: a.id }))} style={[st.btn, { backgroundColor: colors.accent }]} accessibilityLabel={`${a.unit ? `${a.unit}. ünite` : a.unitName} oyununu oyna`}>
+                        <Pressable onPress={() => (t.screen ? navigation.navigate(t.screen, { grade: a.grade, ...(a.params || {}) }) : navigation.navigate('ActivityPlay', { id: a.id }))} style={[st.btn, { backgroundColor: colors.accent }]} accessibilityLabel={`${a.unit ? `${a.unit}. ünite` : a.unitName} oyununu oyna`}>
                           <Text style={st.btnT}>▶ Oyna</Text>
                         </Pressable>
                         {t.screen ? null : (

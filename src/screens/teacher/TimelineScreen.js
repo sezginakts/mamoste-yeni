@@ -34,7 +34,7 @@ export default function TimelineScreen({ route, navigation }) {
   const firstClass = useRef(true);
   const level = GRADE_LEVELS[grade];
   const [custom, setCustom] = useState([]); // [{ id, title, text }]
-  const [setId, setSetId] = useState(null);
+  const [setId, setSetId] = useState(route.params?.set || null);
   const [count, setCount] = useState(level.count);
   const [showHint, setShowHint] = useState(false);
   const [round, setRound] = useState(null); // { items (doğru sırada), pool: [i], slots: [i|null] }
@@ -63,6 +63,11 @@ export default function TimelineScreen({ route, navigation }) {
     const g = gradeFromClassName(cls && cls.name);
     if (g) setGrade(g);
   }, [classId]);
+  // Ekran açıkken Etkinlikler'den başka düzeyle yeniden açılırsa o düzeye geç.
+  useEffect(() => {
+    if (route.params?.grade) setGrade(route.params.grade);
+    setSetId(route.params?.set || null);
+  }, [route.params?.grade, route.params?.set]);
 
   // Düzeye uygun setler önce; diğerleri altta "başka düzeyler" olarak.
   const allSets = useMemo(() => {

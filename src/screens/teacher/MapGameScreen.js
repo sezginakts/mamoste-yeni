@@ -68,6 +68,10 @@ export default function MapGameScreen({ route, navigation }) {
     firstClass.current = false;
     if (classGrade) setGrade(Math.min(7, classGrade));
   }, [classId]);
+  // Ekran açıkken Etkinlikler'den başka düzeyle yeniden açılırsa o düzeye geç.
+  useEffect(() => {
+    if (route.params?.grade) setGrade(Math.min(7, route.params.grade));
+  }, [route.params?.grade]);
 
   const pool = useMemo(() => featuresFor(cat, level.tier), [cat, grade]);
   const poolIds = useMemo(() => new Set(pool.map((f) => f.id)), [pool]);
