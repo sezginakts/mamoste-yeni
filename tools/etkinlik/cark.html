@@ -95,6 +95,11 @@ h1{margin:0;font-size:calc(var(--f)*2.1);font-weight:900;line-height:1;backgroun
 @keyframes salla{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-1.2vmin)}40%,80%{transform:translateX(1.2vmin)}}
 .cevap{display:none;background:#F0FDFA;border:.3vmin dashed var(--turkuaz);border-radius:2vmin;padding:1.6vmin 3vmin;font-size:calc(var(--f)*.85);font-weight:800;color:#0F766E}
 .cevap.acik{display:block;animation:gel .3s ease-out}
+.cevap b{display:block;font-size:.7em;letter-spacing:.06em;color:#0D9488;margin-bottom:.4vmin}
+.tur-rozet{display:flex;align-items:center;gap:1.2vmin;flex-wrap:wrap;justify-content:center;background:var(--c,#0284C7);color:#fff;border-radius:99px;padding:.9vmin 2.6vmin;font-weight:900;font-size:calc(var(--f)*.62)}
+.tur-rozet span{font-weight:700;opacity:.92}
+.guc{display:block;height:1.1vmin;min-height:6px;margin-top:1vmin;background:rgba(255,255,255,.3);border-radius:99px;overflow:hidden}
+.guc i{display:block;height:100%;width:0;background:#fff;border-radius:99px}
 .cevap::before{content:"💬 ";}
 .dugmeler{display:flex;gap:1.6vmin;flex-wrap:wrap;justify-content:center}
 .dugmeler button{font-weight:900;font-size:calc(var(--f)*.7);border-radius:99px;padding:1.5vmin 4vmin;background:var(--zemin);color:var(--yazi);box-shadow:0 .6vmin 0 #CBD5E1}
@@ -152,7 +157,7 @@ h1{margin:0;font-size:calc(var(--f)*2.1);font-weight:900;line-height:1;backgroun
     </div>
     <div class="dilimler"><b>10–50 puan: soru</b><b>×2 çift puan</b><b>🎁 hediye +25</b><b>⏭ pas</b><b>💥 puanın yarısı gider</b></div>
     <button id="basla" class="buyuk">Başla ▶</button>
-    <div class="not">Çarkı <b>ÇEVİR</b> düğmesiyle döndür ya da tahtada <b>parmağınla tutup savur</b>: ne kadar hızlı savurursan o kadar uzun döner, iki yöne de çalışır. Seçenekli sorular kendiliğinden puanlanır; açık uçlu sorularda öğretmen <b>✓ Doğru / ✗ Yanlış</b> der. Büyük dilimlerde sorular zorlaşır!</div>
+    <div class="not"><b>ÇEVİR</b> düğmesini <b>basılı tut</b>: güç çubuğu dolup boşalır, bıraktığın anda ne kadar doluysa çark o kadar hızlı ve uzun döner. Tahtada <b>parmağınla tutup savurabilirsin</b> de: ne kadar hızlı savurursan o kadar uzun döner. Her sorunun üstünde ne istendiği yazar: soru, boşluk doldurma, seçmeli ya da görev. Seçenekli sorular kendiliğinden puanlanır; açık uçlu sorularda öğretmen <b>✓ Doğru / ✗ Yanlış</b> der. Büyük dilimlerde sorular zorlaşır!</div>
   </div>
 </section>
 
@@ -169,7 +174,7 @@ h1{margin:0;font-size:calc(var(--f)*2.1);font-weight:900;line-height:1;backgroun
       <div class="araclar"><button id="sesBtn" title="Ses">🔊</button><button id="tamBtn" title="Tam ekran">⛶</button><button id="cikBtn" title="Ana ekran">✕</button></div></div>
     <div class="tur-bilgi" id="turBilgi"></div>
     <div class="takimlar" id="takimlar"></div>
-    <button class="cevir" id="cevirBtn">🎡 ÇEVİR<small id="cevirAlt"></small></button>
+    <button class="cevir" id="cevirBtn">🎡 ÇEVİR<small id="cevirAlt">Basılı tut, bırak</small><span class="guc"><i id="gucBar"></i></span></button>
   </div>
 </section>
 
@@ -282,7 +287,7 @@ function panelCiz(){
   takimlar.forEach((t,i)=>{const d=document.createElement('div');d.className='takim'+(i===sira?' sirada':'');d.style.color=t.renk;d.id='tk'+i;
     d.innerHTML=`<span class="renk" style="background:${t.renk}"></span><span class="ad" style="color:var(--yazi)">${t.ad}</span><span class="puan">${t.puan}</span>`;el.appendChild(d)});
   $('turBilgi').textContent=`Tur ${Math.min(Math.floor(cevirme/takimlar.length)+1,+AYAR.tur)} / ${AYAR.tur}`;
-  $('cevirAlt').textContent=`${takimlar[sira].ad} Takımı çeviriyor`;
+  $('cevirAlt').textContent=`${takimlar[sira].ad} Takımı · basılı tut, bırak`;
   $('cevirBtn').style.background=takimlar[sira].renk;
   $('cevirBtn').disabled=donuyor;
 }
@@ -306,8 +311,22 @@ function don(fark,sure,k){
     if(x<1)requestAnimationFrame(adim);else{donuyor=false;$('cark').parentNode.classList.remove('doniyor');durdu()}}
   requestAnimationFrame(adim);
 }
-// ÇEVİR düğmesi / Boşluk: saat yönünde 4-7 tur
-function cevir(){if(donuyor||soruBekliyor||SR)return;don((4+Math.random()*2)*360+Math.random()*360,4200+Math.random()*1200,4)}
+// ÇEVİR düğmesi / Boşluk: güç 0-1 → 2-8 tur ve 3-7 sn; ayrıca rastgele bir açı ve yavaşlama eğrisi eklenir ki
+// aynı güçle de hep aynı dilim gelmesin. Güç verilmezse (dokunup bırakma, klavye) rastgele orta bir güç.
+function cevir(guc){if(donuyor||soruBekliyor||SR)return;
+  const g=guc==null?.3+Math.random()*.6:Math.max(.05,Math.min(1,guc));
+  const tur=2+g*6+Math.random()*.8;
+  don(tur*360+Math.random()*360,3000+g*4000+Math.random()*600,3+Math.random()*1.5)}
+// Basılı tutunca güç çubuğu dolup boşalır (yaklaşık 1,6 sn'de bir); bırakınca o anki güçle döner.
+// Güç basılı tutma süresinden hesaplanır (çubuk yalnızca gösterir; animasyon yavaşlasa da güç doğru kalır).
+let GUC=null;
+const gucHesap=ms=>{const x=(ms/1600)%2;return x<1?x:2-x};
+function gucBasla(){if(donuyor||soruBekliyor||SR||GUC)return;ac();GUC={t0:performance.now(),raf:0};
+  const adim=()=>{if(!GUC)return;$('gucBar').style.width=Math.round(gucHesap(performance.now()-GUC.t0)*100)+'%';GUC.raf=requestAnimationFrame(adim)};
+  GUC.raf=requestAnimationFrame(adim)}
+function gucBirak(iptal){if(!GUC)return;const sure=performance.now()-GUC.t0;cancelAnimationFrame(GUC.raf);GUC=null;
+  $('gucBar').style.width=Math.round(gucHesap(sure)*100)+'%';setTimeout(()=>{$('gucBar').style.width='0%'},600);
+  if(iptal)return;cevir(sure<180?null:gucHesap(sure))}
 function altDilim(){const a=((360-(aci%360))%360+360)%360;return DILIM[Math.floor(a/ACI)%N]}
 
 // Parmakla / kalemle / fareyle savurma: çark parmağı takip eder, bırakınca hızı ve yönüyle döner.
@@ -376,13 +395,24 @@ function soruSec(deger){
   sorulan.push(q[0]);yaz(ANAHTAR,oku(ANAHTAR,[]).concat([q[0]]));return q;
 }
 let S=null;
+// Ne istendiği her soruda yazsın: seçmeli, boşluk doldurma, heceleme, soru sorma, düzeltme, açık uçlu soru ya da görev.
+function soruTuru(q,secenekli){const t=String(q[0]).trim();
+  if(secenekli)return['🔘','SEÇMELİ SORU','Doğru cevabı seç.','#0284C7'];
+  if(/^complete\b/i.test(t))return['✏️','BOŞLUK DOLDUR','Boşluğa gelecek kelimeyi İngilizce söyle.','#D99A1E'];
+  if(/^spell\b/i.test(t))return['🔤','HECELE','Kelimeyi harf harf İngilizce söyle.','#D99A1E'];
+  if(/^ask\b/i.test(t))return['💬','SORU SOR','Bu durumda soracağın soruyu İngilizce söyle.','#0D9488'];
+  if(/^correct\b/i.test(t))return['🛠️','CÜMLEYİ DÜZELT','Cümlenin doğrusunu İngilizce söyle.','#D99A1E'];
+  if(/\?\s*$/.test(t))return['❓','SORU','Soruyu İngilizce cevapla.','#0284C7'];
+  return['🗣️','GÖREV','İngilizce söyle, anlat ya da canlandır.','#0D9488']}
 function soruAc(deger,cift){
   const q=soruSec(deger),tk=takimlar[sira],secenek=Array.isArray(q[4])&&q[4].length?karistir(q[4].slice()):null;
   S={q,deger,cevaplandi:false};
   const bas=`<span>${esc(tk.ad)} Takımı</span>${cift?'<span>⚡ Çift puan!</span>':''}<span class="deger">+${deger}</span>`;
-  let g=`<div class="soru-satir"><div class="s-resim">${esc(q[2]||'❓')}</div><div class="s-metin">${esc(q[0])}</div></div><div class="sure" id="sure"><i id="sureBar"></i></div>`;
+  const tr=soruTuru(q,!!secenek);
+  let g=`<div class="tur-rozet" style="--c:${tr[3]}">${tr[0]} ${tr[1]}<span>· ${tr[2]}</span></div>`;
+  g+=`<div class="soru-satir"><div class="s-resim">${esc(q[2]||'❓')}</div><div class="s-metin">${esc(q[0])}</div></div><div class="sure" id="sure"><i id="sureBar"></i></div>`;
   if(secenek)g+=`<div class="secenekler">${secenek.map(s=>`<button class="secenek" data-s="${esc(s)}">${esc(s)}</button>`).join('')}</div>`;
-  g+=`<div class="cevap" id="cevap">${esc(q[1])}</div><div class="dugmeler" id="dugmeler">`;
+  g+=`<div class="cevap" id="cevap"><b>${secenek?'DOĞRU CEVAP':'ÖRNEK CEVAP'}</b>${esc(q[1])}</div><div class="dugmeler" id="dugmeler">`;
   g+=sesVar()?'<button id="okuBtn">🔊 Oku</button>':'';
   if(!secenek)g+='<button id="gosterBtn">👀 Cevabı göster</button><button class="hayir" id="yanlisBtn">✗ Yanlış</button><button class="evet" id="dogruBtn">✓ Doğru</button>';
   g+='</div>';
@@ -435,7 +465,11 @@ function konfeti(n){const k=$('konfeti');const r=['#E2574C','#0D9488','#0284C7',
     c.style.animationDuration=(1.4+Math.random()*1.6)+'s';c.style.animationDelay=(Math.random()*.4)+'s';c.style.transform=`rotate(${Math.random()*360}deg)`;k.appendChild(c);setTimeout(()=>c.remove(),3600)}}
 
 // --- düğmeler ---
-$('basla').onclick=basla;$('cevirBtn').onclick=()=>cevir();
+$('basla').onclick=basla;
+$('cevirBtn').addEventListener('pointerdown',e=>{e.preventDefault();try{$('cevirBtn').setPointerCapture(e.pointerId)}catch(_){}gucBasla()});
+$('cevirBtn').addEventListener('pointerup',()=>gucBirak(false));
+$('cevirBtn').addEventListener('pointercancel',()=>gucBirak(true));
+$('cevirBtn').addEventListener('click',e=>{if(e.detail===0)cevir()}); // klavyeyle (Enter) basıldığında
 $('tekrarBtn').onclick=basla;$('ayarBtn').onclick=()=>ekran('giris');
 $('cikBtn').onclick=()=>$('onay').classList.add('acik');
 $('hayirBtn').onclick=()=>$('onay').classList.remove('acik');
@@ -446,8 +480,9 @@ if(!(document.documentElement.requestFullscreen||document.documentElement.webkit
 $('tamBtn').onclick=()=>{const d=document.documentElement;if(document.fullscreenElement||document.webkitFullscreenElement){(document.exitFullscreen||document.webkitExitFullscreen).call(document)}else{(d.requestFullscreen||d.webkitRequestFullscreen).call(d)}};
 // Klavye: Boşluk = çevir, Enter = devam
 document.addEventListener('keydown',e=>{if(!$('oyun').classList.contains('aktif'))return;
-  if(e.key===' '&&!soruBekliyor){e.preventDefault();cevir()}
+  if(e.key===' '&&!soruBekliyor){e.preventDefault();if(!e.repeat)gucBasla()}
   else if(e.key==='Enter'&&$('devamBtn')){e.preventDefault();$('devamBtn').click()}});
+document.addEventListener('keyup',e=>{if(e.key===' '&&GUC){e.preventDefault();gucBirak(false)}});
 if(window.speechSynthesis)try{speechSynthesis.getVoices()}catch(e){}
 </script>
 </body></html>

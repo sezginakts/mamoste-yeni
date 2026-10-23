@@ -65,6 +65,15 @@ export const ACTIVITY_TYPES = {
     branches: ['teknoloji-tasarim'],
     engine: () => require('./logoEngine.js').default,
   },
+  // Kaynağı tools/etkinlik/kronoloji.html (öğretmenin Claude'da hazırladığı oyun); değişince `node tools/etkinlik/derle.js`.
+  // Havuz yok: 37 buluş kartı oyunun içinde; öğretmen kart ekleyip çıkarabilir (cihazda saklanır).
+  kronoloji: {
+    icon: '🛞',
+    name: 'Kronoloji Şeridi',
+    desc: 'Takımlar sırayla gelen buluş kartını zaman şeridinde doğru yere koyar; şerit uzadıkça yer bulmak zorlaşır. Yanlış konan kart doğru yerine kayar. Öğretmen kendi kartlarını ekleyebilir.',
+    branches: ['teknoloji-tasarim'],
+    engine: () => require('./kronolojiEngine.js').default,
+  },
   // Kaynağı tools/etkinlik/zaman.html; değişince `node tools/etkinlik/derle.js`.
   // Havuz: { sinif, seviye, setler } — olaylar ve düzey zorluğu src/data/timelines.js (oynananlar cihazda hatırlanır).
   zaman: {
@@ -117,7 +126,10 @@ const LIST = {
     { type: 'cark', grade: 8, unit: 1, unitName: 'Friendship', pool: () => require('./ingilizce/cark8_u1.js').default, sesler: () => require('./ingilizce/ses/cark8_u1.js').default },
   ],
   // grade: null → sınıf düzeyine bağlı değil (branşın tüm sınıfları).
-  'teknoloji-tasarim': [{ type: 'logo', grade: null, unit: null, unitName: 'Marka ve logo', pool: () => ({}) }],
+  'teknoloji-tasarim': [
+    { type: 'logo', grade: null, unit: null, unitName: 'Marka ve logo', pool: () => ({}) },
+    { type: 'kronoloji', grade: null, unit: null, unitName: 'Buluşlar ve icatlar', pool: () => ({}) },
+  ],
   turkce: [
     { type: 'fiilimsi', grade: 8, unit: null, unitName: 'Fiilimsiler', pool: () => require('./turkce/fiilimsi8.js').default },
     { type: 'hikaye', grade: 5, unit: null, unitName: 'Yaratıcı Yazma', pool: () => ({ ...require('./turkce/hikaye.js').default, sinif: 5 }) },

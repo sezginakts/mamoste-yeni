@@ -1,4 +1,4 @@
-// Etkinlikler: branşın oyunları kart olarak. Karta dokun → oyun açılır (sınıf düzeyi oyunun içinden değişir,
+// Etkinlikler: branşın oyunları kart olarak. Yalnız kartın “▶ Oyna” düğmesi oyunu açar (sınıf düzeyi oyunun içinden değişir,
 // son seçilen hatırlanır). İçeriği olmayan oyun türleri gösterilmez. Türün `branches` listesi varsa yalnız o branşlarda.
 // "Akıllı tahta" kısayolundan açılınca (params.board) üstte tahtada kullanma adımları görünür.
 import React from 'react';
@@ -56,13 +56,7 @@ export default function ActivitiesScreen({ navigation, route }) {
             {games.map((g, i) => {
               const c = BRAND_CYCLE[i % BRAND_CYCLE.length];
               return (
-                <Pressable
-                  key={g.type}
-                  onPress={() => open(g)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${g.t.name} oyununu aç`}
-                  style={({ pressed }) => [st.card, shadow, { width: `${100 / cols}%` }, pressed && { opacity: 0.9 }]}
-                >
+                <View key={g.type} style={[st.card, shadow, { width: `${100 / cols}%` }]}>
                   <View style={[st.inner, { backgroundColor: colors.card, borderColor: colors.border }]}>
                     <View style={[st.art, { backgroundColor: c + '1F' }]}>
                       <Text style={{ fontSize: 52 }}>{g.t.icon}</Text>
@@ -74,13 +68,19 @@ export default function ActivitiesScreen({ navigation, route }) {
                       </Text>
                       <View style={st.foot}>
                         <Text style={{ color: c, fontWeight: '800', fontSize: font.small }}>{gradeRange(g.items.some((a) => !a.grade) ? (branch ? branch.grades : []) : g.items.map((a) => a.grade))}</Text>
-                        <View style={[st.play, { backgroundColor: c }]}>
+                        <Pressable
+                          onPress={() => open(g)}
+                          accessibilityRole="button"
+                          accessibilityLabel={`${g.t.name} oyununu aç`}
+                          hitSlop={6}
+                          style={({ pressed }) => [st.play, { backgroundColor: c }, pressed && { opacity: 0.8, transform: [{ scale: 0.97 }] }]}
+                        >
                           <Text style={st.playT}>▶ Oyna</Text>
-                        </View>
+                        </Pressable>
                       </View>
                     </View>
                   </View>
-                </Pressable>
+                </View>
               );
             })}
           </View>
