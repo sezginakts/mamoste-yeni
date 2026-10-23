@@ -2,6 +2,7 @@
 
 Expo SDK 54 / React Native 0.81 uygulaması. Ortaokul öğretmenleri (branş seçerek) ve öğrencileri için; İngilizce'de kalıp ezberi, tüm branşlarda görev ödevi, öğretmen modülü ve akıllı tahta modu var.
 Çalıştırma: `npm start` (Expo Go) · `npm run web` (tarayıcı / akıllı tahta).
+Web testi: iki sekme = iki hesap — `http://localhost:8082` öğretmen, `http://127.0.0.1:8082` öğrenci (adres farklı → depo ve rol ayrı). Sınıfa katılmayı uçtan uca denemek için öğretmen sekmesinde giriş yapılmış ve migration'lar uygulanmış olmalı.
 
 ## Mimari
 - İçerik: `src/data/patterns.js` (tek kaynak). Cümle id'leri (ör. `can-12`) ses dosyalarına ve kayıtlara bağlıdır; metni değiştirirsen sesi yeniden üret.
