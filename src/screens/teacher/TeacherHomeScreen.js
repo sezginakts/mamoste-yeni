@@ -323,29 +323,6 @@ export default function TeacherHomeScreen({ navigation }) {
           <Tile icon="🎯" tint="#0D9488" title="Etkinlikler" sub={activitiesFor(branch?.id).length ? `${activitiesFor(branch?.id).length} oyun` : 'Pasaparola'} onPress={() => navigation.navigate('Activities')} />
         </View>
 
-        {/* ---- Dikkat ---- */}
-        {attention.length ? (
-          <>
-            <SectionTitle>DİKKAT</SectionTitle>
-            <View style={[st.flow, { backgroundColor: colors.card, borderColor: colors.border, paddingVertical: 4 }]}>
-              {attention.slice(0, 6).map((a, i) => (
-                <Pressable
-                  key={i}
-                  onPress={() =>
-                    a.st
-                      ? navigation.navigate('TeacherStudent', { classId: a.cls.id, studentId: a.st.id })
-                      : navigation.navigate('TeacherClass', { classId: a.cls.id, tab: a.kind === 'late' ? 'homework' : 'students' })
-                  }
-                  style={st.attRow}
-                >
-                  <View style={[st.attDot, { backgroundColor: a.kind === 'remind' ? colors.accent : a.kind === 'late' ? colors.warning : colors.textFaint }]} />
-                  <Text style={{ color: colors.text, fontSize: font.small, flex: 1 }}>{a.label}</Text>
-                </Pressable>
-              ))}
-            </View>
-          </>
-        ) : null}
-
         {/* ---- Sınıflarım ---- */}
         <SectionTitle right={<SmallButton title={adding ? 'Vazgeç' : '＋ Sınıf'} onPress={() => setAdding(!adding)} />}>SINIFLARIM</SectionTitle>
         {adding ? (
@@ -384,6 +361,29 @@ export default function TeacherHomeScreen({ navigation }) {
               Ya da ders programında şube seçtiğinde sınıf kendiliğinden eklenir.
             </Text>
           </Pressable>
+        ) : null}
+
+        {/* ---- Dikkat ---- */}
+        {attention.length ? (
+          <>
+            <SectionTitle>DİKKAT</SectionTitle>
+            <View style={[st.flow, { backgroundColor: colors.card, borderColor: colors.border, paddingVertical: 4 }]}>
+              {attention.slice(0, 6).map((a, i) => (
+                <Pressable
+                  key={i}
+                  onPress={() =>
+                    a.st
+                      ? navigation.navigate('TeacherStudent', { classId: a.cls.id, studentId: a.st.id })
+                      : navigation.navigate('TeacherClass', { classId: a.cls.id, tab: a.kind === 'late' ? 'homework' : 'students' })
+                  }
+                  style={st.attRow}
+                >
+                  <View style={[st.attDot, { backgroundColor: a.kind === 'remind' ? colors.accent : a.kind === 'late' ? colors.warning : colors.textFaint }]} />
+                  <Text style={{ color: colors.text, fontSize: font.small, flex: 1 }}>{a.label}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </>
         ) : null}
 
         {/* ---- İngilizce çalış (sadece kalıp çalışması olan branş) ---- */}
