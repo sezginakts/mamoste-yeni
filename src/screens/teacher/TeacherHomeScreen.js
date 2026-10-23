@@ -21,6 +21,17 @@ import { useTeacherProfile } from '../../teacher/profile';
 const DAY_NAMES = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
 const MONTH_NAMES = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
 
+// '2026-10-27' → 'Salı, 27 Ekim' / '27 Eki'
+const longDate = (k) => {
+  const d = new Date(k + 'T00:00:00');
+  return `${DAY_NAMES[d.getDay()]}, ${d.getDate()} ${MONTH_NAMES[d.getMonth()]}`;
+};
+const shortDate = (k) => {
+  if (!k) return '';
+  const d = new Date(k + 'T00:00:00');
+  return `${d.getDate()} ${MONTH_NAMES[d.getMonth()].slice(0, 3)}`;
+};
+
 const greeting = (h) => (h < 5 ? 'İyi geceler' : h < 12 ? 'Günaydın' : h < 18 ? 'İyi günler' : 'İyi akşamlar');
 const minOf = (t) => {
   const m = /^(\d{2}):(\d{2})$/.exec(t || '');
@@ -46,31 +57,45 @@ export default function TeacherHomeScreen({ navigation }) {
   const todayNotes = pendingNotes.filter((n) => n.remind && n.remind <= today); // bugün ya da gecikmiş
   const totalStudents = t.classes.reduce((n, c) => n + Object.keys(c.students).length, 0);
 
-  // Dersin bu haftaki planı ve bu derse düşen beceriler.
-  const planOf = (l) => {
+  // Dersin o haftaki planı ve bu derse düşen öğrenme çıktıları (kazanımlar).
+  // day: dersin günü (yarının dersi gösterilirken yarının haftası seçilsin).
+  const planOf = (l, day = today) => {
     const p = planForGrade(l.grade);
-    const cur = p ? weekForDay(p.weeks, today) : null;
+    const cur = p ? weekForDay(p.weeks, day) : null;
     const w = cur && cur.status !== 'ended' ? cur.week : null;
     const slot = w ? lessonSlot(w, l) : { idx: l.idx, count: l.count };
-    const skills = w && !w.holiday ? outcomesForLesson(w, slot.idx, slot.count).lines.map(splitOutcome) : [];
-    return { p, w, skills, slot };
+    const out = w && !w.holiday ? outcomesForLesson(w, slot.idx, slot.count) : { lines: [], review: false };
+    return { p, w, skills: out.lines.map(splitOutcome), review: out.review, slot };
   };
 
-  // Şimdi / sıradaki ders (saatler girildiyse); saat yoksa günün ilk dersi.
+  // Ana kart: şimdiki ders, yoksa bugünün sıradaki dersi; bugün bitti/ders yoksa bir sonraki okul gününün ilk dersi.
   const hasTimes = todayLessons.some((l) => l.start);
   const at = periodAt(desk.periods);
   let focus = null;
   let focusLabel = '';
+  let focusDay = today;
   if (todayLessons.length) {
     if (!hasTimes) {
       focus = todayLessons[0];
-      focusLabel = 'BUGÜNÜN İLK DERSİ';
+      focusLabel = 'BUGÜN';
     } else if (at) {
       focus = todayLessons.find((l) => l.period >= at.period) || null;
-      if (focus) focusLabel = focus.period === at.period && at.status === 'now' ? 'ŞİMDİ DERSTESİN' : 'SIRADAKİ DERS';
+      if (focus) focusLabel = focus.period === at.period && at.status === 'now' ? 'ŞİMDİ' : 'SIRADAKİ';
     }
   }
   const dayOver = todayLessons.length > 0 && hasTimes && !focus;
+  if (!focus && desk.hasTimetable) {
+    for (let i = 1; i <= 7 && !focus; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
+      const ls = desk.lessonsOnDay(weekdayOf(d));
+      if (ls.length) {
+        focus = ls[0];
+        focusDay = dayKey(d);
+        focusLabel = i === 1 ? 'YARIN' : 'SONRAKİ DERS';
+      }
+    }
+  }
+  const live = focusLabel === 'ŞİMDİ';
   const openLesson = (l) => navigation.navigate('YearPlan', planForGrade(l.grade) ? { lessonKey: `${l.day}-${l.period}` } : {});
 
   const create = () => {
@@ -113,53 +138,89 @@ export default function TeacherHomeScreen({ navigation }) {
       </View>
 
       <View style={{ paddingHorizontal: spacing.md, marginTop: -spacing.xl }}>
-        {/* ---- Şimdi / sıradaki ders ---- */}
+        {/* ---- Şimdi / sıradaki dersin kazanımı (ekranın asıl işi) ---- */}
         {focus ? (
           (() => {
-            const { w, skills, p, slot } = planOf(focus);
+            const { w, skills, review, p, slot } = planOf(focus, focusDay);
             const c = classColor(focus.label);
             return (
-              <Pressable onPress={() => openLesson(focus)} style={({ pressed }) => [st.focus, shadow, { backgroundColor: colors.card }, pressed && { opacity: 0.92 }]}>
-                <View style={[st.focusBar, { backgroundColor: c }]} />
-                <View style={{ flex: 1, padding: spacing.md }}>
-                  <View style={st.focusHead}>
-                    <Text style={[st.focusLabel, { color: c }]}>
-                      {focusLabel === 'ŞİMDİ DERSTESİN' ? '● ' : ''}{focusLabel}
-                    </Text>
-                    {focus.start ? <Text style={{ color: colors.textMuted, fontWeight: '700', fontSize: font.small }}>{focus.start}–{focus.end}</Text> : null}
+              <Pressable onPress={() => openLesson(focus)} style={({ pressed }) => [st.focus, shadow, { backgroundColor: colors.card, borderColor: c }, pressed && { opacity: 0.94 }]}>
+                {/* Üst satır: ne zaman + hangi sınıf */}
+                <View style={st.focusHead}>
+                  <View style={[st.pill, { backgroundColor: c + '1F' }]}>
+                    {live ? <View style={[st.liveDot, { backgroundColor: c }]} /> : null}
+                    <Text style={[st.pillT, { color: c }]}>{focusLabel}</Text>
                   </View>
-                  <View style={st.focusMain}>
-                    <View style={[st.focusClass, { backgroundColor: c }]}>
-                      <Text style={st.focusClassT}>{focus.label}</Text>
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ color: colors.text, fontSize: font.h3, fontWeight: '900' }} numberOfLines={2}>
-                        {w ? (w.holiday ? '🏖️ Tatil haftası' : w.unit || w.topic || 'Bu hafta') : `${focus.period}. ders`}
-                      </Text>
-                      <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: 2 }}>
-                        {p ? (slot.count > 1 ? `Haftanın ${slot.idx + 1}. dersi / ${slot.count}` : 'Bu haftanın dersi') : `${focus.grade}. sınıf yıllık planı yüklü değil`}
-                      </Text>
-                    </View>
+                  <Text style={[st.when, { color: colors.textMuted }]} numberOfLines={1}>
+                    {longDate(focusDay)} · {focus.period}. ders{focus.start ? ` · ${focus.start}–${focus.end}` : ''}
+                  </Text>
+                  <View style={[st.classBadge, { backgroundColor: c }]}>
+                    <Text style={st.classBadgeT}>{focus.label}</Text>
                   </View>
-                  {/* Beceri etiketleri yalnız beceri adı olan çıktılarda (İngilizce: Dinleme, Okuma…); diğer derslerde hiçbir şey. */}
-                  {skills.some((s) => s.label) ? (
-                    <View style={st.skillRow}>
-                      {skills.filter((s) => s.label).map((s, i) => (
-                        <View key={i} style={[st.skill, { backgroundColor: c + '1A' }]}>
-                          <Text style={{ color: colors.text, fontSize: font.tiny, fontWeight: '800' }}>{s.icon} {s.label}</Text>
-                        </View>
-                      ))}
-                    </View>
-                  ) : null}
-                  <Text style={{ color: c, fontWeight: '900', marginTop: spacing.sm }}>{p ? 'Bu dersin planını aç ›' : 'Yıllık plan yükle ›'}</Text>
                 </View>
+
+                {!p ? (
+                  <View style={{ marginTop: spacing.md }}>
+                    <Text style={[st.outText, { color: colors.text }]}>{focus.grade ? `${focus.grade}. sınıf` : 'Bu sınıfın'} yıllık planı yüklü değil.</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: 4 }}>Planı yükleyince bu dersin öğrenme çıktısı burada görünür.</Text>
+                    <Text style={[st.more, { color: c }]}>Yıllık plan yükle ›</Text>
+                  </View>
+                ) : !w ? (
+                  <View style={{ marginTop: spacing.md }}>
+                    <Text style={[st.outText, { color: colors.text }]}>Yıllık plan bitti.</Text>
+                    <Text style={[st.more, { color: c }]}>Planı aç ›</Text>
+                  </View>
+                ) : w.holiday ? (
+                  <View style={{ marginTop: spacing.md }}>
+                    <Text style={[st.outText, { color: colors.text }]}>🏖️ {w.unit || w.topic || 'Tatil haftası'}</Text>
+                  </View>
+                ) : (
+                  <>
+                    {w.unit || w.topic ? (
+                      <Text style={[st.unit, { color: colors.textMuted }]} numberOfLines={1}>
+                        {(w.unit || w.topic).toLocaleUpperCase('tr')}
+                      </Text>
+                    ) : null}
+                    <Text style={[st.outHead, { color: colors.textFaint }]}>
+                      {review ? 'PEKİŞTİRME · BU HAFTANIN ÖĞRENME ÇIKTILARI' : skills.length > 1 ? 'BU DERSİN ÖĞRENME ÇIKTILARI' : 'BU DERSİN ÖĞRENME ÇIKTISI'}
+                    </Text>
+                    {skills.length ? (
+                      skills.map((o, i) => (
+                        <View key={i} style={[st.outRow, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border }]}>
+                          {o.code || o.label ? (
+                            <Text style={[st.outCode, { color: c }]}>
+                              {o.code || ''}{o.code && o.label ? '  ·  ' : ''}{o.label ? `${o.icon} ${o.label}` : ''}
+                            </Text>
+                          ) : null}
+                          <Text style={[st.outText, { color: colors.text }]}>{o.text}</Text>
+                        </View>
+                      ))
+                    ) : (
+                      <Text style={[st.outText, { color: colors.textMuted }]}>Planda bu haftanın öğrenme çıktısı yazmıyor.</Text>
+                    )}
+                    <View style={[st.focusFoot, { borderTopColor: colors.border }]}>
+                      <Text style={{ color: colors.textMuted, fontSize: font.tiny, fontWeight: '700', flex: 1 }}>
+                        📅 {w.week ? `${w.week}. hafta · ` : ''}{w.start ? `${shortDate(w.start)} – ${shortDate(w.end)}` : ''}
+                        {slot.count > 1 ? ` · ${slot.idx + 1}. ders / ${slot.count}` : ''}
+                      </Text>
+                      <Text style={[st.more, { color: c, marginTop: 0 }]}>Dersin planı ›</Text>
+                    </View>
+                  </>
+                )}
+                {!hasTimes && focusDay === today ? (
+                  <Pressable onPress={() => navigation.navigate('Timetable')} style={[st.timesHint, { backgroundColor: colors.cardSoft }]}>
+                    <Text style={{ color: colors.textMuted, fontSize: font.tiny, fontWeight: '700' }}>
+                      ⏱️ Okulun ders saatlerini girersen o saatteki dersin öğrenme çıktısı kendiliğinden gelir ›
+                    </Text>
+                  </Pressable>
+                ) : null}
               </Pressable>
             );
           })()
         ) : (
           <Pressable
             onPress={() => navigation.navigate(desk.hasTimetable ? 'YearPlan' : 'Timetable')}
-            style={[st.focus, shadow, { backgroundColor: colors.card, padding: spacing.lg, alignItems: 'center', gap: spacing.md }]}
+            style={[st.focus, shadow, { backgroundColor: colors.card, borderColor: colors.border, padding: spacing.lg, flexDirection: 'row', alignItems: 'center', gap: spacing.md }]}
           >
             <Text style={{ fontSize: 34 }}>{!desk.hasTimetable ? '🗓️' : dayOver ? '🌇' : '☕'}</Text>
             <View style={{ flex: 1 }}>
@@ -167,7 +228,11 @@ export default function TeacherHomeScreen({ navigation }) {
                 {!desk.hasTimetable ? 'Ders programını gir' : dayOver ? 'Bugünkü derslerin bitti' : 'Bugün dersin yok'}
               </Text>
               <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: 2 }}>
-                {!desk.hasTimetable ? 'Hangi gün hangi sınıfa gireceğini bir kez gir; sıradaki dersin burada görünsün.' : dayOver ? 'Emeğine sağlık! Yarının planına göz atabilirsin.' : 'İyi dinlenmeler. Yıllık planına göz atabilirsin.'}
+                {!desk.hasTimetable
+                  ? 'Hangi gün hangi saatte hangi sınıfa gireceğini bir kez gir; o dersin öğrenme çıktısı burada görünsün.'
+                  : dayOver
+                    ? 'Emeğine sağlık! Yarının planına göz atabilirsin.'
+                    : 'İyi dinlenmeler. Yıllık planına göz atabilirsin.'}
               </Text>
             </View>
           </Pressable>
@@ -195,24 +260,25 @@ export default function TeacherHomeScreen({ navigation }) {
             <SectionTitle>BUGÜNÜN AKIŞI</SectionTitle>
             <View style={[st.flow, { backgroundColor: colors.card, borderColor: colors.border }]}>
               {todayLessons.map((l, i) => {
-                const { w } = planOf(l);
+                const { w, skills, review } = planOf(l);
                 const c = classColor(l.label);
                 const past = l.end && minOf(l.end) != null && minOf(l.end) <= nowMin;
-                const live = focus && focus.period === l.period && focusLabel === 'ŞİMDİ DERSTESİN';
+                const isLive = live && focusDay === today && focus.period === l.period;
+                const first = skills[0];
                 return (
                   <Pressable key={l.period} onPress={() => openLesson(l)} style={[st.flowRow, past && { opacity: 0.45 }]}>
                     <View style={st.flowTime}>
-                      <Text style={{ color: live ? c : colors.text, fontWeight: '900', fontSize: font.small }}>{l.start || `${l.period}.`}</Text>
+                      <Text style={{ color: isLive ? c : colors.text, fontWeight: '900', fontSize: font.small }}>{l.start || `${l.period}.`}</Text>
                       {l.start ? <Text style={{ color: colors.textFaint, fontSize: 10, fontWeight: '700' }}>{l.period}. ders</Text> : null}
                     </View>
                     <View style={st.flowRail}>
                       <View style={[st.flowLine, { backgroundColor: colors.border }, i === 0 && { top: '50%' }, i === todayLessons.length - 1 && { bottom: '50%' }]} />
-                      <View style={[st.flowDot, { backgroundColor: c, borderColor: colors.card }, live && { width: 16, height: 16, borderRadius: 8 }]} />
+                      <View style={[st.flowDot, { backgroundColor: c, borderColor: colors.card }, isLive && { width: 16, height: 16, borderRadius: 8 }]} />
                     </View>
-                    <View style={[st.flowCard, { backgroundColor: c + (live ? '26' : '14'), borderColor: live ? c : 'transparent' }]}>
+                    <View style={[st.flowCard, { backgroundColor: c + (isLive ? '26' : '14'), borderColor: isLive ? c : 'transparent' }]}>
                       <Text style={{ color: c, fontWeight: '900', fontSize: font.body }}>{l.label}</Text>
-                      <Text style={{ color: colors.textMuted, fontSize: font.small, flex: 1 }} numberOfLines={1}>
-                        {w ? (w.holiday ? '🏖️ Tatil' : w.unit || w.topic || '') : ''}
+                      <Text style={{ color: colors.textMuted, fontSize: font.small, flex: 1 }} numberOfLines={2}>
+                        {!w ? (planForGrade(l.grade) ? '' : 'Plan yok') : w.holiday ? '🏖️ Tatil' : first ? `${review ? '↻ Pekiştirme · ' : ''}${first.text}` : w.unit || w.topic || ''}
                       </Text>
                       <Text style={{ color: colors.textFaint, fontSize: 18 }}>›</Text>
                     </View>
@@ -392,15 +458,22 @@ const st = StyleSheet.create({
   statV: { color: '#fff', fontSize: font.body, fontWeight: '900' },
   statL: { color: 'rgba(255,255,255,0.8)', fontSize: font.tiny, fontWeight: '700', marginTop: 1 },
 
-  focus: { flexDirection: 'row', borderRadius: radius.lg, overflow: 'hidden' },
-  focusBar: { width: 6 },
-  focusHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  focusLabel: { fontSize: font.tiny, fontWeight: '900', letterSpacing: 1 },
-  focusMain: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: spacing.sm },
-  focusClass: { minWidth: 64, height: 64, borderRadius: 18, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
-  focusClassT: { color: '#fff', fontSize: font.h3, fontWeight: '900' },
-  skillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: spacing.md },
-  skill: { borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 4 },
+  focus: { borderRadius: radius.lg, borderTopWidth: 4, padding: spacing.lg },
+  focusHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  pill: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 4 },
+  pillT: { fontSize: 11, fontWeight: '900', letterSpacing: 0.8 },
+  liveDot: { width: 7, height: 7, borderRadius: 4 },
+  when: { flex: 1, fontSize: font.small, fontWeight: '700' },
+  classBadge: { borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6, minWidth: 54, alignItems: 'center' },
+  classBadgeT: { color: '#fff', fontSize: font.h3, fontWeight: '900' },
+  unit: { fontSize: font.tiny, fontWeight: '800', letterSpacing: 0.8, marginTop: spacing.md },
+  outHead: { fontSize: 10, fontWeight: '900', letterSpacing: 1.2, marginTop: spacing.md, marginBottom: 2 },
+  outRow: { paddingVertical: 10 },
+  outCode: { fontSize: font.tiny, fontWeight: '900', letterSpacing: 0.4, marginBottom: 4 },
+  outText: { fontSize: 18, lineHeight: 26, fontWeight: '600' },
+  focusFoot: { flexDirection: 'row', alignItems: 'center', borderTopWidth: StyleSheet.hairlineWidth, marginTop: spacing.sm, paddingTop: spacing.md },
+  more: { fontSize: font.small, fontWeight: '900', marginTop: spacing.md },
+  timesHint: { borderRadius: radius.sm, paddingHorizontal: spacing.sm, paddingVertical: 6, marginTop: spacing.sm },
 
   sticky: { marginTop: spacing.lg, backgroundColor: '#C7EFEA', borderRadius: 4, padding: spacing.md, paddingTop: spacing.lg, transform: [{ rotate: '-0.8deg' }], shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 6, shadowOffset: { width: 0, height: 3 }, elevation: 3 },
   tape: { position: 'absolute', top: -7, alignSelf: 'center', width: 64, height: 16, backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 2 },

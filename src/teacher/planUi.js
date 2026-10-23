@@ -57,6 +57,10 @@ export function splitOutcome(line) {
     const sk = SKILL_BY_CODE[code[2]];
     return { icon: sk ? sk[0] : '🎯', label: sk ? sk[1] : null, code: code[1].replace(/\.$/, ''), text: line.slice(code[0].length) };
   }
+  // Diğer derslerin kodu (TT.7.3.1., M.7.1.2.3., F.7.1.1.1.): beceri yok, yalnızca kod ayrılır.
+  // Bölümler rakam ya da tek büyük harf olabilir: TT.8.B.1.2.
+  const tr = line.match(/^([A-ZÇĞİÖŞÜ]{1,4}\.\d{1,2}(?:\.(?:\d+|[A-ZÇĞİÖŞÜ])){1,5}\.?)\s+/);
+  if (tr) return { icon: '🎯', label: null, code: tr[1].replace(/\.$/, ''), text: line.slice(tr[0].length) };
   return { icon: '🎯', label: null, code: null, text: line };
 }
 
@@ -212,12 +216,13 @@ export function lessonSlot(w, lesson) {
 
 // Haftanın öğrenme çıktılarını haftanın ders saatlerine sırayla paylaştır (her kazanım bir satır).
 // Döner { lines, review } — review: bu derse yeni çıktı düşmedi, tekrar/pekiştirme dersi.
+// Kazanım dersten azsa yeni kazanım haftanın İLK derslerine düşer, sonrakiler pekiştirme olur
+// (ör. 1 kazanım / 2 ders → 1. ders kazanım, 2. ders pekiştirme).
 export function outcomesForLesson(w, idx, count) {
   const lines = (w.outcomes || '').split('\n').filter(Boolean);
   if (!count || count <= 1 || idx == null || idx < 0) return { lines, review: false };
-  const from = Math.floor((idx * lines.length) / count);
-  const to = Math.floor(((idx + 1) * lines.length) / count);
-  if (to > from) return { lines: lines.slice(from, to), review: false };
+  const mine = lines.filter((_, i) => Math.floor((i * count) / lines.length) === idx);
+  if (mine.length) return { lines: mine, review: false };
   return { lines, review: true };
 }
 
