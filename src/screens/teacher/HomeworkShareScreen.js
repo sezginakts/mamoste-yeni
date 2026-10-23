@@ -6,7 +6,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useTeacher } from '../../teacher/TeacherContext';
 import { homeworkStatus } from '../../teacher/analytics';
 import { hwSummary } from '../../utils/homework';
-import { Header, Card, SmallButton, SectionTitle, formatDate } from '../../teacher/ui';
+import { Header, Card, SmallButton, SectionTitle, formatDate, confirmAction, HW_DELETE_MSG } from '../../teacher/ui';
 
 export default function HomeworkShareScreen({ route, navigation }) {
   const { classId, hwIds } = route.params;
@@ -29,10 +29,7 @@ export default function HomeworkShareScreen({ route, navigation }) {
       list.forEach((h) => t.removeHomework(classId, h.id));
       navigation.goBack();
     };
-    const msg = 'Ödev öğrencilerin listesinden de kalkar (başlamamışlarsa).';
-    if (Platform.OS === 'web') {
-      if (window.confirm(`Ödev silinsin mi? ${msg}`)) go();
-    } else Alert.alert('Ödevi sil', msg, [{ text: 'Vazgeç' }, { text: 'Sil', style: 'destructive', onPress: go }]);
+    confirmAction({ title: 'Ödevi sil', message: HW_DELETE_MSG, ok: 'Sil', destructive: true, onOk: go });
   };
 
   return (

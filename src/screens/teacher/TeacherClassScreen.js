@@ -5,8 +5,8 @@ import { spacing, font, radius } from '../../theme';
 import { useTheme } from '../../context/ThemeContext';
 import { useTeacher } from '../../teacher/TeacherContext';
 import { PATTERNS, PATTERN_BY_ID } from '../../data/patterns';
-import { studentPatternStats, studentTotals, weakSuggestion, homeworkStatus, accColor, classPatternStats } from '../../teacher/analytics';
-import { Header, Card, SectionTitle, Field, SmallButton, Chip, Empty, formatDate, formatJoinCode, shareText } from '../../teacher/ui';
+import { studentPatternStats, studentStanding, weakSuggestion, homeworkStatus, accColor, classPatternStats } from '../../teacher/analytics';
+import { Header, Card, SectionTitle, Field, SmallButton, Chip, Empty, formatDate, formatJoinCode, shareText, confirmAction, HW_DELETE_MSG } from '../../teacher/ui';
 import { hwSummary } from '../../utils/homework';
 import { dayKey } from '../../utils/helpers';
 import { usePlans } from '../../teacher/PlanContext';
@@ -28,13 +28,19 @@ export default function TeacherClassScreen({ route, navigation }) {
 
   const rows = useMemo(() => {
     if (!cls) return [];
-    const r = Object.values(cls.students).map((s) => ({ s, tot: studentTotals(s), ps: studentPatternStats(s) }));
-    if (sort === 'no') r.sort((a, b) => (parseInt(a.s.no, 10) || 0) - (parseInt(b.s.no, 10) || 0) || String(a.s.no).localeCompare(String(b.s.no)));
-    if (sort === 'weak') r.sort((a, b) => (a.tot.acc ?? 2) - (b.tot.acc ?? 2));
-    if (sort === 'points') r.sort((a, b) => b.tot.points - a.tot.points);
-    if (sort === 'idle') r.sort((a, b) => (a.tot.last || 0) - (b.tot.last || 0));
+    const r = Object.values(cls.students).map((s) => ({ s, tot: studentStanding(s, cls, drills), ps: studentPatternStats(s) }));
+    const byNo = (a, b) => (parseInt(a.s.no, 10) || 0) - (parseInt(b.s.no, 10) || 0) || String(a.s.no).localeCompare(String(b.s.no));
+    // Verisi olmayan (null) en sona; eşitlikte puan, sonra numara.
+    const perfKey = (x) => (x.tot.perf == null ? 2 : x.tot.perf);
+    if (sort === 'no') r.sort(byNo);
+    // En zorlanan: başarısı en düşük önce; eşitse geciken ödevi çok olan, sonra puanı düşük olan.
+    if (sort === 'weak') r.sort((a, b) => perfKey(a) - perfKey(b) || b.tot.missing - a.tot.missing || a.tot.points - b.tot.points || byNo(a, b));
+    // Puan: artı/eksi toplamı en yüksek önce.
+    if (sort === 'points') r.sort((a, b) => b.tot.points - a.tot.points || byNo(a, b));
+    // Çalışmayan: hiç çalışmamış ya da en uzun süredir çalışmayan önce; eşitse geciken ödevi çok, puanı düşük olan.
+    if (sort === 'idle') r.sort((a, b) => (a.tot.last || 0) - (b.tot.last || 0) || b.tot.missing - a.tot.missing || a.tot.points - b.tot.points || byNo(a, b));
     return r;
-  }, [cls, sort]);
+  }, [cls, sort, drills]);
 
   // Sadece içinde veri olan kalıp sütunlarını göster (20 sütun telefonda boğar).
   const cols = useMemo(() => {
@@ -60,9 +66,7 @@ export default function TeacherClassScreen({ route, navigation }) {
       t.removeClass(classId);
       navigation.goBack();
     };
-    if (Platform.OS === 'web') {
-      if (window.confirm(`${cls.name} ve tüm kayıtları silinsin mi? Geri alınamaz.`)) go();
-    } else Alert.alert('Sınıfı sil', `${cls.name} ve tüm kayıtları silinsin mi? Geri alınamaz.`, [{ text: 'Vazgeç' }, { text: 'Sil', style: 'destructive', onPress: go }]);
+    confirmAction({ title: 'Sınıfı sil', message: `${cls.name}, öğrencileri ve ödevleriyle birlikte silinsin mi? Geri alınamaz.`, ok: 'Sil', destructive: true, onOk: go });
   };
 
   const today = dayKey();
@@ -129,10 +133,11 @@ export default function TeacherClassScreen({ route, navigation }) {
             {rows.length ? (
               <>
                 <View style={st.sortRow}>
-                  {[['no', 'Numara'], ...(drills ? [['weak', 'En zorlanan']] : []), ['points', 'Puan'], ['idle', 'Çalışmayan']].map(([k, l]) => (
+                  {[['no', 'Numara'], ['weak', 'En zorlanan'], ['points', 'Puan'], ['idle', 'Çalışmayan']].map(([k, l]) => (
                     <Chip key={k} small label={l} active={sort === k} onPress={() => setSort(k)} />
                   ))}
                 </View>
+                <Text style={{ color: colors.textFaint, fontSize: font.tiny, marginBottom: spacing.sm }}>{SORT_HINT[sort](drills)}</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator>
                   <View>
                     <View style={st.gridRow}>
@@ -140,6 +145,9 @@ export default function TeacherClassScreen({ route, navigation }) {
                       {drills ? <Text style={[st.numCol, st.headCell, { color: colors.textMuted }]}>Doğru</Text> : null}
                       <Text style={[st.numCol, st.headCell, { color: colors.textMuted }]}>Puan</Text>
                       {!drills ? <Text style={[st.numCol, st.headCell, { color: colors.textMuted }]}>Teslim</Text> : null}
+                      {!drills ? <Text style={[st.numCol, st.headCell, { color: colors.textMuted }]}>Ort. not</Text> : null}
+                      <Text style={[st.numCol, st.headCell, { color: colors.textMuted }]}>Geciken</Text>
+                      <Text style={[st.numCol, st.headCell, { color: colors.textMuted }]}>Son</Text>
                       {(drills ? cols : []).map((p) => (
                         <Text key={p.id} style={[st.cell, st.headCell, { color: p.color }]} numberOfLines={2}>
                           {p.name.replace(/\s+/g, '')}
@@ -162,6 +170,9 @@ export default function TeacherClassScreen({ route, navigation }) {
                           {tot.points > 0 ? '+' : ''}{tot.points}
                         </Text>
                         {!drills ? <Text style={[st.numCol, { color: colors.textMuted }]}>{(s.submissions || []).length}</Text> : null}
+                        {!drills ? <Text style={[st.numCol, { color: colors.text }]}>{tot.perf != null ? Math.round(tot.perf * 100) : '—'}</Text> : null}
+                        <Text style={[st.numCol, { color: tot.missing ? colors.danger : colors.textMuted, fontWeight: tot.missing ? '800' : '400' }]}>{tot.missing || '—'}</Text>
+                        <Text style={[st.numCol, { color: colors.textMuted }]}>{agoLabel(tot.last)}</Text>
                         {(drills ? cols : []).map((p) => (
                           <View key={p.id} style={[st.cell, { alignItems: 'center', justifyContent: 'center' }]}>
                             <View style={[st.dot, { backgroundColor: accColor(ps[p.id].acc, colors) }]}>
@@ -211,13 +222,26 @@ export default function TeacherClassScreen({ route, navigation }) {
               const s = homeworkStatus(cls, hw);
               const to = hw.to && cls.students[hw.to];
               const late = hw.due && hw.due < today && s.done < s.expected;
+              const removeHw = () =>
+                confirmAction({ title: `“${hw.title}” silinsin mi?`, message: HW_DELETE_MSG, ok: 'Sil', destructive: true, onOk: () => t.removeHomework(classId, hw.id) });
               return (
                 <Card key={hw.id} onPress={() => navigation.navigate('HomeworkShare', { classId, hwIds: [hw.id] })}>
-                  <Text style={{ color: colors.text, fontWeight: '800' }}>{hw.title}{to ? ` · 👤 ${to.no} ${to.nk}` : ''}</Text>
-                  <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: 3 }}>{hwSummary(hw)}</Text>
-                  <Text style={{ color: late ? colors.danger : colors.textMuted, fontSize: font.small, marginTop: 3 }}>
-                    Son gün {formatDate(hw.due)} · teslim {s.done}/{s.expected}
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ color: colors.text, fontWeight: '800' }}>{hw.title}{to ? ` · 👤 ${to.no} ${to.nk || to.nick || ''}` : ''}</Text>
+                      <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: 3 }}>{hw.type === 'task' ? 'Görev' : hwSummary(hw)}</Text>
+                      <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: 3 }}>
+                        📅 Verildi {hw.createdAt ? formatDate(dayKey(new Date(hw.createdAt))) : '—'} · Son gün{' '}
+                        <Text style={{ color: late ? colors.danger : colors.textMuted, fontWeight: late ? '800' : '400' }}>
+                          {hw.due ? formatDate(hw.due) : '—'}{late ? ' (geçti)' : ''}
+                        </Text>
+                      </Text>
+                      <Text style={{ color: s.done >= s.expected && s.expected ? colors.primary : colors.textMuted, fontSize: font.small, marginTop: 3, fontWeight: '700' }}>
+                        Teslim {s.done}/{s.expected}
+                      </Text>
+                    </View>
+                    <SmallButton title="🗑" color={colors.danger} onPress={removeHw} />
+                  </View>
                 </Card>
               );
             })}
@@ -228,11 +252,7 @@ export default function TeacherClassScreen({ route, navigation }) {
   );
 }
 
-const ask = (title, msg, ok, go) => {
-  if (Platform.OS === 'web') {
-    if (window.confirm(`${title}\n\n${msg}`)) go();
-  } else Alert.alert(title, msg, [{ text: 'Vazgeç' }, { text: ok, onPress: go }]);
-};
+const ask = (title, message, ok, onOk) => confirmAction({ title, message, ok, onOk });
 
 // Davet kodu: öğretmen tahtaya yazar, öğrenci evde Mamoste'de "Derse katıl"a kod + okul numarasıyla girer.
 // Yenileyince eski kod çalışmaz; sınıftakiler kalır. Sonradan gelen öğrenciye güncel kod gönderilir (Paylaş).
@@ -312,6 +332,22 @@ function JoinCodeCard({ cls, total }) {
       </Modal>
     </Card>
   );
+}
+
+// Sıralama açıklaması (öğretmen neye göre dizildiğini görsün).
+const SORT_HINT = {
+  no: () => 'Okul numarasına göre.',
+  weak: (drills) =>
+    `En düşük başarı önce (${drills ? 'cümlelerde doğru oranı' : 'görevlerde verdiğin notların ortalaması'}); eşitse geciken ödevi çok, sonra puanı düşük olan. Verisi olmayan sonda.`,
+  points: () => 'Artı/eksi puan toplamı en yüksek önce.',
+  idle: (drills) => `En uzun süredir ${drills ? 'çalışmayan ya da ödev teslim etmeyen' : 'ödev teslim etmeyen'} önce; hiç etkinliği olmayan en üstte.`,
+};
+
+// Son çalışma: bugün / dün / 5 g / hiç
+function agoLabel(ts) {
+  if (!ts) return 'hiç';
+  const d = Math.floor((Date.now() - ts) / 86400000);
+  return d <= 0 ? 'bugün' : d === 1 ? 'dün' : `${d} g`;
 }
 
 function MiniPM({ label, color, onPress }) {

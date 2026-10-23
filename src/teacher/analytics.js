@@ -50,8 +50,29 @@ export function studentTotals(student) {
     f += a.f || 0;
   });
   const points = (student.points || []).reduce((s, x) => s + x.d, 0);
-  const last = Math.max(0, ...Object.values(student.attempts || {}).map((a) => a.last || 0));
+  // Son çalışma: cümle cevabı ya da ödev teslimi (görev derslerinde yalnız teslim olur).
+  const last = Math.max(
+    0,
+    ...Object.values(student.attempts || {}).map((a) => a.last || 0),
+    ...(student.submissions || []).map((x) => x.at || 0)
+  );
   return { p, f, t: p + f, acc: p + f ? p / (p + f) : null, points, last };
+}
+
+// Sınıf tablosu sıralaması için öğrencinin durumu.
+//   perf: başarı 0–1 (İngilizce: doğru oranı; görev dersleri: öğretmen puanı ortalaması / 100; veri yoksa null)
+//   missing: süresi geçmiş ama teslim edilmemiş ödev sayısı
+export function studentStanding(student, cls, drills, today = dayKey()) {
+  const tot = studentTotals(student);
+  let perf = null;
+  if (drills) perf = tot.acc;
+  else {
+    const scores = (student.submissions || []).filter((x) => x.fb && x.fb.score != null).map((x) => x.fb.score);
+    perf = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length / 100 : null;
+  }
+  const done = new Set((student.submissions || []).map((x) => x.h));
+  const missing = (cls.homeworks || []).filter((h) => (!h.to || h.to === student.id) && h.due && h.due < today && !done.has(h.id)).length;
+  return { ...tot, perf, missing };
 }
 
 export function classPatternStats(cls) {

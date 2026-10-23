@@ -8,7 +8,7 @@ import { parseYearPlan, weekForDay, guessGrade, assignDates, parseStartDate } fr
 import { pickTableFile, RosterFileError } from '../../teacher/rosterFile';
 import { WeekCard, LessonCard, PlanCalendar, unitColor } from '../../teacher/planUi';
 import { useDesk, weekdayOf, periodAt } from '../../teacher/DeskContext';
-import { Header, Card, SectionTitle, Field, SmallButton, Chip, formatDate } from '../../teacher/ui';
+import { Header, Card, SectionTitle, Field, SmallButton, Chip, formatDate, confirmAction } from '../../teacher/ui';
 import { dayKey } from '../../utils/helpers';
 
 const GRADES = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
@@ -135,9 +135,7 @@ export default function YearPlanScreen({ route, navigation }) {
       setOffset(0);
     };
     const msg = `“${plan.name}” planı silinsin mi?`;
-    if (Platform.OS === 'web') {
-      if (window.confirm(msg)) go();
-    } else Alert.alert('Planı sil', msg, [{ text: 'Vazgeç' }, { text: 'Sil', style: 'destructive', onPress: go }]);
+    confirmAction({ title: 'Planı sil', message: msg, ok: 'Sil', destructive: true, onOk: go });
   };
 
   // ---- Yükleme önizlemesi ----

@@ -41,7 +41,8 @@ const DEFAULT_STATE = {
   student: { no: '', nk: '', avatar: '', rid: null, token: null, cc: null, cn: null, classes: [] },
   weeklyGoal: 4, // haftada kaç gün çalışılacak (profil)
   reminder: null, // { time: 'HH:MM', id } günlük çalışma hatırlatıcısı (yerel bildirim)
-  homeworks: {}, // id -> { ...ödev, cc, cn, receivedAt, sessionIds, result: { res, at, dur } }
+  homeworks: {}, // id -> { ...ödev, cc, cn, given (verildiği an), receivedAt, sessionIds, result: { res, at, dur } }
+  hiddenHw: {}, // öğrencinin bitirip listeden sildiği sunucu ödevleri (yenilemede geri gelmesin)
 };
 
 // Eski sürümde tek sınıf vardı (student.rid); ders listesine çevir.
@@ -215,13 +216,16 @@ export function ProgressProvider({ children }) {
       const ids = new Set(rows.map((r) => r.id));
       setState((prev) => {
         const hws = { ...prev.homeworks };
+        const hidden = prev.hiddenHw || {};
         rows.forEach((r) => {
+          if (hidden[r.id]) return;
           const server = {
             type: r.kind,
             body: r.body || '',
             att: r.attachments || [],
             branch: r.branch,
             cn: r.class_name,
+            given: r.created_at || null,
             srid: r.student_id,
             fb: r.feedback || r.score != null ? { text: r.feedback || '', score: r.score } : null,
           };
@@ -232,7 +236,9 @@ export function ProgressProvider({ children }) {
         Object.values(hws).forEach((h) => {
           if (h.cloud && !ids.has(h.id) && !h.result && !h.sessionIds) delete hws[h.id];
         });
-        return { ...prev, homeworks: hws };
+        // Öğretmenin sildiği ödevlerin gizleme kaydı da gereksiz.
+        const hiddenHw = Object.fromEntries(Object.keys(hidden).filter((id) => ids.has(id)).map((id) => [id, true]));
+        return { ...prev, homeworks: hws, hiddenHw };
       });
       await flushResults();
     } finally {
@@ -339,11 +345,15 @@ export function ProgressProvider({ children }) {
       ? encodePayload('R', { cc: hw.cc, no: state.student.no, nk: state.student.nk, h: hw.id, ht: hw.title, at: hw.result.at, dur: hw.result.dur, res: hw.result.res })
       : null;
 
+  // Öğrenci ödevi listeden siler: yalnızca bitmiş (sonucu öğretmene gitmiş) ödev. Sunucudan gelen ödev gizlenir,
+  // yenilemede geri gelmez.
   const removeStudentHomework = (id) =>
     setState((prev) => {
+      const h = prev.homeworks[id];
+      if (!h || (h.cloud && !(h.result && h.result.sent))) return prev;
       const hws = { ...prev.homeworks };
       delete hws[id];
-      return { ...prev, homeworks: hws };
+      return { ...prev, homeworks: hws, hiddenHw: h.cloud ? { ...(prev.hiddenHw || {}), [id]: true } : prev.hiddenHw || {} };
     });
 
   const setDailyGoal = (goal) => setState((prev) => ({ ...prev, dailyGoal: goal }));

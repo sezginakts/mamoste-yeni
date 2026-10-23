@@ -7,7 +7,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useTeacher } from '../../teacher/TeacherContext';
 import { useRole } from '../../context/RoleContext';
 import { useTeacherProfile, PROFILE_LIMITS } from '../../teacher/profile';
-import { Header, Card, SectionTitle, Field, SmallButton, Stat, formatJoinCode } from '../../teacher/ui';
+import { Header, Card, SectionTitle, Field, SmallButton, Stat, formatJoinCode, confirmAction } from '../../teacher/ui';
 import { TEACHER_AVATARS } from '../../data/avatars';
 import { activitiesFor, ACTIVITY_TYPES } from '../../data/activities';
 
@@ -61,9 +61,7 @@ export default function TeacherProfileScreen({ navigation }) {
       setRenewing(false);
     };
     const m = 'Bütün sınıfların kodu değişir, eski kodlar çalışmaz. Sınıfa katılmış öğrenciler sınıfta kalır.';
-    if (Platform.OS === 'web') {
-      if (window.confirm(`Tüm kodları yenile\n\n${m}`)) go();
-    } else Alert.alert('Tüm kodları yenile', m, [{ text: 'Vazgeç' }, { text: 'Yenile', onPress: go }]);
+    confirmAction({ title: 'Tüm kodları yenile', message: m, ok: 'Yenile', onOk: go });
   };
 
   const sum = useMemo(() => {

@@ -6,7 +6,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useTeacher } from '../../teacher/TeacherContext';
 import { PATTERNS, SENTENCE_BY_ID } from '../../data/patterns';
 import { studentPatternStats, studentTotals, accColor, addDays, POINT_TAGS } from '../../teacher/analytics';
-import { Header, Card, SectionTitle, Field, SmallButton, Chip, Stat, Empty, formatDate, formatTime } from '../../teacher/ui';
+import { Header, Card, SectionTitle, Field, SmallButton, Chip, Stat, Empty, formatDate, formatTime, confirmAction, notify } from '../../teacher/ui';
 import { dayKey } from '../../utils/helpers';
 import { useRole } from '../../context/RoleContext';
 
@@ -58,9 +58,7 @@ export default function TeacherStudentScreen({ route, navigation }) {
       t.removeStudent(classId, studentId);
       navigation.goBack();
     };
-    if (Platform.OS === 'web') {
-      if (window.confirm('Öğrenci ve tüm kayıtları silinsin mi?')) go();
-    } else Alert.alert('Öğrenciyi sil', 'Öğrenci ve tüm kayıtları silinsin mi?', [{ text: 'Vazgeç' }, { text: 'Sil', style: 'destructive', onPress: go }]);
+    confirmAction({ title: 'Öğrenciyi sınıftan çıkar', message: 'Öğrenci ve tüm kayıtları silinsin mi? Telefonundaki bu ders de kalkar.', ok: 'Çıkar', destructive: true, onOk: go });
   };
 
   const usedPatterns = PATTERNS.filter((p) => ps[p.id] && ps[p.id].t > 0);
@@ -118,8 +116,7 @@ export default function TeacherStudentScreen({ route, navigation }) {
                       setLink(await t.deviceLinkCode(classId, studentId));
                     } catch (e) {
                       setLink(null);
-                      if (Platform.OS === 'web') window.alert(e.message);
-                      else Alert.alert('Kod üretilemedi', e.message);
+                      notify('Kod üretilemedi', e.message);
                     }
                   }}
                 />

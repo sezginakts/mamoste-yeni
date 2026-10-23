@@ -1,6 +1,6 @@
 // Öğretmen / ödev ekranlarının ortak küçük bileşenleri.
 import React, { useState } from 'react';
-import { View, Text, Pressable, TextInput, StyleSheet, Platform, Share } from 'react-native';
+import { View, Text, Pressable, TextInput, StyleSheet, Platform, Share, Alert, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import QRCode from 'react-native-qrcode-svg';
 import { radius, spacing, font } from '../theme';
@@ -175,7 +175,59 @@ const s = StyleSheet.create({
   stat: { flex: 1, borderRadius: radius.sm, padding: spacing.sm, alignItems: 'center' },
   statV: { fontSize: font.h3, fontWeight: '900' },
   statL: { fontSize: font.tiny, marginTop: 2 },
+  cBack: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center', padding: spacing.lg },
+  cBox: { width: '100%', maxWidth: 420, borderRadius: radius.md, borderWidth: 1, padding: spacing.lg },
+  cTitle: { fontSize: font.h3, fontWeight: '900' },
+  cMsg: { fontSize: font.small, marginTop: spacing.sm, lineHeight: 20 },
+  cRow: { flexDirection: 'row', justifyContent: 'flex-end', gap: spacing.sm, marginTop: spacing.lg },
 });
+
+// Onay sorusu: telefonda sistem penceresi; web'de uygulama içi pencere (tarayıcının confirm'ü bazı ortamlarda
+// kendiliğinden kapanıyor, silme hiç olmuyordu). ConfirmHost App.js'te bir kez durur.
+let openConfirm = null;
+export function confirmAction({ title, message, ok = 'Tamam', destructive = false, onOk }) {
+  if (Platform.OS !== 'web') {
+    Alert.alert(title, message, [{ text: 'Vazgeç', style: 'cancel' }, { text: ok, style: destructive ? 'destructive' : 'default', onPress: onOk }]);
+  } else if (openConfirm) openConfirm({ title, message, ok, destructive, onOk });
+  else if (window.confirm(`${title}\n\n${message}`)) onOk();
+}
+// Hata/bilgi mesajı (web'de de görünsün).
+export function notify(title, message) {
+  if (Platform.OS !== 'web') Alert.alert(title, message);
+  else if (openConfirm) openConfirm({ title, message, ok: 'Tamam', info: true });
+  else window.alert(`${title}\n\n${message}`);
+}
+export const HW_DELETE_MSG = 'Ödev senin listenden ve sunucudan silinir; başlamamış öğrencilerin listesinden de kalkar. Öğrencilerin daha önce gelen sonuçları profillerinde kalır.';
+
+export function ConfirmHost() {
+  const { colors } = useTheme();
+  const [c, setC] = useState(null);
+  openConfirm = setC;
+  const close = () => setC(null);
+  return (
+    <Modal visible={!!c} transparent animationType="fade" onRequestClose={close}>
+      <Pressable style={s.cBack} onPress={close}>
+        <Pressable style={[s.cBox, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => {}}>
+          <Text style={[s.cTitle, { color: colors.text }]}>{c ? c.title : ''}</Text>
+          {c && c.message ? <Text style={[s.cMsg, { color: colors.textMuted }]}>{c.message}</Text> : null}
+          <View style={s.cRow}>
+            {c && !c.info ? <SmallButton title="Vazgeç" color={colors.textMuted} onPress={close} /> : null}
+            <SmallButton
+              title={c ? c.ok : ''}
+              filled
+              color={c && c.destructive ? colors.danger : colors.accent}
+              onPress={() => {
+                const fn = c && c.onOk;
+                close();
+                if (fn) fn();
+              }}
+            />
+          </View>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
 
 // Yığında varsa o ekrana geri dön, yoksa ekle (aynı ekran iki kez açılmasın).
 export function goTo(navigation, name, params) {

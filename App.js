@@ -46,6 +46,7 @@ import ActivityPlayScreen from './src/screens/teacher/ActivityPlayScreen';
 // Geliştirmede girişi atlamak için true yap (sunucu özellikleri — ödev gönderme, eşitleme — o zaman çalışmaz).
 const SKIP_TEACHER_LOGIN = false;
 import NewPasswordScreen from './src/screens/teacher/NewPasswordScreen';
+import { ConfirmHost } from './src/teacher/ui';
 import StudentJoinScreen from './src/screens/StudentJoinScreen';
 import StudentProfileScreen from './src/screens/StudentProfileScreen';
 import TeacherProfileScreen from './src/screens/teacher/TeacherProfileScreen';
@@ -230,6 +231,7 @@ export default function App() {
                     <PlanProvider>
                       <DeskProvider>
                         <RootNavigator />
+                        <ConfirmHost />
                       </DeskProvider>
                     </PlanProvider>
                   </TeacherProvider>
