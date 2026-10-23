@@ -83,7 +83,7 @@ export default function TeacherStudentScreen({ route, navigation }) {
         ) : null}
 
         <View style={{ flexDirection: 'row', gap: spacing.sm }}>
-          <Stat value={tot.t ? `%${Math.round(tot.acc * 100)}` : '—'} label={`${tot.p} doğru / ${tot.f} yanlış`} color={accColor(tot.acc, colors)} />
+          {drills ? <Stat value={tot.t ? `%${Math.round(tot.acc * 100)}` : '—'} label={`${tot.p} doğru / ${tot.f} yanlış`} color={accColor(tot.acc, colors)} /> : null}
           <Stat value={`${tot.points > 0 ? '+' : ''}${tot.points}`} label="puan" color={tot.points >= 0 ? colors.primary : colors.danger} />
           <Stat value={s.submissions.length} label="teslim" />
         </View>
@@ -182,7 +182,9 @@ export default function TeacherStudentScreen({ route, navigation }) {
           </Card>
         ))}
 
-        {/* --- Kalıp performansı --- */}
+        {/* --- Kalıp performansı (yalnız İngilizce) --- */}
+        {drills ? (
+        <>
         <SectionTitle>KALIPLARA GÖRE</SectionTitle>
         {usedPatterns.length === 0 ? <Empty text="Henüz cevap verisi yok. Ödev sonucu okutulunca ya da tahtada cevap verince dolar." /> : null}
         {usedPatterns.map((p) => {
@@ -212,6 +214,8 @@ export default function TeacherStudentScreen({ route, navigation }) {
               </View>
             ))}
           </>
+        ) : null}
+        </>
         ) : null}
 
         <SectionTitle>TESLİM ETTİĞİ ÖDEVLER</SectionTitle>

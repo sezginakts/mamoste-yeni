@@ -331,7 +331,9 @@ export default function TeacherHomeScreen({ navigation }) {
           <Text style={{ color: colors.textFaint, fontSize: 22 }}>›</Text>
         </Pressable>
         ) : null}
-        <Text style={{ color: colors.textFaint, fontSize: font.tiny, textAlign: 'center', marginTop: spacing.lg }}>🔒 Veriler sadece bu cihazda tutulur</Text>
+        <Text style={{ color: colors.textFaint, fontSize: font.tiny, textAlign: 'center', marginTop: spacing.lg }}>
+          {t.cloudOn ? '☁️ Sınıflar hesabına eşitlenir · öğrenci adları sunucuya gitmez' : '🔒 Veriler sadece bu cihazda tutulur'}
+        </Text>
       </View>
     </ScrollView>
     <StatusBarCover color={heroBg} />

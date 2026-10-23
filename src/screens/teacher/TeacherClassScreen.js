@@ -73,7 +73,7 @@ export default function TeacherClassScreen({ route, navigation }) {
         title={cls.name}
         subtitle={`${rows.length} öğrenci`}
         onBack={() => navigation.goBack()}
-        right={<SmallButton title="🖥️ Tahta" onPress={() => navigation.navigate('Board', { classId })} />}
+        right={<SmallButton title="🖥️ Tahta" onPress={() => (drills ? navigation.navigate('Board', { classId }) : navigation.navigate('Activities', { board: true }))} />}
       />
       <View style={[st.tabs, { borderColor: colors.border }]}>
         {[['students', 'Öğrenciler'], ['homework', 'Ödevler']].map(([k, l]) => (
@@ -99,7 +99,7 @@ export default function TeacherClassScreen({ route, navigation }) {
                 ) : null}
               </Card>
             ) : null}
-            {weak.patterns.length ? (
+            {drills && weak.patterns.length ? (
               <Card style={{ borderLeftWidth: 4, borderLeftColor: colors.warning }}>
                 <Text style={{ color: colors.text, fontWeight: '800' }}>🩹 Önerilen ödev</Text>
                 <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: 4 }}>
@@ -121,7 +121,7 @@ export default function TeacherClassScreen({ route, navigation }) {
                   Excel / Word dosyasından ya da yapıştırarak tüm sınıfı tek seferde ekle.
                 </Text>
                 <Text style={{ color: colors.textFaint, fontSize: font.tiny, textAlign: 'center', marginTop: spacing.sm }}>
-                  Gerçek isim zorunlu değil. Öğrenciler ödev sonucunu okuttuğunda numarayla eşleşir; listede olmayan numara otomatik eklenir.
+                  Gerçek isim zorunlu değil, sunucuya da gitmez. Öğrenci sınıf koduyla katılınca numarasıyla eşleşir; listede olmayan numara otomatik eklenir.
                 </Text>
               </Card>
             ) : null}
@@ -129,7 +129,7 @@ export default function TeacherClassScreen({ route, navigation }) {
             {rows.length ? (
               <>
                 <View style={st.sortRow}>
-                  {[['no', 'Numara'], ['weak', 'En zorlanan'], ['points', 'Puan'], ['idle', 'Çalışmayan']].map(([k, l]) => (
+                  {[['no', 'Numara'], ...(drills ? [['weak', 'En zorlanan']] : []), ['points', 'Puan'], ['idle', 'Çalışmayan']].map(([k, l]) => (
                     <Chip key={k} small label={l} active={sort === k} onPress={() => setSort(k)} />
                   ))}
                 </View>
@@ -137,9 +137,10 @@ export default function TeacherClassScreen({ route, navigation }) {
                   <View>
                     <View style={st.gridRow}>
                       <Text style={[st.nameCol, st.headCell, { color: colors.textMuted }]}>Öğrenci</Text>
-                      <Text style={[st.numCol, st.headCell, { color: colors.textMuted }]}>Doğru</Text>
+                      {drills ? <Text style={[st.numCol, st.headCell, { color: colors.textMuted }]}>Doğru</Text> : null}
                       <Text style={[st.numCol, st.headCell, { color: colors.textMuted }]}>Puan</Text>
-                      {cols.map((p) => (
+                      {!drills ? <Text style={[st.numCol, st.headCell, { color: colors.textMuted }]}>Teslim</Text> : null}
+                      {(drills ? cols : []).map((p) => (
                         <Text key={p.id} style={[st.cell, st.headCell, { color: p.color }]} numberOfLines={2}>
                           {p.name.replace(/\s+/g, '')}
                         </Text>
@@ -156,11 +157,12 @@ export default function TeacherClassScreen({ route, navigation }) {
                             <MiniPM label="−" color={colors.danger} onPress={() => t.addPoint(classId, s.id, -1)} />
                           </View>
                         </View>
-                        <Text style={[st.numCol, { color: colors.text }]}>{tot.t ? `%${Math.round(tot.acc * 100)}` : '—'}</Text>
+                        {drills ? <Text style={[st.numCol, { color: colors.text }]}>{tot.t ? `%${Math.round(tot.acc * 100)}` : '—'}</Text> : null}
                         <Text style={[st.numCol, { color: tot.points > 0 ? colors.primary : tot.points < 0 ? colors.danger : colors.textMuted, fontWeight: '800' }]}>
                           {tot.points > 0 ? '+' : ''}{tot.points}
                         </Text>
-                        {cols.map((p) => (
+                        {!drills ? <Text style={[st.numCol, { color: colors.textMuted }]}>{(s.submissions || []).length}</Text> : null}
+                        {(drills ? cols : []).map((p) => (
                           <View key={p.id} style={[st.cell, { alignItems: 'center', justifyContent: 'center' }]}>
                             <View style={[st.dot, { backgroundColor: accColor(ps[p.id].acc, colors) }]}>
                               {ps[p.id].acc != null ? <Text style={st.dotT}>{Math.round(ps[p.id].acc * 100)}</Text> : null}
@@ -172,7 +174,7 @@ export default function TeacherClassScreen({ route, navigation }) {
                   </View>
                 </ScrollView>
                 <Text style={{ color: colors.textFaint, fontSize: font.tiny, marginTop: spacing.sm }}>
-                  Renk: 🔴 %50 altı · 🟠 %50–79 · 🟢 %80+ · gri = henüz yeterli veri yok (en az 3 cevap). Satıra dokun → öğrenci profili.
+                  {drills ? 'Renk: 🔴 %50 altı · 🟠 %50–79 · 🟢 %80+ · gri = henüz yeterli veri yok (en az 3 cevap). ' : ''}Satıra dokun → öğrenci profili.
                 </Text>
               </>
             ) : null}

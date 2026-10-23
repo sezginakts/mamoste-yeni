@@ -37,8 +37,8 @@ export default function HomeScreen({ navigation }) {
   };
 
   const classes = state.student.classes || [];
-  // İngilizce çalışma bölümü: henüz derse katılmamışsa ya da İngilizce dersi varsa.
-  const showEnglish = !classes.length || classes.some((c) => c.branch === 'ingilizce');
+  // İngilizce çalışma bölümü (kalıplar, günlük hedef, seri/XP) yalnızca İngilizce dersine katılmış öğrencide.
+  const showEnglish = classes.some((c) => c.branch === 'ingilizce');
   const pendingIn = (branch) => pending.filter((h) => (h.branch || 'ingilizce') === branch).length;
 
   const startNextHw = () => {
@@ -65,12 +65,16 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.title}>Mamoste</Text>
         </View>
         <View style={styles.topRight}>
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>🔥 {state.streak}</Text>
-          </View>
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>⭐ {state.xp}</Text>
-          </View>
+          {showEnglish ? (
+            <>
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>🔥 {state.streak}</Text>
+              </View>
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>⭐ {state.xp}</Text>
+              </View>
+            </>
+          ) : null}
           <Pressable style={styles.badge} onPress={() => navigation.navigate('Profile')} accessibilityLabel="Profilim" hitSlop={6}>
             <Text style={styles.badgeText}>{state.student.avatar || '🙂'}</Text>
           </Pressable>

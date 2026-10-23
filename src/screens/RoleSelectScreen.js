@@ -12,7 +12,7 @@ const OPTIONS = [
     key: 'student',
     emoji: '🎒',
     title: 'Öğrenciyim',
-    desc: 'Kalıplarla İngilizce çalış, öğretmeninden gelen ödevleri yap.',
+    desc: 'Derslerine sınıf koduyla katıl, öğretmeninden gelen ödevleri yap.',
   },
   {
     key: 'teacher',

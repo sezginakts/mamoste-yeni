@@ -64,9 +64,10 @@ export default function StudentProfileScreen({ navigation }) {
       total: all.length,
       done: done.length,
       acc: t ? c / t : null,
+      // Tam puan: cümle ödevinde hepsi doğru ya da görevde öğretmenden 100.
       perfect: done.some((h) => {
         const v = Object.values(h.result.res || {});
-        return v.length > 0 && v.every((x) => x === 1);
+        return (v.length > 0 && v.every((x) => x === 1)) || (h.fb && h.fb.score === 100);
       }),
       score: scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null,
       days: new Set(done.map((h) => h.result.at && dayKey(new Date(h.result.at))).filter(Boolean)),
@@ -77,7 +78,8 @@ export default function StudentProfileScreen({ navigation }) {
   const week = thisWeek();
   const activeWeek = week.map((k) => !!(state.studyLog || {})[k] || hw.days.has(k));
   const activeCount = activeWeek.filter(Boolean).length;
-  const english = !classes.length || classes.some((c) => c.branch === 'ingilizce');
+  // Seri, XP, seviye ve kalıp sayıları İngilizce çalışmasından gelir: yalnız İngilizce dersi olan öğrencide.
+  const english = classes.some((c) => c.branch === 'ingilizce');
   const lv = levelOf(state.xp || 0);
 
   const badges = [
@@ -86,17 +88,17 @@ export default function StudentProfileScreen({ navigation }) {
     { e: '📝', name: 'İlk ödev', ok: hw.done >= 1 },
     { e: '📚', name: '10 ödev', ok: hw.done >= 10 },
     { e: '💯', name: 'Tam puan', ok: hw.perfect },
-    { e: '🔥', name: '3 gün seri', ok: (state.longestStreak || 0) >= 3 },
-    { e: '🚀', name: '7 gün seri', ok: (state.longestStreak || 0) >= 7 },
-    { e: '🏆', name: '30 gün seri', ok: (state.longestStreak || 0) >= 30 },
     { e: '🎯', name: 'Haftalık hedef', ok: activeCount >= (state.weeklyGoal || 4) },
     ...(english
       ? [
+          { e: '🔥', name: '3 gün seri', ok: (state.longestStreak || 0) >= 3 },
+          { e: '🚀', name: '7 gün seri', ok: (state.longestStreak || 0) >= 7 },
+          { e: '🏆', name: '30 gün seri', ok: (state.longestStreak || 0) >= 30 },
           { e: '🧩', name: '10 kalıp cümlesi', ok: stats.mastered >= 10 },
           { e: '🧠', name: '50 kalıp cümlesi', ok: stats.mastered >= 50 },
+          { e: '⭐', name: 'Seviye 5', ok: lv.level >= 5 },
         ]
       : []),
-    { e: '⭐', name: 'Seviye 5', ok: lv.level >= 5 },
   ];
 
   const pickReminder = async (time) => {
@@ -116,13 +118,19 @@ export default function StudentProfileScreen({ navigation }) {
             <Text style={{ fontSize: 52 }}>{avatar || '🙂'}</Text>
           </View>
           <Text style={{ color: colors.text, fontSize: font.h3, fontWeight: '900', marginTop: spacing.sm }}>{nk.trim() || 'Takma adın yok'}</Text>
-          <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: 2 }}>
-            Seviye {lv.level} · ⭐ {state.xp || 0} XP · 🔥 {state.streak || 0} gün seri
-          </Text>
-          <View style={[s.bar, { backgroundColor: colors.cardSoft }]}>
-            <View style={[s.barFill, { width: `${Math.round(lv.ratio * 100)}%`, backgroundColor: colors.primary }]} />
-          </View>
-          <Text style={{ color: colors.textFaint, fontSize: font.tiny, marginTop: 4 }}>Seviye {lv.level + 1} için {lv.to - (state.xp || 0)} XP</Text>
+          {english ? (
+            <>
+              <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: 2 }}>
+                Seviye {lv.level} · ⭐ {state.xp || 0} XP · 🔥 {state.streak || 0} gün seri
+              </Text>
+              <View style={[s.bar, { backgroundColor: colors.cardSoft }]}>
+                <View style={[s.barFill, { width: `${Math.round(lv.ratio * 100)}%`, backgroundColor: colors.primary }]} />
+              </View>
+              <Text style={{ color: colors.textFaint, fontSize: font.tiny, marginTop: 4 }}>Seviye {lv.level + 1} için {lv.to - (state.xp || 0)} XP</Text>
+            </>
+          ) : (
+            <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: 2 }}>{classes.length} ders · {hw.done} ödev bitti</Text>
+          )}
         </Card>
 
         <SectionTitle>AVATARIN</SectionTitle>
@@ -188,14 +196,17 @@ export default function StudentProfileScreen({ navigation }) {
         <SectionTitle>İLERLEMEM</SectionTitle>
         <View style={s.statRow}>
           <Stat value={`${hw.done}/${hw.total}`} label="ödev bitti" />
-          <Stat value={hw.acc != null ? `%${Math.round(hw.acc * 100)}` : '—'} label="doğru oranı" />
-          {hw.score != null ? <Stat value={hw.score} label="görev puanı" /> : english ? <Stat value={stats.mastered} label="kalıp cümlesi" /> : null}
+          {english ? <Stat value={hw.acc != null ? `%${Math.round(hw.acc * 100)}` : '—'} label="doğru oranı" /> : null}
+          <Stat value={hw.score != null ? hw.score : '—'} label="görev puanı ort." />
+          {english ? <Stat value={stats.mastered} label="kalıp cümlesi" /> : null}
         </View>
-        <View style={s.statRow}>
-          <Stat value={state.streak || 0} label="gün seri" color={colors.warning} />
-          <Stat value={state.longestStreak || 0} label="en uzun seri" />
-          <Stat value={lv.level} label="seviye" color={colors.primary} />
-        </View>
+        {english ? (
+          <View style={s.statRow}>
+            <Stat value={state.streak || 0} label="gün seri" color={colors.warning} />
+            <Stat value={state.longestStreak || 0} label="en uzun seri" />
+            <Stat value={lv.level} label="seviye" color={colors.primary} />
+          </View>
+        ) : null}
 
         <SectionTitle>ROZETLERİM · {badges.filter((b) => b.ok).length}/{badges.length}</SectionTitle>
         <Card>
