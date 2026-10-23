@@ -1,13 +1,13 @@
 // Öğretmen profili: görünen ad, avatar (emoji), okul, tanıtım, iletişim saatleri (öğrenciler derslerinde görür);
-// branş (değişmez), sınıflar + katılma QR'ları, istatistik, etkinlikler.
+// branş (değişmez), sınıflar + davet kodları (tümünü yenile), istatistik, etkinlikler.
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet, Platform, Alert } from 'react-native';
 import { spacing, font } from '../../theme';
 import { useTheme } from '../../context/ThemeContext';
 import { useTeacher } from '../../teacher/TeacherContext';
 import { useRole } from '../../context/RoleContext';
 import { useTeacherProfile, PROFILE_LIMITS } from '../../teacher/profile';
-import { Header, Card, SectionTitle, Field, SmallButton, Stat } from '../../teacher/ui';
+import { Header, Card, SectionTitle, Field, SmallButton, Stat, formatJoinCode } from '../../teacher/ui';
 import { TEACHER_AVATARS } from '../../data/avatars';
 import { activitiesFor, ACTIVITY_TYPES } from '../../data/activities';
 
@@ -43,6 +43,27 @@ export default function TeacherProfileScreen({ navigation }) {
       setMsg({ ok: false, text: /column|schema/i.test(e.message) ? 'Sunucu henüz güncellenmedi (yeni migration uygulanmalı).' : e.message });
     }
     setBusy(false);
+  };
+
+  // Tüm sınıfların davet kodunu birden yenile (sınıftakiler kalır).
+  const [renewing, setRenewing] = useState(false);
+  const [codeMsg, setCodeMsg] = useState(null);
+  const renewAll = () => {
+    const go = async () => {
+      setRenewing(true);
+      setCodeMsg(null);
+      try {
+        const n = await t.newJoinCodesAll();
+        setCodeMsg({ ok: true, text: `${n} sınıfın kodu yenilendi. Eski kodlar artık çalışmaz.` });
+      } catch (e) {
+        setCodeMsg({ ok: false, text: e.message });
+      }
+      setRenewing(false);
+    };
+    const m = 'Bütün sınıfların kodu değişir, eski kodlar çalışmaz. Sınıfa katılmış öğrenciler sınıfta kalır.';
+    if (Platform.OS === 'web') {
+      if (window.confirm(`Tüm kodları yenile\n\n${m}`)) go();
+    } else Alert.alert('Tüm kodları yenile', m, [{ text: 'Vazgeç' }, { text: 'Yenile', onPress: go }]);
   };
 
   const sum = useMemo(() => {
@@ -110,7 +131,10 @@ export default function TeacherProfileScreen({ navigation }) {
           <Stat value={sum.hws} label="ödev" />
         </View>
 
-        <SectionTitle>SINIFLARIM · KATILMA QR'LARI</SectionTitle>
+        <SectionTitle right={t.cloudOn && t.classes.some((c) => c.code) ? <SmallButton title={renewing ? '…' : '🔄 Tüm kodları yenile'} disabled={renewing} onPress={renewAll} /> : null}>
+          SINIFLARIM · KODLAR
+        </SectionTitle>
+        {codeMsg ? <Text style={{ color: codeMsg.ok ? colors.primary : colors.danger, fontSize: font.small, marginBottom: spacing.sm }}>{codeMsg.text}</Text> : null}
         {t.classes.length === 0 ? (
           <Card>
             <Text style={{ color: colors.textMuted, fontSize: font.small }}>Henüz sınıf yok. Ana sayfadan sınıf ekle.</Text>
@@ -119,12 +143,12 @@ export default function TeacherProfileScreen({ navigation }) {
         {t.classes.map((c) => {
           const n = Object.keys(c.students).length;
           const j = Object.values(c.students).filter((x) => x.joined).length;
-          const state = !t.cloudOn ? '' : !c.qr ? '…' : c.qrOpen ? '🟢 QR açık' : '🔒 Katılım kapalı';
+          const state = !t.cloudOn ? '' : c.code ? formatJoinCode(c.code) : '…';
           return (
             <Card key={c.id} onPress={() => navigation.navigate('TeacherClass', { classId: c.id })}>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Text style={{ color: colors.text, fontWeight: '800', flex: 1 }}>{c.name}</Text>
-                <Text style={{ color: colors.textMuted, fontSize: font.small }}>{state}</Text>
+                <Text style={{ color: colors.accent, fontWeight: '900', letterSpacing: 1.5 }} selectable>{state}</Text>
               </View>
               <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: 2 }}>
                 {n} öğrenci{t.cloudOn ? ` · ${j} katıldı` : ''} · {(c.homeworks || []).length} ödev ›

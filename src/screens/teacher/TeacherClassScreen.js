@@ -1,13 +1,12 @@
 // Sınıf ekranı: öğrenci ızgarası (öğrenci × kalıp renkleri), hızlı artı/eksi, ödevler.
 import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet, Alert, Platform, Modal, useWindowDimensions } from 'react-native';
-import QRCode from 'react-native-qrcode-svg';
 import { spacing, font, radius } from '../../theme';
 import { useTheme } from '../../context/ThemeContext';
 import { useTeacher } from '../../teacher/TeacherContext';
 import { PATTERNS, PATTERN_BY_ID } from '../../data/patterns';
 import { studentPatternStats, studentTotals, weakSuggestion, homeworkStatus, accColor, classPatternStats } from '../../teacher/analytics';
-import { Header, Card, SectionTitle, Field, SmallButton, Chip, Empty, formatDate } from '../../teacher/ui';
+import { Header, Card, SectionTitle, Field, SmallButton, Chip, Empty, formatDate, formatJoinCode, shareText } from '../../teacher/ui';
 import { hwSummary } from '../../utils/homework';
 import { dayKey } from '../../utils/helpers';
 import { usePlans } from '../../teacher/PlanContext';
@@ -110,8 +109,8 @@ export default function TeacherClassScreen({ route, navigation }) {
               </Card>
             ) : null}
 
-            {/* Öğrencilerin uygulamadan okutarak katılacağı QR */}
-            <JoinQrCard cls={cls} total={rows.length} />
+            {/* Öğrencilerin evde uygulamaya yazacağı sınıf kodu */}
+            <JoinCodeCard cls={cls} total={rows.length} />
 
             <SectionTitle right={<SmallButton title="＋ Öğrenci" onPress={openImport} />}>ÖĞRENCİLER</SectionTitle>
             {rows.length === 0 ? (
@@ -227,41 +226,39 @@ export default function TeacherClassScreen({ route, navigation }) {
   );
 }
 
-export const joinQrValue = (secret) => `MAMOSTE:KATIL:${secret}`;
-
 const ask = (title, msg, ok, go) => {
   if (Platform.OS === 'web') {
-    if (window.confirm(`${title}
-
-${msg}`)) go();
+    if (window.confirm(`${title}\n\n${msg}`)) go();
   } else Alert.alert(title, msg, [{ text: 'Vazgeç' }, { text: ok, onPress: go }]);
 };
 
-// Katılma QR'ı: öğrenciler uygulamada okutup okul numarasıyla katılır. Kod yazılmaz, paylaşılmaz.
-// "Tamam" → katılım kapanır; yeni öğrenci gelirse "Yeni QR" (eski QR artık çalışmaz, sınıftakiler kalır).
-function JoinQrCard({ cls, total }) {
+// Davet kodu: öğretmen tahtaya yazar, öğrenci evde Mamoste'de "Derse katıl"a kod + okul numarasıyla girer.
+// Yenileyince eski kod çalışmaz; sınıftakiler kalır. Sonradan gelen öğrenciye güncel kod gönderilir (Paylaş).
+function JoinCodeCard({ cls, total }) {
   const { colors } = useTheme();
   const t = useTeacher();
-  const { width, height } = useWindowDimensions();
+  const { width } = useWindowDimensions();
   const [big, setBig] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState('');
+  const [msg, setMsg] = useState(null);
   const joined = Object.values(cls.students).filter((s) => s.joined).length;
 
-  const run = async (fn) => {
-    setBusy(true);
-    setErr('');
-    try {
-      await fn();
-    } catch (e) {
-      setErr(e.message || 'Olmadı, tekrar dene.');
-    }
-    setBusy(false);
+  const renew = () =>
+    ask('Kodu yenile', 'Eski kod artık çalışmaz. Sınıfa katılmış öğrenciler sınıfta kalır.', 'Yenile', async () => {
+      setBusy(true);
+      setMsg(null);
+      try {
+        await t.newJoinCode(cls.id);
+        setMsg({ ok: true, text: 'Yeni kod hazır.' });
+      } catch (e) {
+        setMsg({ ok: false, text: e.message || 'Olmadı, tekrar dene.' });
+      }
+      setBusy(false);
+    });
+  const share = async () => {
+    const r = await shareText(`Mamoste ${cls.name} sınıf kodu: ${formatJoinCode(cls.code)}\nUygulamada “Derse katıl”a bu kodu ve okul numaranı yaz.`);
+    if (r === 'copied') setMsg({ ok: true, text: 'Kopyalandı.' });
   };
-  const newQr = () =>
-    ask('Yeni QR üret', 'Eski QR artık çalışmaz (fotoğrafı çekilmiş olsa bile). Sınıftaki öğrenciler kalır.', 'Yeni QR', () => run(() => t.newJoinQr(cls.id)));
-  const close = () =>
-    ask('Katılımı kapat', 'Bu QR ile kimse katılamaz. Yeni öğrenci gelirse yeni QR üretirsin.', 'Kapat', () => run(() => t.closeJoin(cls.id)));
 
   if (!t.cloudOn) {
     return (
@@ -272,63 +269,43 @@ function JoinQrCard({ cls, total }) {
   }
   const head = (
     <Text style={{ color: colors.textMuted, fontSize: font.tiny, fontWeight: '800', letterSpacing: 1 }}>
-      SINIFA KATILMA · {joined}/{total} katıldı
+      SINIF KODU · {joined}/{total} katıldı
     </Text>
   );
-  if (!cls.rid || (!cls.qr && cls.qrOpen !== false)) {
+  if (!cls.rid || !cls.code) {
     return (
       <Card style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
         <View style={{ flex: 1 }}>
           {head}
           <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: 4 }}>
-            {cls.rid ? 'QR hazırlanıyor… Sunucu güncellenmediyse QR görünmez.' : 'Sınıf sunucuya eşitleniyor…'}
+            {cls.rid ? 'Kod hazırlanıyor… Sunucu güncellenmediyse kod görünmez.' : 'Sınıf sunucuya eşitleniyor…'}
           </Text>
         </View>
         <SmallButton title={t.sync.busy ? '…' : '↻'} onPress={t.syncNow} disabled={t.sync.busy} />
       </Card>
     );
   }
-  if (!cls.qrOpen) {
-    return (
-      <Card>
-        {head}
-        <Text style={{ color: colors.text, fontWeight: '800', marginTop: 6 }}>🔒 Katılım kapalı</Text>
-        <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: 2 }}>
-          Sınıftakiler kalır. Yeni öğrenci gelirse yeni QR üret; eski QR'lar çalışmaz.
-        </Text>
-        <SmallButton title={busy ? '…' : '🔄 Yeni QR üret'} filled disabled={busy} onPress={newQr} style={{ marginTop: spacing.sm, alignSelf: 'flex-start' }} />
-        {err ? <Text style={{ color: colors.danger, fontSize: font.small, marginTop: 6 }}>{err}</Text> : null}
-      </Card>
-    );
-  }
-  const value = joinQrValue(cls.qr);
-  const bigSize = Math.min(width, height) * 0.72;
+  const code = formatJoinCode(cls.code);
   return (
     <Card>
-      <View style={{ flexDirection: 'row', gap: spacing.md, alignItems: 'center' }}>
-        <Pressable onPress={() => setBig(true)} style={{ padding: 8, backgroundColor: '#fff', borderRadius: radius.md }} accessibilityLabel="QR kodu büyüt">
-          <QRCode value={value} size={132} ecl="M" backgroundColor="#FFFFFF" color="#000000" />
-        </Pressable>
-        <View style={{ flex: 1 }}>
-          {head}
-          <Text style={{ color: colors.text, fontWeight: '800', marginTop: 4 }}>Öğrenciler Mamoste'de “Derse katıl → QR okut” ile katılır.</Text>
-          <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: 2 }}>Herkes katılınca “Tamam”a bas: QR kapanır, sınıftakiler kalır.</Text>
-        </View>
-      </View>
+      {head}
+      <Text style={{ color: colors.accent, fontSize: 34, fontWeight: '900', letterSpacing: 4, marginTop: 4 }} selectable>
+        {code}
+      </Text>
+      <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: 2 }}>
+        Tahtaya yaz; öğrenciler Mamoste'de “Derse katıl”a bu kodu ve okul numarasını girer. Yenileyince eski kod çalışmaz, sınıftakiler kalır.
+      </Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.sm }}>
         <SmallButton title="⛶ Tahtada göster" onPress={() => setBig(true)} />
-        <SmallButton title={busy ? '…' : '✓ Tamam, kapat'} filled disabled={busy} onPress={close} />
-        <SmallButton title="🔄 Yeni QR" disabled={busy} onPress={newQr} />
-        <SmallButton title={t.sync.busy ? '…' : '↻'} onPress={t.syncNow} disabled={t.sync.busy} />
+        <SmallButton title={Platform.OS === 'web' ? '📋 Kopyala' : '📤 Gönder'} onPress={share} />
+        <SmallButton title={busy ? '…' : '🔄 Kodu yenile'} disabled={busy} onPress={renew} />
       </View>
-      {err ? <Text style={{ color: colors.danger, fontSize: font.small, marginTop: 6 }}>{err}</Text> : null}
+      {msg ? <Text style={{ color: msg.ok ? colors.primary : colors.danger, fontSize: font.small, marginTop: 6 }}>{msg.text}</Text> : null}
       <Modal visible={big} transparent animationType="fade" onRequestClose={() => setBig(false)}>
-        <Pressable onPress={() => setBig(false)} style={st.qrModal}>
-          <Text style={st.qrModalTitle}>{cls.name} · Mamoste'de “Derse katıl → QR okut”</Text>
-          <View style={{ padding: 16, backgroundColor: '#fff', borderRadius: 16 }}>
-            <QRCode value={value} size={bigSize} ecl="M" backgroundColor="#FFFFFF" color="#000000" />
-          </View>
-          <Text style={st.qrModalSub}>{joined}/{total} katıldı · kapatmak için dokun</Text>
+        <Pressable onPress={() => setBig(false)} style={st.codeModal}>
+          <Text style={st.codeModalTitle}>{cls.name} · Mamoste → “Derse katıl”</Text>
+          <Text style={[st.codeModalCode, { fontSize: Math.min(150, (width - 32) / 7) }]} numberOfLines={1} adjustsFontSizeToFit>{code}</Text>
+          <Text style={st.codeModalSub}>Bu kodu ve okul numaranı yaz · {joined}/{total} katıldı · kapatmak için dokun</Text>
         </Pressable>
       </Modal>
     </Card>
@@ -354,8 +331,9 @@ const st = StyleSheet.create({
   cell: { width: CELL + 18 },
   dot: { width: CELL, height: CELL, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
   dotT: { color: '#fff', fontSize: 11, fontWeight: '900' },
-  qrModal: { flex: 1, backgroundColor: 'rgba(0,0,0,0.88)', alignItems: 'center', justifyContent: 'center', padding: 16 },
-  qrModalTitle: { color: '#fff', fontSize: 22, fontWeight: '900', marginBottom: 16, textAlign: 'center' },
-  qrModalSub: { color: 'rgba(255,255,255,0.75)', fontSize: 16, fontWeight: '700', marginTop: 14 },
+  codeModal: { flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', alignItems: 'center', justifyContent: 'center', padding: 16 },
+  codeModalTitle: { color: '#fff', fontSize: 24, fontWeight: '900', marginBottom: 16, textAlign: 'center' },
+  codeModalCode: { color: '#fff', fontWeight: '900', letterSpacing: 2, textAlign: 'center' },
+  codeModalSub: { color: 'rgba(255,255,255,0.75)', fontSize: 16, fontWeight: '700', marginTop: 18, textAlign: 'center' },
   pm: { width: 28, height: 24, borderRadius: 6, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
 });

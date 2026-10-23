@@ -158,12 +158,12 @@ export function ProgressProvider({ children }) {
     setStudent({ ...cur, avatar, classes, rid: classes[0] ? classes[0].rid : null, cn: classes[0] ? classes[0].cn : null });
   };
 
-  // Derse katıl: öğretmenin QR'ındaki anahtar + okul numarası (+ takma ad). Cihazda anahtar varsa aynı anahtarla katılır.
+  // Derse katıl: öğretmenin verdiği sınıf kodu + okul numarası (+ takma ad). Cihazda anahtar varsa aynı anahtarla katılır.
   // Hata mesajını fırlatır.
-  const joinClass = async (secret, no, nk) => {
+  const joinClass = async (code, no, nk) => {
     const cur = stateRef.current.student;
     const rows = await rpc('student_join', {
-      p_join_code: secret.trim().toLowerCase(),
+      p_join_code: code.toUpperCase().replace(/[^A-Z0-9]/g, ''),
       p_number: String(no).trim(),
       p_nickname: (nk || '').trim() || null,
       p_token: cur.token || null,

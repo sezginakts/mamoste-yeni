@@ -153,7 +153,7 @@ export default function StudentProfileScreen({ navigation }) {
         {classes.length === 0 ? (
           <Card onPress={() => navigation.navigate('StudentJoin')}>
             <Text style={{ color: colors.text, fontWeight: '800' }}>Henüz bir derse katılmadın</Text>
-            <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: 2 }}>Öğretmeninin tahtada gösterdiği QR kodu okut.</Text>
+            <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: 2 }}>Öğretmeninin tahtaya yazdığı sınıf kodunu gir.</Text>
           </Card>
         ) : null}
         {classes.map((c) => {

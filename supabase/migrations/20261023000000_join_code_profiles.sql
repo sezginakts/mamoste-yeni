@@ -1,39 +1,21 @@
--- Mamoste: QR ile sınıfa katılma + öğretmen/öğrenci profilleri.
+-- Mamoste: sınıf davet kodu (öğretmen tahtaya yazar) + öğretmen/öğrenci profilleri.
 -- Sırayla uygulanır: …000000_init → …010000_push → …020000_branches → bu dosya.
 --
---   * Sınıfa katılma artık yalnızca QR ile: her sınıfın tahmin edilemez bir QR anahtarı (join_secret, 32 hex) var.
---     Öğrenci uygulamada QR'ı okutur → student_join(join_secret, okul no, takma ad).
---     6 karakterlik eski sınıf kodu (join_code) artık katılmada KULLANILMAZ (kolay paylaşılıp tahmin edilebiliyordu).
---   * Öğretmen "Yeni QR" dediğinde anahtar değişir: eski QR (fotoğrafı çekilip paylaşılmış olsa bile) işe yaramaz.
---     Sınıftaki öğrenciler etkilenmez; öğretmen çıkarana kadar kalırlar (cihaz anahtarıyla bağlılar).
---   * Öğretmen katılımı tamamen kapatabilir (join_open = false); kapalıyken hiçbir QR çalışmaz.
+--   * Her sınıfın 8 karakterlik davet kodu var (invite_code, ör. K7MQ-4XPA). Öğretmen tahtaya yazar, öğrenci evde
+--     uygulamaya yazar → student_join(kod, okul no, takma ad). 32 harf/rakam ^ 8 ≈ 1,1 trilyon olasılık + deneme sınırı.
+--     Init'teki 6 karakterlik join_code artık katılmada KULLANILMAZ (eski QR sonuç kodlarının kimliği olarak kalır).
+--   * Öğretmen istediği an kodu yeniler (tek sınıf ya da tüm sınıfları): eski kod çalışmaz; sınıftaki öğrenciler
+--     etkilenmez, öğretmen çıkarana kadar kalır. Yeni öğrenci gelirse öğretmen ona güncel kodu söyler.
 --   * Profil: öğretmen görünen ad, avatar (emoji), okul, tanıtım, iletişim saatleri; öğrenci takma ad + avatar.
 --     Öğrenci derslerinde öğretmenin adını/avatarını/tanıtımını görür; öğretmen öğrencinin avatarını görür.
 --     Öğrencinin gerçek adı yine sunucuya GİTMEZ.
 
 -- ---------------------------------------------------------------------------
--- QR anahtarı
+-- Davet kodu
 -- ---------------------------------------------------------------------------
 
-create or replace function public.new_join_secret()
-returns text
-language sql
-volatile
-set search_path = ''
-as $$ select encode(extensions.gen_random_bytes(16), 'hex') $$;
-
-alter table public.classes
-  add column join_secret text unique default public.new_join_secret(),
-  add column join_open boolean not null default true;
-update public.classes set join_secret = public.new_join_secret() where join_secret is null;
-alter table public.classes alter column join_secret set not null;
-
--- Öğretmen QR anahtarını ve katılım durumunu doğrudan yazamaz; yalnızca aşağıdaki fonksiyonlarla, kendi sınıfı için.
--- (Supabase tablolara varsayılan olarak tüm yetkiyi verir; init'teki "update (name)" bunu daraltmıyordu.)
-revoke insert, update on public.classes from authenticated;
-grant insert (teacher_id, name, branch) on public.classes to authenticated;
-grant update (name) on public.classes to authenticated;
-create or replace function public.teacher_new_qr(p_class_id uuid)
+-- 8 karakter; karışmasın diye 0/O, 1/I yok (init'teki alfabe). Benzersiz olana kadar dener.
+create or replace function public.new_invite_code()
 returns text
 language plpgsql
 volatile
@@ -41,31 +23,70 @@ security definer
 set search_path = ''
 as $$
 declare
-  s text := public.new_join_secret();
+  alphabet constant text := 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  code text;
 begin
-  if not public.owns_class(p_class_id) then
-    raise exception 'Bu sınıf senin değil.' using errcode = 'P0001';
-  end if;
-  update public.classes c set join_secret = s, join_open = true where c.id = p_class_id;
-  return s;
+  loop
+    code := '';
+    for i in 1..8 loop
+      code := code || substr(alphabet, 1 + (get_byte(extensions.gen_random_bytes(1), 0) % length(alphabet)), 1);
+    end loop;
+    exit when not exists (select 1 from public.classes c where c.invite_code = code);
+  end loop;
+  return code;
 end $$;
 
-create or replace function public.teacher_set_join_open(p_class_id uuid, p_open boolean)
-returns void
+alter table public.classes add column invite_code text unique;
+update public.classes set invite_code = public.new_invite_code() where invite_code is null;
+alter table public.classes alter column invite_code set default public.new_invite_code();
+alter table public.classes alter column invite_code set not null;
+
+-- Öğretmen davet kodunu doğrudan yazamaz (seçilmiş/kolay kod olmasın); yalnızca aşağıdaki fonksiyonlarla.
+-- (Supabase tablolara varsayılan olarak tüm yetkiyi verir; init'teki "update (name)" bunu daraltmıyordu.)
+revoke insert, update on public.classes from authenticated;
+grant insert (teacher_id, name, branch) on public.classes to authenticated;
+grant update (name) on public.classes to authenticated;
+
+-- Tek sınıfın kodunu yenile.
+create or replace function public.teacher_new_code(p_class_id uuid)
+returns text
 language plpgsql
 volatile
 security definer
 set search_path = ''
 as $$
+declare
+  s text := public.new_invite_code();
 begin
   if not public.owns_class(p_class_id) then
     raise exception 'Bu sınıf senin değil.' using errcode = 'P0001';
   end if;
-  update public.classes c set join_open = coalesce(p_open, false) where c.id = p_class_id;
+  update public.classes c set invite_code = s where c.id = p_class_id;
+  return s;
 end $$;
 
--- Sınıfa katıl: p_join_code artık QR'daki join_secret. Gövde branches.sql'deki ile aynı; yalnızca sınıf
--- join_secret ile bulunur ve katılım kapalıysa reddedilir.
+-- Öğretmenin TÜM sınıflarının kodunu yenile.
+create or replace function public.teacher_new_codes_all()
+returns table (class_id uuid, invite_code text)
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  r record;
+begin
+  if (select auth.uid()) is null then
+    raise exception 'Önce giriş yapmalısın.' using errcode = 'P0001';
+  end if;
+  for r in select c.id from public.classes c where c.teacher_id = (select auth.uid()) loop
+    update public.classes c set invite_code = public.new_invite_code() where c.id = r.id;
+  end loop;
+  return query select c.id, c.invite_code from public.classes c where c.teacher_id = (select auth.uid());
+end $$;
+
+-- Sınıfa katıl: p_join_code artık davet kodu (boşluk/tire yok sayılır, büyük-küçük harf fark etmez).
+-- Gövde branches.sql'deki ile aynı; yalnızca sınıf invite_code ile bulunur.
 create or replace function public.student_join(p_join_code text, p_number text, p_nickname text default null, p_token text default null)
 returns table (student_id uuid, token text, class_name text, branch text, error text)
 language plpgsql
@@ -78,28 +99,24 @@ declare
   s public.students;
   t text;
   h text;
-  code text := lower(trim(coalesce(p_join_code, '')));
+  code text := upper(regexp_replace(coalesce(p_join_code, ''), '[^A-Za-z0-9]', '', 'g'));
   num text := trim(coalesce(p_number, ''));
   nick text := nullif(left(trim(coalesce(p_nickname, '')), 30), '');
 begin
-  -- Deneme sınırı: QR anahtarı başına ve genel (anahtar tahmini denemelerine karşı).
+  -- Deneme sınırı: kod başına ve genel (kod tahmini denemelerine karşı).
   perform public.check_rate('join:' || left(code, 12), 30, 600);
   perform public.check_rate('join-all', 2000, 600);
   if num !~ '^[0-9]{1,6}$' then
     return query select null::uuid, null::text, null::text, null::text, 'Okul numarası sadece rakam olmalı.';
     return;
   end if;
-  if code !~ '^[0-9a-f]{32}$' then
-    return query select null::uuid, null::text, null::text, null::text, 'Bu bir Mamoste sınıf QR kodu değil.';
+  if code !~ '^[A-Z0-9]{8}$' then
+    return query select null::uuid, null::text, null::text, null::text, 'Sınıf kodu 8 harf/rakam olmalı.';
     return;
   end if;
-  select * into c from public.classes cl where cl.join_secret = code;
+  select * into c from public.classes cl where cl.invite_code = code;
   if not found then
-    return query select null::uuid, null::text, null::text, null::text, 'Bu QR kod geçersiz ya da yenilenmiş. Öğretmeninden güncel QR kodu iste.';
-    return;
-  end if;
-  if not c.join_open then
-    return query select null::uuid, null::text, null::text, null::text, 'Bu sınıfın katılımı kapalı. Öğretmeninden yeni QR kodu iste.';
+    return query select null::uuid, null::text, null::text, null::text, 'Bu kod geçersiz ya da yenilenmiş. Öğretmeninden güncel kodu iste.';
     return;
   end if;
   -- Cihazın mevcut anahtarı geçerliyse onu kullan.
@@ -197,13 +214,13 @@ end $$;
 -- Yetkiler
 -- ---------------------------------------------------------------------------
 
-revoke execute on function public.new_join_secret() from public, anon;
-revoke execute on function public.teacher_new_qr(uuid) from public, anon;
-revoke execute on function public.teacher_set_join_open(uuid, boolean) from public, anon;
+revoke execute on function public.new_invite_code() from public, anon;
+grant execute on function public.new_invite_code() to authenticated; -- sütun varsayılanı, öğretmen sınıf açarken çalışır
+revoke execute on function public.teacher_new_code(uuid) from public, anon;
+revoke execute on function public.teacher_new_codes_all() from public, anon;
 revoke execute on function public.student_set_profile(text, text, text) from public;
 revoke execute on function public.student_classes(text) from public;
-grant execute on function public.new_join_secret() to authenticated;
-grant execute on function public.teacher_new_qr(uuid) to authenticated;
-grant execute on function public.teacher_set_join_open(uuid, boolean) to authenticated;
+grant execute on function public.teacher_new_code(uuid) to authenticated;
+grant execute on function public.teacher_new_codes_all() to authenticated;
 grant execute on function public.student_set_profile(text, text, text) to anon, authenticated;
 grant execute on function public.student_classes(text) to anon, authenticated;

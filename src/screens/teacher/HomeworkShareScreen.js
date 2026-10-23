@@ -56,7 +56,7 @@ export default function HomeworkShareScreen({ route, navigation }) {
           </Text>
           {joined < total ? (
             <Text style={{ color: colors.warning, fontSize: font.small, marginTop: spacing.sm, textAlign: 'center' }}>
-              {total - joined} öğrenci henüz katılmadı. Sınıf ekranındaki QR'ı okutarak katılırlar.
+              {total - joined} öğrenci henüz katılmadı. Sınıf ekranındaki kodu ve okul numaralarını yazarak katılırlar.
             </Text>
           ) : null}
         </Card>

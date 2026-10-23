@@ -67,7 +67,7 @@ export default function StudentHomeworkScreen({ navigation, route }) {
             <Text style={{ fontSize: 34 }}>🎒</Text>
             <Text style={[st.t, { color: colors.text, marginTop: 6 }]}>Dersine katıl</Text>
             <Text style={[st.m, { color: colors.textMuted, textAlign: 'center' }]}>
-              Öğretmeninin tahtada gösterdiği QR kodu okut. Katıldıktan sonra ödevler buraya kendiliğinden gelir.
+              Öğretmeninin tahtaya yazdığı sınıf kodunu gir. Katıldıktan sonra ödevler buraya kendiliğinden gelir.
             </Text>
           </Card>
         ) : null}

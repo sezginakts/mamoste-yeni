@@ -156,7 +156,7 @@ export default function HomeScreen({ navigation }) {
         styles={styles}
         emoji="＋"
         title={classes.length ? 'Ders ekle' : 'Derse katıl'}
-        desc="Öğretmeninin QR kodunu okut"
+        desc="Öğretmeninin verdiği sınıf koduyla"
         onPress={() => navigation.navigate('StudentJoin')}
       />
       {classes.length > 1 ? (

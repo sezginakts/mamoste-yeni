@@ -1,7 +1,7 @@
 // Öğretmen verisi — cihazda (AsyncStorage) asıl kopya; öğretmen giriş yaptıysa sunucuyla eşitlenir (cloud.js).
 // Her sınıf ayrı anahtarda tutulur (tek dev JSON'un boyut sınırına takılmamak için).
 //
-// Sınıf: { id, rid (sunucu id), cc (eski sınıf kodu — sunucudan), qr (katılma QR anahtarı), qrOpen, name, createdAt, students: { [sid]: Öğrenci }, homeworks: [Ödev], subsSince }
+// Sınıf: { id, rid (sunucu id), cc (eski sınıf kodu — sunucudan), code (davet kodu — sunucudan), name, createdAt, students: { [sid]: Öğrenci }, homeworks: [Ödev], subsSince }
 // Öğrenci: { id, rid, joined (uygulamadan katıldı mı), no, nk (öğretmenin yazdığı ad — sunucuya gitmez), nick (öğrencinin takma adı), createdAt,
 //            attempts: { [cümleId]: { p, f, last } },       // doğru / yanlış sayısı
 //            submissions: [{ h, at, c, t, dur }],             // teslim edilen ödevler
@@ -15,7 +15,7 @@ import { scheduleReminder, cancelReminder } from '../utils/notify';
 import { AppState } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { useRole } from '../context/RoleContext';
-import { syncClass, applySync, cloudDeleteClass, cloudDeleteHomework, cloudDeleteStudent, cloudUpdateStudentNo, cloudDeviceLink, cloudFeedback, cloudNewQr, cloudSetJoinOpen } from './cloud';
+import { syncClass, applySync, cloudDeleteClass, cloudDeleteHomework, cloudDeleteStudent, cloudUpdateStudentNo, cloudDeviceLink, cloudFeedback, cloudNewCode, cloudNewCodesAll } from './cloud';
 
 const emptyStudent = (id, no, nk) => ({ id, no: String(no), nk: nk || '', createdAt: Date.now(), attempts: {}, submissions: [], points: [], notes: [] });
 
@@ -238,20 +238,24 @@ export function TeacherProvider({ children }) {
     if (!st || !st.rid) throw new Error('Öğrenci henüz sunucuya eşitlenmedi; birazdan tekrar dene.');
     return cloudDeviceLink(st.rid);
   };
-  // Katılma QR'ı. Yeni QR: eski QR (fotoğrafı paylaşılmış olsa bile) çalışmaz; sınıftaki öğrenciler kalır.
-  const newJoinQr = async (classId) => {
+  // Davet kodu: öğretmen tahtaya yazar, öğrenci evde uygulamaya girer. Yenileyince eski kod çalışmaz; sınıftakiler kalır.
+  const newJoinCode = async (classId) => {
     const c = classes[classId];
     if (!userId) throw new Error('Önce giriş yapmalısın.');
     if (!c || !c.rid) throw new Error('Sınıf henüz sunucuya eşitlenmedi; birazdan tekrar dene.');
-    const qr = await cloudNewQr(c.rid);
-    mutate(classId, (x) => { x.qr = qr; x.qrOpen = true; });
+    const code = await cloudNewCode(c.rid);
+    mutate(classId, (x) => { x.code = code; });
+    return code;
   };
-  // "Tamam, herkes katıldı": katılımı kapat. Yeniden açmak için yeni QR üretilir.
-  const closeJoin = async (classId) => {
-    const c = classes[classId];
-    if (!userId || !c || !c.rid) return;
-    await cloudSetJoinOpen(c.rid, false);
-    mutate(classId, (x) => { x.qrOpen = false; });
+  // Tüm sınıfların kodunu birden yenile.
+  const newJoinCodesAll = async () => {
+    if (!userId) throw new Error('Önce giriş yapmalısın.');
+    const rows = await cloudNewCodesAll();
+    const byRid = Object.fromEntries(rows.map((r) => [r.class_id, r.invite_code]));
+    Object.values(classes).forEach((c) => {
+      if (c.rid && byRid[c.rid]) mutate(c.id, (x) => { x.code = byRid[c.rid]; });
+    });
+    return rows.length;
   };
   // Görev teslimine geri bildirim + puan: önce sunucuya, sonra cihazdaki kayda.
   const giveFeedback = async (classId, sid, subId, text, score) => {
@@ -384,8 +388,8 @@ export function TeacherProvider({ children }) {
     sync,
     syncNow: syncAll,
     deviceLinkCode,
-    newJoinQr,
-    closeJoin,
+    newJoinCode,
+    newJoinCodesAll,
     giveFeedback,
     branchId,
     classes: list,

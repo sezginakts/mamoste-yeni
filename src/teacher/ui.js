@@ -87,6 +87,9 @@ export function SmallButton({ title, onPress, color, filled, style, disabled }) 
   );
 }
 
+// Davet kodu tahtada okunaklı olsun: K7MQ4XPA → K7MQ-4XPA
+export const formatJoinCode = (c) => (c && c.length === 8 ? `${c.slice(0, 4)}-${c.slice(4)}` : c || '');
+
 // Metni panoya kopyala / paylaş (WhatsApp vb.). Web'de panoya kopyalar.
 export async function shareText(message) {
   if (Platform.OS === 'web') {

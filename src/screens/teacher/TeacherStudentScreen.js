@@ -126,7 +126,7 @@ export default function TeacherStudentScreen({ route, navigation }) {
               )
             ) : (
               <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: 4 }}>
-                Öğrenci sınıf ekranındaki QR'ı okutup {s.no} numarasıyla katılır.
+                Öğrenci Mamoste'de “Derse katıl”a sınıf kodunu ve {s.no} numarasını yazarak katılır.
               </Text>
             )}
           </Card>

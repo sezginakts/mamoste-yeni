@@ -15,7 +15,7 @@ import { useRole } from '../../context/RoleContext';
 import StatusBarCover from '../../components/StatusBarCover';
 import { activitiesFor } from '../../data/activities';
 import { attentionItems, studentTotals } from '../../teacher/analytics';
-import { Card, SectionTitle, Field, SmallButton } from '../../teacher/ui';
+import { Card, SectionTitle, Field, SmallButton, formatJoinCode } from '../../teacher/ui';
 import { useTeacherProfile } from '../../teacher/profile';
 
 const DAY_NAMES = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
@@ -301,9 +301,9 @@ export default function TeacherHomeScreen({ navigation }) {
                   <Text style={st.className}>{c.name}</Text>
                   <Text style={st.classMeta}>{sts.length} öğrenci</Text>
                   <Text style={st.classMeta}>{c.homeworks.length} ödev · {active} aktif</Text>
-                  {c.qr && c.qrOpen ? (
+                  {c.code ? (
                     <View style={st.classCode}>
-                      <Text style={{ color: '#fff', fontWeight: '900', fontSize: 11, letterSpacing: 1 }}>QR AÇIK</Text>
+                      <Text style={{ color: '#fff', fontWeight: '900', fontSize: 11, letterSpacing: 1.5 }}>{formatJoinCode(c.code)}</Text>
                     </View>
                   ) : null}
                 </Pressable>
