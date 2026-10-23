@@ -47,6 +47,8 @@ import ActivityPlayScreen from './src/screens/teacher/ActivityPlayScreen';
 const SKIP_TEACHER_LOGIN = false;
 import NewPasswordScreen from './src/screens/teacher/NewPasswordScreen';
 import StudentJoinScreen from './src/screens/StudentJoinScreen';
+import StudentProfileScreen from './src/screens/StudentProfileScreen';
+import TeacherProfileScreen from './src/screens/teacher/TeacherProfileScreen';
 import BranchSelectScreen from './src/screens/BranchSelectScreen';
 import TaskScreen from './src/screens/TaskScreen';
 import TaskCreateScreen from './src/screens/teacher/TaskCreateScreen';
@@ -180,6 +182,7 @@ function RootNavigator() {
         <Stack.Screen name="Library" component={LibraryScreen} />
         <Stack.Screen name="Settings" component={SettingsScreen} />
         <Stack.Screen name="Scan" component={ScanScreen} />
+        <Stack.Screen name="Profile" component={isTeacher ? TeacherProfileScreen : StudentProfileScreen} />
         {isTeacher ? (
           <>
             <Stack.Screen name="TeacherClass" component={TeacherClassScreen} />

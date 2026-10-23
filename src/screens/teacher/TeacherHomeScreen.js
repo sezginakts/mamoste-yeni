@@ -16,6 +16,7 @@ import StatusBarCover from '../../components/StatusBarCover';
 import { activitiesFor } from '../../data/activities';
 import { attentionItems, studentTotals } from '../../teacher/analytics';
 import { Card, SectionTitle, Field, SmallButton } from '../../teacher/ui';
+import { useTeacherProfile } from '../../teacher/profile';
 
 const DAY_NAMES = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
 const MONTH_NAMES = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
@@ -31,6 +32,7 @@ export default function TeacherHomeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const t = useTeacher();
   const { branch } = useRole();
+  const { profile } = useTeacherProfile();
   const [newName, setNewName] = useState('');
   const [adding, setAdding] = useState(false);
   const attention = useMemo(() => attentionItems(t.classes), [t.classes]);
@@ -90,13 +92,18 @@ export default function TeacherHomeScreen({ navigation }) {
         <View style={[st.blob, { width: 140, height: 140, bottom: -50, left: -40 }]} />
         <View style={st.heroTop}>
           <View style={{ flex: 1 }}>
-            <Text style={st.heroHello}>{greeting(now.getHours())} 👋</Text>
+            <Text style={st.heroHello}>{greeting(now.getHours())}{profile.display_name ? `, ${profile.display_name}` : ''} 👋</Text>
             <Text style={st.heroDate}>{DAY_NAMES[now.getDay()]}, {now.getDate()} {MONTH_NAMES[now.getMonth()]}</Text>
             {branch ? <Text style={st.heroBranch}>{branch.emoji} {branch.name}</Text> : null}
           </View>
-          <Pressable onPress={() => navigation.navigate('Settings')} style={st.gear} accessibilityLabel="Ayarlar" hitSlop={8}>
-            <Text style={{ fontSize: 18 }}>⚙️</Text>
-          </Pressable>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Pressable onPress={() => navigation.navigate('Profile')} style={st.gear} accessibilityLabel="Profilim" hitSlop={8}>
+              <Text style={{ fontSize: 20 }}>{profile.avatar || '🧑‍🏫'}</Text>
+            </Pressable>
+            <Pressable onPress={() => navigation.navigate('Settings')} style={st.gear} accessibilityLabel="Ayarlar" hitSlop={8}>
+              <Text style={{ fontSize: 18 }}>⚙️</Text>
+            </Pressable>
+          </View>
         </View>
         <View style={st.stats}>
           <Stat icon="🏫" value={t.classes.length} label="sınıf" />
@@ -294,9 +301,11 @@ export default function TeacherHomeScreen({ navigation }) {
                   <Text style={st.className}>{c.name}</Text>
                   <Text style={st.classMeta}>{sts.length} öğrenci</Text>
                   <Text style={st.classMeta}>{c.homeworks.length} ödev · {active} aktif</Text>
-                  <View style={st.classCode}>
-                    <Text style={{ color: '#fff', fontWeight: '900', fontSize: 11, letterSpacing: 1.5 }}>{c.cc}</Text>
-                  </View>
+                  {c.qr && c.qrOpen ? (
+                    <View style={st.classCode}>
+                      <Text style={{ color: '#fff', fontWeight: '900', fontSize: 11, letterSpacing: 1 }}>QR AÇIK</Text>
+                    </View>
+                  ) : null}
                 </Pressable>
               );
             })}

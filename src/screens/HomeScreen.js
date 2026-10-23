@@ -71,8 +71,8 @@ export default function HomeScreen({ navigation }) {
           <View style={styles.badge}>
             <Text style={styles.badgeText}>⭐ {state.xp}</Text>
           </View>
-          <Pressable style={styles.badge} onPress={() => navigation.navigate('Settings')} accessibilityLabel="Ayarlar" hitSlop={6}>
-            <Text style={styles.badgeText}>⚙️</Text>
+          <Pressable style={styles.badge} onPress={() => navigation.navigate('Profile')} accessibilityLabel="Profilim" hitSlop={6}>
+            <Text style={styles.badgeText}>{state.student.avatar || '🙂'}</Text>
           </Pressable>
         </View>
       </View>
@@ -156,7 +156,7 @@ export default function HomeScreen({ navigation }) {
         styles={styles}
         emoji="＋"
         title={classes.length ? 'Ders ekle' : 'Derse katıl'}
-        desc="Öğretmeninin verdiği sınıf koduyla"
+        desc="Öğretmeninin QR kodunu okut"
         onPress={() => navigation.navigate('StudentJoin')}
       />
       {classes.length > 1 ? (

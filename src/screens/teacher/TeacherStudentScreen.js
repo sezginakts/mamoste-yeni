@@ -126,7 +126,7 @@ export default function TeacherStudentScreen({ route, navigation }) {
               )
             ) : (
               <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: 4 }}>
-                Öğrenci “Sınıfa katıl”a sınıf kodu {cls.cc} ve numarası {s.no} ile katılır.
+                Öğrenci sınıf ekranındaki QR'ı okutup {s.no} numarasıyla katılır.
               </Text>
             )}
           </Card>

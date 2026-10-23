@@ -21,6 +21,9 @@ export async function syncClass(cls, userId, branch = 'ingilizce') {
   } else if (cls.syncedName !== cls.name) {
     must(await supabase.from('classes').update({ name: cls.name.slice(0, 40) }).eq('id', sid));
   }
+  // Katılma QR'ı: anahtar + katılım açık mı (öğretmen başka cihazda yenilemiş olabilir).
+  // Sunucuda QR migration'ı yoksa hata verir; eşitleme yine de sürsün.
+  const join = (await supabase.from('classes').select('join_secret, join_open').eq('id', sid).single()).data || {};
 
   // Öğretmenin eklediği numaralar (isim değil) sunucuya.
   const nums = Object.values(cls.students)
@@ -68,13 +71,15 @@ export async function syncClass(cls, userId, branch = 'ingilizce') {
     if (cls.subsSince) q = q.gt('submitted_at', cls.subsSince);
     subs = must(await q);
   }
-  return { rid: sid, cc, students, hwSids, subs, syncedName: cls.name };
+  return { rid: sid, cc, qr: join.join_secret, qrOpen: join.join_open, students, hwSids, subs, syncedName: cls.name };
 }
 
 // syncClass sonucunu cihazdaki sınıf kopyasına uygula (mutate içinde çağrılır).
 export function applySync(c, r, { newId, emptyStudent }) {
   c.rid = r.rid;
   c.cc = r.cc;
+  c.qr = r.qr;
+  c.qrOpen = r.qrOpen;
   c.syncedName = r.syncedName;
   const localByNo = {};
   Object.values(c.students).forEach((s) => (localByNo[String(s.no)] = s));
@@ -132,3 +137,10 @@ export const cloudDeleteStudent = (rid) => supabase.from('students').delete().eq
 export const cloudFeedback = async (subRid, text, score) =>
   must(await supabase.from('submissions').update({ feedback: text || null, score: score ?? null, feedback_at: new Date().toISOString() }).eq('id', subRid));
 export const cloudDeviceLink = async (studentRid) => must(await supabase.rpc('create_device_link', { p_student_id: studentRid }));
+// Katılma QR'ı: yenisini üret (eski QR geçersiz olur, sınıftakiler kalır) / katılımı kapat.
+export const cloudNewQr = async (rid) => must(await supabase.rpc('teacher_new_qr', { p_class_id: rid }));
+export const cloudSetJoinOpen = async (rid, open) => must(await supabase.rpc('teacher_set_join_open', { p_class_id: rid, p_open: open }));
+// Öğretmen profili (öğrenciler derslerinde görür).
+export const cloudTeacherProfile = async (userId) =>
+  must(await supabase.from('teachers').select('display_name, avatar, school, bio, contact_hours').eq('id', userId).maybeSingle());
+export const cloudSaveTeacherProfile = async (userId, p) => must(await supabase.from('teachers').update(p).eq('id', userId));

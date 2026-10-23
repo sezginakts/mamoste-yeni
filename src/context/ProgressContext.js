@@ -35,9 +35,12 @@ const DEFAULT_STATE = {
     sound: true,
     autoSpeak: true,
   },
-  // Öğrenci tarafı: numara + takma ad; cihaz anahtarı (token) ve dersler (classes: [{ rid, cn, branch, no, teacher }]).
-  // rid/cn: ilk dersin kopyası (eski sürümlerle uyum).
-  student: { no: '', nk: '', rid: null, token: null, cc: null, cn: null, classes: [] },
+  // Öğrenci tarafı: numara + takma ad + avatar (emoji); cihaz anahtarı (token) ve dersler
+  // (classes: [{ rid, cn, branch, no, teacher, tAvatar, tSchool, tBio, tHours }]). rid/cn: ilk dersin kopyası (eski sürümlerle uyum).
+  // Fotoğraf, telefon, e-posta, doğum tarihi tutulmaz (çocuk verisi).
+  student: { no: '', nk: '', avatar: '', rid: null, token: null, cc: null, cn: null, classes: [] },
+  weeklyGoal: 4, // haftada kaç gün çalışılacak (profil)
+  reminder: null, // { time: 'HH:MM', id } günlük çalışma hatırlatıcısı (yerel bildirim)
   homeworks: {}, // id -> { ...ödev, cc, cn, receivedAt, sessionIds, result: { res, at, dur } }
 };
 
@@ -138,16 +141,29 @@ export function ProgressProvider({ children }) {
     const st = stateRef.current.student;
     if (!cloudEnabled || !st.token) return;
     const rows = await rpc('student_classes', { p_token: st.token });
-    const classes = rows.map((r) => ({ rid: r.student_id, cn: r.class_name, branch: r.branch, no: r.number, teacher: r.teacher_name || '' }));
+    const classes = rows.map((r) => ({
+      rid: r.student_id,
+      cn: r.class_name,
+      branch: r.branch,
+      no: r.number,
+      teacher: r.teacher_name || '',
+      tAvatar: r.teacher_avatar || '',
+      tSchool: r.teacher_school || '',
+      tBio: r.teacher_bio || '',
+      tHours: r.teacher_hours || '',
+    }));
     const cur = stateRef.current.student;
-    setStudent({ ...cur, classes, rid: classes[0] ? classes[0].rid : null, cn: classes[0] ? classes[0].cn : null });
+    // Avatar başka cihazda seçildiyse (ör. telefon değişimi) sunucudakini al.
+    const avatar = cur.avatar || (rows.find((r) => r.avatar) || {}).avatar || '';
+    setStudent({ ...cur, avatar, classes, rid: classes[0] ? classes[0].rid : null, cn: classes[0] ? classes[0].cn : null });
   };
 
-  // Derse katıl: sınıf kodu + okul numarası (+ takma ad). Cihazda anahtar varsa aynı anahtarla katılır. Hata mesajını fırlatır.
-  const joinClass = async (code, no, nk) => {
+  // Derse katıl: öğretmenin QR'ındaki anahtar + okul numarası (+ takma ad). Cihazda anahtar varsa aynı anahtarla katılır.
+  // Hata mesajını fırlatır.
+  const joinClass = async (secret, no, nk) => {
     const cur = stateRef.current.student;
     const rows = await rpc('student_join', {
-      p_join_code: code.trim().toUpperCase(),
+      p_join_code: secret.trim().toLowerCase(),
       p_number: String(no).trim(),
       p_nickname: (nk || '').trim() || null,
       p_token: cur.token || null,
@@ -158,10 +174,23 @@ export function ProgressProvider({ children }) {
     const student = { ...cur, no: String(no).trim(), nk: (nk || '').trim() || cur.nk, token: r.token, classes, rid: classes[0].rid, cn: classes[0].cn };
     setStudent(student);
     registerStudentPush(student).catch(() => {});
+    if (student.avatar) rpc('student_set_profile', { p_token: r.token, p_nickname: student.nk || null, p_avatar: student.avatar }).catch(() => {});
     refreshClasses().catch(() => {});
     await refreshHomeworks();
     return r.class_name;
   };
+
+  // Profil: takma ad + avatar. Cihaza hemen yazılır; derse katıldıysa tüm derslerdeki üyeliğe de (öğretmen görür).
+  const setProfile = async ({ nk, avatar }) => {
+    const cur = stateRef.current.student;
+    const student = { ...cur, nk: nk != null ? String(nk).trim().slice(0, 30) : cur.nk, avatar: avatar != null ? avatar : cur.avatar };
+    setStudent(student);
+    if (cloudEnabled && student.token) {
+      await rpc('student_set_profile', { p_token: student.token, p_nickname: student.nk || null, p_avatar: student.avatar || null });
+    }
+  };
+  const setWeeklyGoal = (n) => setState((prev) => ({ ...prev, weeklyGoal: n }));
+  const setReminder = (reminder) => setState((prev) => ({ ...prev, reminder }));
 
   // Yeni telefona geçiş: öğretmenin verdiği 6 haneli kod bütün dersleri taşır.
   const linkDevice = async (code) => {
@@ -569,6 +598,9 @@ export function ProgressProvider({ children }) {
     setSetting,
     setStudentProfile,
     joinClass,
+    setProfile,
+    setWeeklyGoal,
+    setReminder,
     linkDevice,
     refreshHomeworks,
     refreshClasses,
