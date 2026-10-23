@@ -113,8 +113,11 @@ export default function TeacherHomeScreen({ navigation }) {
     <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: spacing.xxl }}>
       {/* ---- Karşılama bandı ---- */}
       <View style={[st.hero, { backgroundColor: heroBg, paddingTop: insets.top + spacing.lg }]}>
-        <View style={[st.blob, { width: 220, height: 220, top: -80, right: -60 }]} />
-        <View style={[st.blob, { width: 140, height: 140, bottom: -50, left: -40 }]} />
+        {/* Dekor ayrı katmanda: taşan daireler bant içinde odaklanınca bandı yana kaydırmasın (web). */}
+        <View pointerEvents="none" style={[StyleSheet.absoluteFill, { overflow: 'hidden' }]}>
+          <View style={[st.blob, { width: 220, height: 220, top: -80, right: -60 }]} />
+          <View style={[st.blob, { width: 140, height: 140, bottom: -50, left: -40 }]} />
+        </View>
         <View style={st.heroTop}>
           <View style={{ flex: 1 }}>
             <Text style={st.heroHello}>{greeting(now.getHours())}{profile.display_name ? `, ${profile.display_name}` : ''} 👋</Text>
@@ -151,13 +154,15 @@ export default function TeacherHomeScreen({ navigation }) {
                     {live ? <View style={[st.liveDot, { backgroundColor: c }]} /> : null}
                     <Text style={[st.pillT, { color: c }]}>{focusLabel}</Text>
                   </View>
-                  <Text style={[st.when, { color: colors.textMuted }]} numberOfLines={1}>
-                    {longDate(focusDay)} · {focus.period}. ders{focus.start ? ` · ${focus.start}–${focus.end}` : ''}
-                  </Text>
+                  <View style={{ flex: 1 }} />
                   <View style={[st.classBadge, { backgroundColor: c }]}>
                     <Text style={st.classBadgeT}>{focus.label}</Text>
                   </View>
                 </View>
+                <Text style={[st.when, { color: colors.text }]}>
+                  {longDate(focusDay)} · {focus.period}. ders
+                  {focus.start ? <Text style={{ color: colors.textMuted }}>{`  ${focus.start}–${focus.end}`}</Text> : null}
+                </Text>
 
                 {!p ? (
                   <View style={{ marginTop: spacing.md }}>
@@ -463,7 +468,7 @@ const st = StyleSheet.create({
   pill: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 4 },
   pillT: { fontSize: 11, fontWeight: '900', letterSpacing: 0.8 },
   liveDot: { width: 7, height: 7, borderRadius: 4 },
-  when: { flex: 1, fontSize: font.small, fontWeight: '700' },
+  when: { fontSize: font.body, fontWeight: '800', marginTop: spacing.sm },
   classBadge: { borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6, minWidth: 54, alignItems: 'center' },
   classBadgeT: { color: '#fff', fontSize: font.h3, fontWeight: '900' },
   unit: { fontSize: font.tiny, fontWeight: '800', letterSpacing: 0.8, marginTop: spacing.md },
