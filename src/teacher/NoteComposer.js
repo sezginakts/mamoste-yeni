@@ -1,7 +1,9 @@
 // Yapışkan notlar: renkli not yaz + isteğe bağlı hatırlatma (bugün / yarın / takvimden tarih, saat).
+// Kağıtta yalnızca yazı durur; renk, hatırlatma ve kaydet düğmesi kağıdın altında.
 import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
 import { spacing, font, radius } from '../theme';
+import { useTheme } from '../context/ThemeContext';
 import { useDesk } from './DeskContext';
 import { PlanCalendar } from './planUi';
 import { formatDate } from './ui';
@@ -12,9 +14,11 @@ export const NOTE_COLORS = {
   green: { bg: '#C7EFEA', edge: '#0D9488' }, // turkuaz
   blue: { bg: '#CDEBFA', edge: '#0284C7' }, // gök mavisi
   pink: { bg: '#FAD4CF', edge: '#E2574C' }, // mercan
+  yellow: { bg: '#FFF3B0', edge: '#C99A06' }, // açık sarı
 };
-// Eski notların renkleri (sarı, turuncu, mor) en yakın üç renkten birine düşer.
-const OLD_NOTE = { yellow: 'green', orange: 'pink', purple: 'blue' };
+// Eski notların renkleri (turuncu, mor) en yakın renge düşer.
+const OLD_NOTE = { orange: 'pink', purple: 'blue' };
+const COLOR_NAMES = { green: 'Turkuaz', blue: 'Mavi', pink: 'Mercan', yellow: 'Açık sarı' };
 const INK = '#1F2937';
 const INK_SOFT = 'rgba(31,41,55,0.65)';
 const paper = (c) => NOTE_COLORS[c] || NOTE_COLORS[OLD_NOTE[c]] || NOTE_COLORS.green;
@@ -27,6 +31,7 @@ const plusDays = (n) => {
 
 export default function NoteComposer({ autoFocus, onSaved }) {
   const desk = useDesk();
+  const { colors } = useTheme();
   const [text, setText] = useState('');
   const [color, setColor] = useState('green');
   const [remind, setRemind] = useState(null);
@@ -53,33 +58,39 @@ export default function NoteComposer({ autoFocus, onSaved }) {
   };
 
   const Pill = ({ label, active, onPress }) => (
-    <Pressable onPress={onPress} style={[st.pill, { borderColor: p.edge, backgroundColor: active ? p.edge : 'rgba(255,255,255,0.45)' }]}>
-      <Text style={{ color: active ? '#fff' : INK, fontWeight: '800', fontSize: font.tiny }}>{label}</Text>
+    <Pressable onPress={onPress} style={[st.pill, { borderColor: active ? p.edge : colors.border, backgroundColor: active ? p.edge : colors.card }]}>
+      <Text style={{ color: active ? '#fff' : colors.text, fontWeight: '800', fontSize: font.tiny }}>{label}</Text>
     </Pressable>
   );
 
   return (
-    <View style={[st.composer, { backgroundColor: p.bg }]}>
-      <View style={st.tape} />
-      <TextInput
-        value={text}
-        onChangeText={setText}
-        placeholder="Bir not yaz… (ör. 7-B sınav kağıtlarını dağıt)"
-        placeholderTextColor={INK_SOFT}
-        multiline
-        autoFocus={autoFocus}
-        accessibilityLabel="Not"
-        style={st.input}
-      />
+    <View>
+      {/* Kağıt: yalnızca yazı */}
+      <View style={[st.composer, { backgroundColor: p.bg }]}>
+        <View style={st.tape} />
+        <TextInput
+          value={text}
+          onChangeText={setText}
+          placeholder="Bir not yaz… (ör. 7-B sınav kağıtlarını dağıt)"
+          placeholderTextColor={INK_SOFT}
+          multiline
+          autoFocus={autoFocus}
+          accessibilityLabel="Not"
+          style={st.input}
+        />
+      </View>
+
+      {/* Kağıdın altı: renk, hatırlatma, kaydet */}
       <View style={st.colors}>
         {Object.entries(NOTE_COLORS).map(([k, v]) => (
           <Pressable
             key={k}
             onPress={() => setColor(k)}
-            accessibilityLabel={`${k} renk`}
-            style={[st.swatch, { backgroundColor: v.bg, borderColor: color === k ? INK : 'rgba(31,41,55,0.2)' }, color === k && { transform: [{ scale: 1.15 }] }]}
+            accessibilityLabel={`${COLOR_NAMES[k]} not`}
+            style={[st.swatch, { backgroundColor: v.bg, borderColor: color === k ? v.edge : colors.border }, color === k && { transform: [{ scale: 1.15 }] }]}
           />
         ))}
+        <Text style={{ color: colors.textMuted, fontSize: font.tiny, fontWeight: '700', marginLeft: 4 }}>{COLOR_NAMES[color]}</Text>
       </View>
       <View style={st.pills}>
         <Pill label="Hatırlatma yok" active={!remind} onPress={() => setRemind(null)} />
@@ -93,20 +104,20 @@ export default function NoteComposer({ autoFocus, onSaved }) {
       </View>
       {remind ? (
         <View style={st.timeRow}>
-          <Text style={{ color: INK, fontSize: font.small, fontWeight: '700' }}>Saat</Text>
+          <Text style={{ color: colors.text, fontSize: font.small, fontWeight: '700' }}>Saat</Text>
           <TextInput
             value={time}
             onChangeText={onTime}
             placeholder="08:30"
-            placeholderTextColor={INK_SOFT}
+            placeholderTextColor={colors.textFaint}
             keyboardType="number-pad"
             accessibilityLabel="Hatırlatma saati"
-            style={[st.time, { borderColor: timeOk ? 'rgba(31,41,55,0.25)' : '#E2574C' }]}
+            style={[st.time, { color: colors.text, backgroundColor: colors.card, borderColor: timeOk ? colors.border : '#E2574C' }]}
           />
-          <Text style={{ color: INK_SOFT, fontSize: font.tiny, flex: 1 }}>{timeOk ? 'Boş bırakırsan 08:30’da hatırlatır.' : 'Saati 13:30 gibi yaz.'}</Text>
+          <Text style={{ color: colors.textMuted, fontSize: font.tiny, flex: 1 }}>{timeOk ? 'Boş bırakırsan 08:30’da hatırlatır.' : 'Saati 13:30 gibi yaz.'}</Text>
         </View>
       ) : null}
-      <Pressable onPress={save} disabled={!text.trim() || !timeOk} style={[st.save, (!text.trim() || !timeOk) && { opacity: 0.35 }]}>
+      <Pressable onPress={save} disabled={!text.trim() || !timeOk} style={[st.save, { backgroundColor: p.edge }, (!text.trim() || !timeOk) && { opacity: 0.35 }]}>
         <Text style={{ color: '#fff', fontWeight: '800' }}>{remind ? '📌 Yapıştır ve hatırlat' : '📌 Notu yapıştır'}</Text>
       </Pressable>
       {cal ? <PlanCalendar visible legend={false} selected={remind} onClose={() => setCal(false)} onPick={(k) => setRemind(k < today ? today : k)} /> : null}
@@ -157,14 +168,14 @@ const paperShadow = { shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 6,
 const st = StyleSheet.create({
   composer: { borderRadius: 6, padding: spacing.md, paddingTop: spacing.lg, ...paperShadow },
   tape: { position: 'absolute', top: -7, alignSelf: 'center', width: 64, height: 16, backgroundColor: 'rgba(255,255,255,0.55)', borderRadius: 2, transform: [{ rotate: '-2deg' }] },
-  input: { color: INK, fontSize: font.body, minHeight: 72, textAlignVertical: 'top', lineHeight: 22 },
-  colors: { flexDirection: 'row', gap: 10, marginTop: spacing.sm },
-  swatch: { width: 26, height: 26, borderRadius: 13, borderWidth: 2 },
+  input: { color: INK, fontSize: font.body, minHeight: 96, textAlignVertical: 'top', lineHeight: 22 },
+  colors: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: spacing.md },
+  swatch: { width: 28, height: 28, borderRadius: 14, borderWidth: 2.5 },
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: spacing.md },
   pill: { borderWidth: 1.5, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 5 },
   timeRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.sm },
-  time: { borderWidth: 1, borderRadius: radius.sm, paddingHorizontal: 8, paddingVertical: 5, width: 70, textAlign: 'center', color: INK, backgroundColor: 'rgba(255,255,255,0.5)', fontSize: font.body },
-  save: { marginTop: spacing.md, backgroundColor: INK, borderRadius: radius.md, paddingVertical: 12, alignItems: 'center' },
+  time: { borderWidth: 1, borderRadius: radius.sm, paddingHorizontal: 8, paddingVertical: 5, width: 70, textAlign: 'center', fontSize: font.body },
+  save: { marginTop: spacing.md, borderRadius: radius.md, paddingVertical: 12, alignItems: 'center' },
 
   note: { borderRadius: 4, padding: spacing.md, paddingTop: spacing.lg, minHeight: 130, justifyContent: 'space-between', ...paperShadow },
   noteText: { color: INK, fontSize: font.body, lineHeight: 21, fontWeight: '600' },
