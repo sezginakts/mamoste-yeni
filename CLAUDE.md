@@ -1,6 +1,6 @@
 # Okul (ingapp)
 
-Uygulamanın adı **Okul** (eski adı Mamoste; simge ve açılış ekranı `generate-assets.js`). Teknik kimlikler eski adla kaldı ve değiştirilmez — paket/bundle `com.ingapp.cumle`, slug `ingapp`, kayıt anahtarları `@ingapp/…` ve `mamoste-…`, oyun hafıza adresi `mamoste.app`, tahta deposu `mamoste-tahta`: değişirse telefondaki veriler sıfırlanır ya da mağazada ayrı uygulama olur.
+Uygulamanın adı **Okul** (eski adı Mamoste). Logo = O-K-U-L harfli dört bayrak (`assets/kaynak/okul-bayrak.png`): simge 2×2 bayrak, açılış ekranı yan yana, beyaz zemin — `node generate-assets.js` (sharp gerekir). Teknik kimlikler eski adla kaldı ve değiştirilmez — paket/bundle `com.ingapp.cumle`, slug `ingapp`, kayıt anahtarları `@ingapp/…` ve `mamoste-…`, oyun hafıza adresi `mamoste.app`, tahta deposu `mamoste-tahta`: değişirse telefondaki veriler sıfırlanır ya da mağazada ayrı uygulama olur.
 Expo SDK 54 / React Native 0.81 uygulaması. Ortaokul öğretmenleri (branş seçerek) ve öğrencileri için; İngilizce'de kalıp ezberi, tüm branşlarda görev ödevi, öğretmen modülü ve akıllı tahta modu var.
 Çalıştırma: `npm start` (Expo Go) · `npm run web` (tarayıcı / akıllı tahta).
 Web testi: iki sekme = iki hesap — `http://localhost:8082` öğretmen, `http://127.0.0.1:8082` öğrenci (adres farklı → depo ve rol ayrı). Sınıfa katılmayı uçtan uca denemek için öğretmen sekmesinde giriş yapılmış ve migration'lar uygulanmış olmalı.
