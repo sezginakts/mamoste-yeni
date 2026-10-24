@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Okul Tahta</title>
+<style>
+:root{--mercan:#E2574C;--turkuaz:#0D9488;--gok:#0284C7;--kehribar:#D99A1E;--yazi:#0F172A;--soluk:#64748B;--zemin:#F1F5F9;--f:clamp(16px,2.8vmin,40px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;color:var(--yazi);font-family:"Segoe UI","Helvetica Neue",Arial,sans-serif;
+  background:linear-gradient(155deg,#E0F2FE 0%,#ECFEFF 45%,#F0FDFA 70%,#FFF1EE 100%);user-select:none;-webkit-user-select:none}
+button{font-family:inherit;cursor:pointer;border:0}
+#arka{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+.blob{position:absolute;border-radius:50%;filter:blur(6vmin);opacity:.35}
+.b1{width:45vmin;height:45vmin;background:var(--gok);top:-12vmin;left:-10vmin}
+.b2{width:38vmin;height:38vmin;background:var(--mercan);bottom:-14vmin;right:-8vmin;opacity:.25}
+.b3{width:30vmin;height:30vmin;background:var(--turkuaz);bottom:10vmin;left:-12vmin;opacity:.22}
+#bekle{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:3vmin}
+.kart{position:relative;background:rgba(255,255,255,.93);border-radius:4vmin;padding:4vmin 6vmin;max-width:min(94vw,130vmin);width:100%;
+  box-shadow:0 2vmin 6vmin rgba(2,132,199,.18);text-align:center;display:flex;flex-direction:column;align-items:center;gap:2vmin}
+.logo{display:flex;gap:1vmin}
+.logo i{display:grid;place-items:center;width:7vmin;height:7vmin;border-radius:1.6vmin;font-style:normal;color:#fff;font-weight:900;font-size:4vmin;box-shadow:0 .7vmin 0 rgba(0,0,0,.18)}
+.logo i:nth-child(1){background:var(--gok);transform:rotate(-8deg)}.logo i:nth-child(2){background:var(--turkuaz);transform:translateY(-1vmin)}.logo i:nth-child(3){background:var(--mercan);transform:rotate(7deg)}
+h1{margin:0;font-size:calc(var(--f)*1.8);font-weight:900;line-height:1;background:linear-gradient(90deg,var(--turkuaz),var(--gok));-webkit-background-clip:text;background-clip:text;color:transparent}
+.yon{color:var(--soluk);font-weight:700;font-size:calc(var(--f)*.75);line-height:1.5}
+.yon b{color:var(--yazi)}
+.kod{display:flex;gap:1.6vmin;margin:1vmin 0}
+.kod span{display:grid;place-items:center;width:calc(var(--f)*3.2);height:calc(var(--f)*4);border-radius:2vmin;background:#fff;border:.4vmin solid var(--turkuaz);border-bottom-width:1.2vmin;
+  font-size:calc(var(--f)*2.8);font-weight:900;color:var(--yazi)}
+.kod span:nth-child(n+4){border-color:var(--mercan)}
+.kod .ara{width:auto;border:0;background:transparent;color:var(--soluk)}
+.durum{display:flex;align-items:center;gap:1.2vmin;font-weight:800;font-size:calc(var(--f)*.8);padding:1.2vmin 2.6vmin;border-radius:99px;background:var(--zemin);color:var(--soluk)}
+.durum i{width:1.6vmin;height:1.6vmin;min-width:10px;min-height:10px;border-radius:50%;background:#94A3B8}
+.durum.bagli{background:#D5F2EE;color:#0F766E}.durum.bagli i{background:var(--turkuaz);animation:nabiz 1.4s ease-in-out infinite}
+.durum.hata{background:#FBE1DD;color:#B4382E}.durum.hata i{background:var(--mercan)}
+@keyframes nabiz{0%,100%{transform:scale(1)}50%{transform:scale(1.5)}}
+.kucuk{display:flex;gap:1.4vmin;flex-wrap:wrap;justify-content:center}
+.kucuk button{background:#fff;font-weight:900;font-size:calc(var(--f)*.6);padding:1.1vmin 2.6vmin;border-radius:99px;box-shadow:0 .5vmin 0 #CBD5E1}
+#oyun{position:fixed;inset:0;z-index:10;display:none;background:#fff}
+#oyun.acik{display:block}
+#oyun iframe{width:100%;height:100%;border:0;display:block}
+#rozet{position:fixed;left:1.4vmin;bottom:1.4vmin;z-index:11;display:none;align-items:center;gap:1vmin;background:rgba(15,23,42,.72);color:#fff;font-weight:900;font-size:calc(var(--f)*.55);border-radius:99px;padding:.9vmin 2vmin}
+#rozet i{width:1.2vmin;height:1.2vmin;min-width:8px;min-height:8px;border-radius:50%;background:#2DD4BF}
+#rozet.kopuk i{background:#FB8A7B}
+#oyun.acik~#rozet{display:flex}
+</style></head><body>
+<div id="arka"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span></div>
+
+<section id="bekle">
+  <div class="kart">
+    <div class="logo"><i>O</i><i>k</i><i>l</i></div>
+    <h1>Okul Tahta</h1>
+    <div class="yon" id="yon">Telefonda <b>Okul → Akıllı tahta → Kodla bağlan</b>'a gir ve bu kodu yaz:</div>
+    <div class="kod" id="kod"></div>
+    <div class="durum" id="durum"><i></i><span id="durumYazi">Bağlanıyor…</span></div>
+    <div class="kucuk"><button id="tamBtn">⛶ Tam ekran</button><button id="yeniBtn">↻ Yeni kod</button></div>
+  </div>
+</section>
+<div id="oyun"></div>
+<div id="rozet"><i></i><span id="rozetYazi">Telefon bağlı</span></div>
+
+<script>/*__SUPABASE_UMD__*/</script>
+<script>
+// Tahta sayfası: 6 haneli kod gösterir; telefon (Okul → Akıllı tahta → Kodla bağlan) aynı kodla
+// Supabase anlık kanalına ("tahta:<kod>") katılır. Mesajlar (broadcast):
+//   telefon → tahta: merhaba · ac {id} · komut {k, ...} · kapat
+//   tahta → telefon: hazir {acik} · durum {...} (oyun bildirir, ör. Kalıp Tahtası'nın o anki cümlesi)
+// Etkinlikler aynı adreste e/<id>.html (tools/tahta/uret.mjs üretir). Komutlar oyuna postMessage ile iletilir.
+const URL_='__SUPABASE_URL__',ANAHTAR='__SUPABASE_KEY__';
+const $=id=>document.getElementById(id);
+const oku=(k,v)=>{try{const x=localStorage.getItem(k);return x?JSON.parse(x):v}catch(e){return v}};
+const yaz=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const yeniKod=()=>String(Math.floor(100000+Math.random()*900000));
+let KOD=oku('mamoste-tahta-kod',null)||yeniKod();yaz('mamoste-tahta-kod',KOD);
+let sb=null,kanal=null,acik=null,sonTel=0,abone=false;
+
+function kodCiz(){const k=$('kod');k.innerHTML='';[...KOD].forEach((c,i)=>{if(i===3){const a=document.createElement('span');a.className='ara';a.textContent='·';k.appendChild(a)}const s=document.createElement('span');s.textContent=c;k.appendChild(s)})}
+function durum(tur,yazi){const d=$('durum');d.className='durum'+(tur?' '+tur:'');$('durumYazi').textContent=yazi}
+function telDurum(){
+  const bagli=Date.now()-sonTel<75000;
+  if(!abone)return;
+  durum(bagli?'bagli':'',bagli?'📱 Telefon bağlı — telefondan bir etkinlik seç':'Telefon bekleniyor');
+  $('rozet').classList.toggle('kopuk',!bagli);$('rozetYazi').textContent=bagli?'Telefon bağlı':'Telefon bağlantısı yok';
+}
+function gonder(event,payload){if(kanal&&abone)kanal.send({type:'broadcast',event,payload:payload||{}})}
+
+function ac(id){
+  const o=$('oyun');o.innerHTML='';const f=document.createElement('iframe');
+  f.setAttribute('allow','autoplay; fullscreen');f.setAttribute('allowfullscreen','');f.src='e/'+encodeURIComponent(id)+'.html';
+  o.appendChild(f);o.classList.add('acik');acik=id;gonder('hazir',{acik});
+}
+function kapat(){const o=$('oyun');o.classList.remove('acik');o.innerHTML='';acik=null;gonder('hazir',{acik})}
+function oyunaIlet(m){const f=$('oyun').querySelector('iframe');if(f&&f.contentWindow)f.contentWindow.postMessage(Object.assign({mamoste:'komut'},m),'*')}
+// Oyundan gelen durum (Kalıp Tahtası'nın cümlesi, puanı…) telefona.
+window.addEventListener('message',e=>{const d=e.data;if(d&&d.mamoste==='durum')gonder('durum',d)});
+
+function baglan(){
+  if(!window.supabase){durum('hata','Bağlantı kitaplığı yüklenemedi');return}
+  if(!sb)sb=window.supabase.createClient(URL_,ANAHTAR,{auth:{persistSession:false}});
+  if(kanal){sb.removeChannel(kanal);kanal=null}
+  abone=false;durum('','Bağlanıyor…');
+  kanal=sb.channel('tahta:'+KOD,{config:{broadcast:{self:false}}});
+  kanal.on('broadcast',{event:'merhaba'},()=>{sonTel=Date.now();telDurum();gonder('hazir',{acik})})
+    .on('broadcast',{event:'ac'},m=>{sonTel=Date.now();telDurum();if(m.payload&&m.payload.id)ac(m.payload.id)})
+    .on('broadcast',{event:'komut'},m=>{sonTel=Date.now();telDurum();oyunaIlet(m.payload||{})})
+    .on('broadcast',{event:'kapat'},()=>{sonTel=Date.now();kapat()})
+    .subscribe(s=>{
+      if(s==='SUBSCRIBED'){abone=true;telDurum();gonder('hazir',{acik})}
+      else if(s==='CHANNEL_ERROR'||s==='TIMED_OUT'){abone=false;durum('hata','İnternete bağlanılamadı — yeniden deneniyor…');setTimeout(baglan,4000)}
+      else if(s==='CLOSED'){abone=false}
+    });
+}
+setInterval(telDurum,5000);
+$('yeniBtn').onclick=()=>{KOD=yeniKod();yaz('mamoste-tahta-kod',KOD);sonTel=0;kodCiz();baglan()};
+const tamVar=!!(document.documentElement.requestFullscreen||document.documentElement.webkitRequestFullscreen);
+if(!tamVar)$('tamBtn').style.display='none';
+$('tamBtn').onclick=()=>{const d=document.documentElement;if(document.fullscreenElement||document.webkitFullscreenElement){(document.exitFullscreen||document.webkitExitFullscreen).call(document)}else{(d.requestFullscreen||d.webkitRequestFullscreen).call(d)}};
+kodCiz();baglan();
+</script>
+</body></html>

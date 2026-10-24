@@ -104,7 +104,7 @@ export default function TeacherSignInScreen() {
         <Text style={{ fontSize: 44 }}>👩‍🏫</Text>
         <Text style={[st.title, { color: colors.text }]}>{mode === 'forgot' ? 'Şifremi unuttum' : 'Öğretmen girişi'}</Text>
         <Text style={[st.sub, { color: colors.textMuted }]}>
-          {mode === 'forgot' ? 'E-postana bir link göndereceğiz; o linkle yeni şifreni belirleyeceksin. Şifren hiç yoksa da bu yolu kullan.' : 'Mamoste hesabınla gir ya da yeni hesap aç.'}
+          {mode === 'forgot' ? 'E-postana bir link göndereceğiz; o linkle yeni şifreni belirleyeceksin. Şifren hiç yoksa da bu yolu kullan.' : 'Okul hesabınla gir ya da yeni hesap aç.'}
         </Text>
 
         {mode !== 'forgot' ? (

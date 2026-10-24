@@ -26,7 +26,7 @@ export default function BranchSelectScreen() {
           </Pressable>
         ) : null}
         <Text style={[st.title, { color: colors.text }]}>Branşın hangisi?</Text>
-        <Text style={[st.sub, { color: colors.textMuted }]}>Mamoste seçtiğin branşa göre açılır. Her branşın sınıfları ve planları ayrı tutulur.</Text>
+        <Text style={[st.sub, { color: colors.textMuted }]}>Uygulama seçtiğin branşa göre açılır. Her branşın sınıfları ve planları ayrı tutulur.</Text>
         <View style={st.grid}>
           {BRANCHES.map((b) => {
             const on = picked === b.id;

@@ -27,6 +27,11 @@ import TeacherStudentScreen from './src/screens/teacher/TeacherStudentScreen';
 import HomeworkCreateScreen from './src/screens/teacher/HomeworkCreateScreen';
 import HomeworkShareScreen from './src/screens/teacher/HomeworkShareScreen';
 import TeacherBackupScreen from './src/screens/teacher/TeacherBackupScreen';
+import BoardScreen from './src/screens/teacher/BoardScreen';
+import DocsScreen from './src/screens/teacher/DocsScreen';
+import BoardConnectScreen from './src/screens/teacher/BoardConnectScreen';
+import BoardRemoteScreen from './src/screens/teacher/BoardRemoteScreen';
+import { BoardLinkProvider } from './src/teacher/BoardLink';
 import RosterImportScreen from './src/screens/teacher/RosterImportScreen';
 import YearPlanScreen from './src/screens/teacher/YearPlanScreen';
 import { PlanProvider, usePlans } from './src/teacher/PlanContext';
@@ -46,6 +51,7 @@ import ActivityPlayScreen from './src/screens/teacher/ActivityPlayScreen';
 const SKIP_TEACHER_LOGIN = false;
 import NewPasswordScreen from './src/screens/teacher/NewPasswordScreen';
 import { ConfirmHost } from './src/teacher/ui';
+import BellOverlay from './src/components/BellOverlay';
 import StudentJoinScreen from './src/screens/StudentJoinScreen';
 import StudentProfileScreen from './src/screens/StudentProfileScreen';
 import TeacherProfileScreen from './src/screens/teacher/TeacherProfileScreen';
@@ -195,6 +201,10 @@ function RootNavigator() {
             <Stack.Screen name="TaskCreate" component={TaskCreateScreen} />
             <Stack.Screen name="HomeworkShare" component={HomeworkShareScreen} />
             <Stack.Screen name="TeacherBackup" component={TeacherBackupScreen} />
+            <Stack.Screen name="Board" component={BoardScreen} />
+            <Stack.Screen name="Docs" component={DocsScreen} />
+            <Stack.Screen name="BoardConnect" component={BoardConnectScreen} />
+            <Stack.Screen name="BoardRemote" component={BoardRemoteScreen} />
             <Stack.Screen name="Activities" component={ActivitiesScreen} />
             <Stack.Screen name="ActivityPlay" component={ActivityPlayScreen} options={{ orientation: 'default', gestureEnabled: false }} />
           </>
@@ -228,12 +238,15 @@ export default function App() {
                   <TeacherProvider>
                     <PlanProvider>
                       <DeskProvider>
-                        {/* Klavye açılınca tüm ekran (oyunlar dahil) klavyenin üstüne sığsın.
-                            Android tam ekran (edge-to-edge) düzende pencere kendiliğinden küçülmüyor; iOS'ta hiç küçülmez. */}
-                        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
-                          <RootNavigator />
-                        </KeyboardAvoidingView>
-                        <ConfirmHost />
+                        <BoardLinkProvider>
+                          {/* Klavye açılınca tüm ekran (oyunlar dahil) klavyenin üstüne sığsın.
+                              Android tam ekran (edge-to-edge) düzende pencere kendiliğinden küçülmüyor; iOS'ta hiç küçülmez. */}
+                          <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
+                            <RootNavigator />
+                          </KeyboardAvoidingView>
+                          <ConfirmHost />
+                          <BellOverlay />
+                        </BoardLinkProvider>
                       </DeskProvider>
                     </PlanProvider>
                   </TeacherProvider>

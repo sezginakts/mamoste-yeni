@@ -4,15 +4,19 @@
 // Ders:   lessons['<gün>-<ders>'] = { classId|null, grade, label }   gün: 1 = Pazartesi … 5 = Cuma
 // Saat:   periods = [{ start: 'HH:MM', end: 'HH:MM' }, …]           her okulun saati farklı; öğretmen düzenler
 // Not:    { id, text, color, remind: 'YYYY-MM-DD'|null, time: 'HH:MM'|null, done, at, nid }
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+// Zil:    bell = { mode: 'off' | 'mine' | 'all', end: ders bitişinde de çalsın } → utils/bell (haftalık bildirimler)
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { shortId } from '../utils/codec';
 import { useRole } from '../context/RoleContext';
 import { getBranchItem, setBranchItem } from '../utils/branchStore';
+import { bellTimes, scheduleBells } from '../utils/bell';
 import { scheduleReminder, cancelReminder } from '../utils/notify';
 
 const TT_KEY = '@ingapp/teacher/v1/timetable';
 const PERIODS_KEY = '@ingapp/teacher/v1/periods';
 const NOTES_KEY = '@ingapp/teacher/v1/notes';
+const BELL_KEY = '@ingapp/teacher/v1/bell';
+const DEFAULT_BELL = { mode: 'off', end: true };
 const Ctx = createContext(null);
 
 const DEFAULT_PERIODS = Array.from({ length: 7 }, () => ({ start: '', end: '' }));
@@ -60,6 +64,7 @@ export function DeskProvider({ children }) {
   const [lessons, setLessons] = useState({});
   const [periods, setPeriodsState] = useState(DEFAULT_PERIODS);
   const [notes, setNotes] = useState([]);
+  const [bell, setBellState] = useState(DEFAULT_BELL);
   const { branchId } = useRole();
   const [loadedFor, setLoadedFor] = useState(null); // hangi branşın verisi yüklü
   // Branş seçilmemişken (seçim ekranı) beklenecek bir şey yok.
@@ -69,10 +74,10 @@ export function DeskProvider({ children }) {
     if (!branchId) return undefined;
     let live = true;
     (async () => {
-      let d = { lessons: {}, periods: DEFAULT_PERIODS, notes: [] };
+      let d = { lessons: {}, periods: DEFAULT_PERIODS, notes: [], bell: DEFAULT_BELL };
       try {
-        const [tt, ps, ns] = await Promise.all([getBranchItem(TT_KEY, branchId), getBranchItem(PERIODS_KEY, branchId), getBranchItem(NOTES_KEY, branchId)]);
-        d = { lessons: tt ? JSON.parse(tt) : {}, periods: ps ? JSON.parse(ps) : DEFAULT_PERIODS, notes: ns ? JSON.parse(ns) : [] };
+        const [tt, ps, ns, bl] = await Promise.all([getBranchItem(TT_KEY, branchId), getBranchItem(PERIODS_KEY, branchId), getBranchItem(NOTES_KEY, branchId), getBranchItem(BELL_KEY, branchId)]);
+        d = { lessons: tt ? JSON.parse(tt) : {}, periods: ps ? JSON.parse(ps) : DEFAULT_PERIODS, notes: ns ? JSON.parse(ns) : [], bell: bl ? { ...DEFAULT_BELL, ...JSON.parse(bl) } : DEFAULT_BELL };
       } catch (e) {
         console.warn('ders programı / notlar okunamadı', e);
       }
@@ -80,6 +85,7 @@ export function DeskProvider({ children }) {
       setLessons(d.lessons);
       setPeriodsState(d.periods);
       setNotes(d.notes);
+      setBellState(d.bell);
       setLoadedFor(branchId);
     })();
     return () => {
@@ -95,6 +101,22 @@ export function DeskProvider({ children }) {
     setPeriodsState(next);
     setBranchItem(PERIODS_KEY, branchId, JSON.stringify(next)).catch(() => {});
   };
+  const setBell = (patch) => {
+    const next = { ...bell, ...patch };
+    setBellState(next);
+    setBranchItem(BELL_KEY, branchId, JSON.stringify(next)).catch(() => {});
+  };
+
+  // Zil bildirimlerini ders saatleri / program / zil ayarı değişince yeniden kur (kısa gecikmeyle, art arda değişikliklerde bir kez).
+  const bellTimer = useRef(null);
+  const bells = useMemo(() => (bell.mode === 'off' ? [] : bellTimes({ periods, lessons, mode: bell.mode, end: bell.end })), [bell, periods, lessons]);
+  useEffect(() => {
+    if (!branchId || loadedFor !== branchId) return undefined;
+    clearTimeout(bellTimer.current);
+    bellTimer.current = setTimeout(() => scheduleBells(bells), 800);
+    return () => clearTimeout(bellTimer.current);
+  }, [bells, branchId, loadedFor]);
+
   const saveNotes = (fn) =>
     setNotes((prev) => {
       const next = fn(prev);
@@ -162,6 +184,10 @@ export function DeskProvider({ children }) {
       },
       hasTimetable: Object.keys(lessons).length > 0,
 
+      bell,
+      bells,
+      setBell,
+
       notes,
       addNote: async (text, remind, time, color) => {
         const nid = remind ? await scheduleReminder(remind, '📝 Hatırlatma', text.trim(), time) : null;
@@ -183,7 +209,7 @@ export function DeskProvider({ children }) {
         }),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [lessons, periods, notes, loaded, branchId]
+    [lessons, periods, notes, loaded, branchId, bell, bells]
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

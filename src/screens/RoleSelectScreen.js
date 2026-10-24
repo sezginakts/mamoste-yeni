@@ -34,7 +34,7 @@ export default function RoleSelectScreen() {
       style={styles.screen}
       contentContainerStyle={{ padding: spacing.lg, paddingTop: insets.top + spacing.xl, paddingBottom: spacing.xxl, flexGrow: 1 }}
     >
-      <Text style={styles.title}>Mamoste</Text>
+      <Text style={styles.title}>Okul</Text>
       <Text style={styles.sub}>Uygulamayı nasıl kullanacaksın?</Text>
 
       <View style={{ gap: spacing.md, marginTop: spacing.xl }}>

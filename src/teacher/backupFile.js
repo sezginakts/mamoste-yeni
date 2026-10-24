@@ -4,7 +4,7 @@ import { Platform } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { dayKey } from '../utils/helpers';
 
-export const backupFileName = () => `mamoste-yedek-${dayKey()}.json`;
+export const backupFileName = () => `okul-yedek-${dayKey()}.json`;
 
 export async function saveBackupFile(text) {
   const name = backupFileName();

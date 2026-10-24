@@ -13,6 +13,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useTeacher } from '../../teacher/TeacherContext';
 import { useRole } from '../../context/RoleContext';
 import StatusBarCover from '../../components/StatusBarCover';
+import LineIcon from '../../components/LineIcon';
 import { attentionItems, studentTotals } from '../../teacher/analytics';
 import { Card, SectionTitle, Field, SmallButton, formatJoinCode } from '../../teacher/ui';
 import { useTeacherProfile } from '../../teacher/profile';
@@ -131,12 +132,14 @@ export default function TeacherHomeScreen({ navigation }) {
             <Text style={st.heroDate}>{DAY_NAMES[now.getDay()]}, {now.getDate()} {MONTH_NAMES[now.getMonth()]}</Text>
             {branch ? <Text style={st.heroBranch}>{branch.emoji} {branch.name}</Text> : null}
           </View>
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            <Pressable onPress={() => navigation.navigate('Profile')} style={st.gear} accessibilityLabel="Profilim" hitSlop={8}>
-              <Text style={{ fontSize: 20 }}>{profile.avatar || '🧑‍🏫'}</Text>
+          {/* Profil + ayarlar: koyu yarı saydam tek hap içinde beyaz çizgi simgeler. */}
+          <View style={st.tools}>
+            <Pressable onPress={() => navigation.navigate('Profile')} style={({ pressed }) => [st.tool, pressed && st.toolOn]} accessibilityLabel="Profilim" hitSlop={4}>
+              <LineIcon name="user" />
             </Pressable>
-            <Pressable onPress={() => navigation.navigate('Settings')} style={st.gear} accessibilityLabel="Ayarlar" hitSlop={8}>
-              <Text style={{ fontSize: 18 }}>⚙️</Text>
+            <View style={st.toolLine} />
+            <Pressable onPress={() => navigation.navigate('Settings')} style={({ pressed }) => [st.tool, pressed && st.toolOn]} accessibilityLabel="Ayarlar" hitSlop={4}>
+              <LineIcon name="settings" />
             </Pressable>
           </View>
         </View>
@@ -391,8 +394,9 @@ export default function TeacherHomeScreen({ navigation }) {
             badge={todayNotes.length || null}
             onPress={() => navigation.navigate('Notes')}
           />
-          <Tile icon="🖥️" tint={colors.second} title="Akıllı tahta" onPress={() => navigation.navigate('Activities', { board: true })} />
+          <Tile icon="🖥️" tint={colors.second} title="Akıllı tahta" onPress={() => navigation.navigate('Board')} />
           <Tile icon="🎯" tint={colors.accent} title="Etkinlikler" onPress={() => navigation.navigate('Activities')} />
+          <Tile icon="📁" tint={colors.second} title="Evraklar" onPress={() => navigation.navigate('Docs')} />
         </View>
 
         {/* ---- Sınıflarım ---- */}
@@ -521,7 +525,10 @@ const st = StyleSheet.create({
   heroHello: { color: 'rgba(255,255,255,0.85)', fontSize: font.body, fontWeight: '700' },
   heroDate: { color: '#fff', fontSize: font.h2, fontWeight: '900', marginTop: 2 },
   heroBranch: { color: 'rgba(255,255,255,0.85)', fontSize: font.small, fontWeight: '800', marginTop: 4 },
-  gear: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
+  tools: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(15,23,42,0.22)', borderRadius: radius.pill, padding: 3 },
+  tool: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  toolOn: { backgroundColor: 'rgba(255,255,255,0.18)' },
+  toolLine: { width: 1, height: 20, backgroundColor: 'rgba(255,255,255,0.35)' },
   stats: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.lg },
   stat: { flex: 1, backgroundColor: 'rgba(255,255,255,0.16)', borderRadius: radius.md, paddingVertical: 10, alignItems: 'center' },
   statV: { color: '#fff', fontSize: font.body, fontWeight: '900' },

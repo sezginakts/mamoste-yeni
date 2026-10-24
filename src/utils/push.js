@@ -3,6 +3,7 @@
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { rpc, cloudEnabled } from '../lib/supabase';
+import { foregroundHandling } from './notify';
 
 export async function registerStudentPush(student) {
   if (Platform.OS === 'web' || !cloudEnabled || !student || !student.rid || !student.token) return null;
@@ -31,9 +32,7 @@ export function onHomeworkNotification(cb) {
   } catch (e) {
     return () => {};
   }
-  N.setNotificationHandler({
-    handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: false }),
-  });
+  N.setNotificationHandler({ handleNotification: foregroundHandling });
   const handle = (resp) => {
     const data = resp && resp.notification && resp.notification.request.content.data;
     if (data && data.homeworkId) cb({ homeworkId: data.homeworkId, branch: data.branch || null });

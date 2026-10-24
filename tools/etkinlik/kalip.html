@@ -358,6 +358,36 @@ document.addEventListener('keydown',e=>{if(!$('oyun').classList.contains('aktif'
   const k=e.key.toLowerCase();
   if(k==='arrowright'||k==='enter'){e.preventDefault();git(1)}else if(k==='arrowleft'){e.preventDefault();git(-1)}
   else if(k===' '){e.preventDefault();acik=!acik;goster()}else if(k==='d')cevapla(true);else if(k==='y')cevapla(false);else if(k==='s')soz()});
+// --- Uzaktan kumanda: Okul Tahta sayfası (iframe'in sahibi) telefondan gelen komutu postMessage ile iletir;
+// oyun her değişiklikte durumunu geri bildirir (telefonda cümle, puan, sıra görünsün). Tek dosya olarak açılınca etkisiz.
+const USTTE=window.parent&&window.parent!==window;
+let sozSon=null;
+function aktifEkran(){const e=document.querySelector('.ekran.aktif');return e?e.id:'giris'}
+function bildir(){if(!USTTE)return;try{const q=liste[i]||null;parent.postMessage({mamoste:'durum',oyun:'kalip',ekran:aktifEkran(),kaliplar:KALIPLAR.map(k=>k.ad),kalip:AYAR.kalip,mod:AYAR.mod,oyuncu:AYAR.oyuncu,
+  en:q?q[0]:'',tr:q?q[1]:'',acik,i,n:liste.length,sonuc:sonuclar[i]||null,puan,sira,soz:sozSon,mevcut:AYAR.mevcut},'*')}catch(e){}}
+function ayarCiz(){document.querySelectorAll('.sec').forEach(sec=>sec.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===AYAR[sec.dataset.k])));kalipCiz()}
+// Mevcut işlevleri sar: her değişiklikten sonra durum bildirilsin.
+[['goster'],['ekran'],['bitis'],['kalipCiz']].forEach(([ad])=>{const eski=window[ad];window[ad]=function(){const r=eski.apply(this,arguments);bildir();return r}});
+const sozEski=soz;soz=function(){sozEski();sozSon=sozler[sozler.length-1]||null;bildir()};
+$('sozBtn').onclick=soz;$('sozYeni').onclick=soz;
+window.addEventListener('message',e=>{const m=e.data;if(!m||m.mamoste!=='komut')return;const oyunda=aktifEkran()==='oyun';
+  switch(m.k){
+    case 'durum':bildir();break;
+    case 'kalip':if(KALIPLAR[m.i]){AYAR.kalip=m.i;kaydet();ayarCiz()}break;
+    case 'ayar':if(m.ad&&m.v!=null){AYAR[m.ad]=String(m.v);kaydet();ayarCiz()}break;
+    case 'basla':basla();zamanBaslat();break;
+    case 'giris':zamanDur();sus();$('soz').classList.remove('acik');ekran('giris');break;
+    case 'sonraki':if(oyunda)git(1);break;
+    case 'onceki':if(oyunda)git(-1);break;
+    case 'cevap':if(oyunda){acik=!acik;goster()}break;
+    case 'dogru':if(oyunda)cevapla(true);break;
+    case 'yanlis':if(oyunda)cevapla(false);break;
+    case 'soz':if(oyunda)soz();break;
+    case 'sozKapat':$('soz').classList.remove('acik');break;
+    case 'dinle':if(oyunda){ac();konus(liste[i][0])}break;
+  }
+});
+bildir();
 if(window.speechSynthesis)try{speechSynthesis.getVoices()}catch(e){}
 </script>
 </body></html>

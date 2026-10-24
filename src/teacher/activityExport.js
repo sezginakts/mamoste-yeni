@@ -2,10 +2,9 @@
 // flash belleğe atılıp akıllı tahtada çift tıklanınca tarayıcıda açılır.
 import { Platform } from 'react-native';
 import { buildHtml, fileName } from '../data/activities/build';
+import { buildBoardPack, packFileName } from '../data/activities/pack';
 
-export async function exportActivity(act) {
-  const html = buildHtml(act);
-  const name = fileName(act);
+async function saveHtml(html, name) {
   if (Platform.OS === 'web') {
     const url = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
     const a = document.createElement('a');
@@ -25,3 +24,8 @@ export async function exportActivity(act) {
   file.write(html);
   await Sharing.shareAsync(file.uri, { mimeType: 'text/html', UTI: 'public.html', dialogTitle: name });
 }
+
+export const exportActivity = (act) => saveHtml(buildHtml(act), fileName(act));
+
+// Tahta paketi: branşın bütün oyunları + menü, tek dosya (data/activities/pack.js).
+export const exportBoardPack = (branchId) => saveHtml(buildBoardPack(branchId), packFileName(branchId));

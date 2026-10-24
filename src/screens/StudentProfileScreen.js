@@ -104,7 +104,7 @@ export default function StudentProfileScreen({ navigation }) {
   const pickReminder = async (time) => {
     if (state.reminder && state.reminder.id) await cancelReminder(state.reminder.id);
     if (!time) return p.setReminder(null);
-    const id = await scheduleDaily(time, 'Mamoste 📚', 'Bugünkü çalışmanı ve ödevlerini unutma!');
+    const id = await scheduleDaily(time, 'Okul 📚', 'Bugünkü çalışmanı ve ödevlerini unutma!');
     p.setReminder({ time, id });
   };
 
@@ -252,7 +252,7 @@ export default function StudentProfileScreen({ navigation }) {
           {Platform.OS === 'web' ? (
             <Text style={{ color: colors.textFaint, fontSize: font.tiny, marginTop: 6 }}>Bildirim yalnızca telefondaki uygulamada çalışır.</Text>
           ) : state.reminder && !state.reminder.id ? (
-            <Text style={{ color: colors.danger, fontSize: font.tiny, marginTop: 6 }}>Bildirim izni verilmedi; telefon ayarlarından Mamoste'ye bildirim izni ver.</Text>
+            <Text style={{ color: colors.danger, fontSize: font.tiny, marginTop: 6 }}>Bildirim izni verilmedi; telefon ayarlarından Okul uygulamasına bildirim izni ver.</Text>
           ) : null}
         </Card>
       </ScrollView>

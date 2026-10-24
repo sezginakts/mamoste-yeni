@@ -62,7 +62,7 @@ export default function HomeScreen({ navigation }) {
       <View style={styles.topbar}>
         <View style={{ flex: 1 }}>
           <Text style={styles.hello}>Merhaba{state.student.nk ? ` ${state.student.nk}` : ''} 👋</Text>
-          <Text style={styles.title}>Mamoste</Text>
+          <Text style={styles.title}>Okul</Text>
         </View>
         <View style={styles.topRight}>
           {showEnglish ? (

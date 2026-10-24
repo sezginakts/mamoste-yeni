@@ -7,6 +7,8 @@ import { useTheme, useThemedStyles, ACCENTS } from '../context/ThemeContext';
 import { useRole } from '../context/RoleContext';
 import { useAuth } from '../context/AuthContext';
 import { useTeacher } from '../teacher/TeacherContext';
+import { useDesk } from '../teacher/DeskContext';
+import { ringBell } from '../components/BellOverlay';
 
 const THEMES = [
   { key: 'light', label: 'Aydınlık', emoji: '☀️' },
@@ -21,6 +23,8 @@ export default function SettingsScreen({ navigation }) {
   const { role, branch, resetRole, resetBranch } = useRole();
   const auth = useAuth();
   const t = useTeacher();
+  const desk = useDesk();
+  const hasTimes = desk.periods.some((p) => p.start);
 
   return (
     <View style={styles.screen}>
@@ -71,6 +75,52 @@ export default function SettingsScreen({ navigation }) {
         </>
       ) : null}
 
+      {/* Ders zili: ders saatlerinde bildirim + uygulama açıksa zil animasyonu */}
+      {role === 'teacher' ? (
+        <>
+          <Text style={styles.sectionTitle}>Ders Zili</Text>
+          <View style={styles.goalRow}>
+            {[
+              ['off', 'Kapalı'],
+              ['mine', 'Derslerimde'],
+              ['all', 'Her ders saati'],
+            ].map(([k, l]) => {
+              const active = desk.bell.mode === k;
+              return (
+                <Pressable key={k} onPress={() => desk.setBell({ mode: k })} style={[styles.themeChip, active && { borderColor: colors.accent, backgroundColor: colors.accent + (mode === 'dark' ? '33' : '1A') }]}>
+                  <Text style={[styles.themeLabel, { fontSize: font.small }, active && { color: colors.accent }]}>{l}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          {desk.bell.mode !== 'off' ? (
+            <>
+              <Pressable onPress={() => desk.setBell({ end: !desk.bell.end })} style={[styles.toggleRow, { marginTop: spacing.sm }]}>
+                <Text style={[styles.toggleLabel, { flex: 1 }]}>Ders bitince de çalsın</Text>
+                <View style={[styles.switch, { backgroundColor: desk.bell.end ? colors.accent : colors.border }]}>
+                  <View style={[styles.knob, desk.bell.end && { alignSelf: 'flex-end' }]} />
+                </View>
+              </Pressable>
+              {!hasTimes ? (
+                <Pressable onPress={() => navigation.navigate('Timetable')} style={[styles.toggleRow, { marginTop: spacing.sm }]}>
+                  <Text style={[styles.toggleDesc, { flex: 1, marginTop: 0, fontSize: font.small }]}>Zil için ders saatlerini gir ›</Text>
+                </Pressable>
+              ) : desk.bell.mode === 'mine' && !desk.hasTimetable ? (
+                <Pressable onPress={() => navigation.navigate('Timetable')} style={[styles.toggleRow, { marginTop: spacing.sm }]}>
+                  <Text style={[styles.toggleDesc, { flex: 1, marginTop: 0, fontSize: font.small }]}>Derslerinde çalması için ders programını gir ›</Text>
+                </Pressable>
+              ) : (
+                <Text style={[styles.toggleDesc, { marginTop: spacing.sm, marginLeft: spacing.xs }]}>Haftada {desk.bells.length} zil kurulu.</Text>
+              )}
+            </>
+          ) : null}
+          <Pressable onPress={() => ringBell({ title: '🔔 Ders başladı', body: 'Zil böyle çalar' })} style={[styles.toggleRow, { marginTop: spacing.sm }]}>
+            <Text style={[styles.toggleLabel, { flex: 1 }]}>🔔 Zili dene</Text>
+            <Text style={[styles.back, { fontSize: font.small }]}>›</Text>
+          </Pressable>
+        </>
+      ) : null}
+
       {/* Tema seçimi */}
       <Text style={styles.sectionTitle}>Tema</Text>
       <View style={styles.goalRow}>
@@ -102,7 +152,7 @@ export default function SettingsScreen({ navigation }) {
         })}
       </View>
 
-      <Text style={styles.version}>Mamoste · v1.0</Text>
+      <Text style={styles.version}>Okul · v1.0</Text>
     </ScrollView>
     <StatusBarCover color={colors.bg} />
     </View>
@@ -135,6 +185,8 @@ const makeStyles = (colors, shadow) => StyleSheet.create({
   infoText: { color: colors.textMuted, fontSize: font.small, lineHeight: 22 },
   resetBtn: { marginTop: spacing.xl, padding: spacing.md, alignItems: 'center' },
   resetText: { color: colors.danger, fontWeight: '800', fontSize: font.body },
+  switch: { width: 46, height: 28, borderRadius: 14, padding: 3, justifyContent: 'center' },
+  knob: { width: 22, height: 22, borderRadius: 11, backgroundColor: '#fff' },
   adminRow: { gap: spacing.sm, marginTop: spacing.sm },
   adminBtn: { borderWidth: 1.5, borderRadius: radius.md, paddingVertical: spacing.md, paddingHorizontal: spacing.md },
   version: { color: colors.textFaint, textAlign: 'center', marginTop: spacing.lg, fontSize: font.tiny },

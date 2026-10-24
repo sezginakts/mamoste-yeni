@@ -77,7 +77,7 @@ export default function TeacherClassScreen({ route, navigation }) {
         title={cls.name}
         subtitle={`${rows.length} öğrenci`}
         onBack={() => navigation.goBack()}
-        right={<SmallButton title="🖥️ Tahta" onPress={() => navigation.navigate('Activities', { board: true })} />}
+        right={<SmallButton title="🖥️ Tahta" onPress={() => navigation.navigate('Board')} />}
       />
       <View style={[st.tabs, { borderColor: colors.border }]}>
         {[['students', 'Öğrenciler'], ['homework', 'Ödevler']].map(([k, l]) => (
@@ -256,7 +256,7 @@ export default function TeacherClassScreen({ route, navigation }) {
 
 const ask = (title, message, ok, onOk) => confirmAction({ title, message, ok, onOk });
 
-// Davet kodu: öğretmen tahtaya yazar, öğrenci evde Mamoste'de "Derse katıl"a kod + okul numarasıyla girer.
+// Davet kodu: öğretmen tahtaya yazar, öğrenci evde Okul uygulamasında "Derse katıl"a kod + okul numarasıyla girer.
 // Yenileyince eski kod çalışmaz; sınıftakiler kalır. Sonradan gelen öğrenciye güncel kod gönderilir (Paylaş).
 function JoinCodeCard({ cls, total }) {
   const { colors } = useTheme();
@@ -280,7 +280,7 @@ function JoinCodeCard({ cls, total }) {
       setBusy(false);
     });
   const share = async () => {
-    const r = await shareText(`Mamoste ${cls.name} sınıf kodu: ${formatJoinCode(cls.code)}\nUygulamada “Derse katıl”a bu kodu ve okul numaranı yaz.`);
+    const r = await shareText(`Okul uygulaması · ${cls.name} sınıf kodu: ${formatJoinCode(cls.code)}\nUygulamada “Derse katıl”a bu kodu ve okul numaranı yaz.`);
     if (r === 'copied') setMsg({ ok: true, text: 'Kopyalandı.' });
   };
 
@@ -317,7 +317,7 @@ function JoinCodeCard({ cls, total }) {
         {code}
       </Text>
       <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: 2 }}>
-        Tahtaya yaz; öğrenciler Mamoste'de “Derse katıl”a bu kodu ve okul numarasını girer. Yenileyince eski kod çalışmaz, sınıftakiler kalır.
+        Tahtaya yaz; öğrenciler Okul uygulamasında “Derse katıl”a bu kodu ve okul numarasını girer. Yenileyince eski kod çalışmaz, sınıftakiler kalır.
       </Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.sm }}>
         <SmallButton title="⛶ Tahtada göster" onPress={() => setBig(true)} />
@@ -327,7 +327,7 @@ function JoinCodeCard({ cls, total }) {
       {msg ? <Text style={{ color: msg.ok ? colors.success : colors.danger, fontSize: font.small, marginTop: 6 }}>{msg.text}</Text> : null}
       <Modal visible={big} transparent animationType="fade" onRequestClose={() => setBig(false)}>
         <Pressable onPress={() => setBig(false)} style={st.codeModal}>
-          <Text style={st.codeModalTitle}>{cls.name} · Mamoste → “Derse katıl”</Text>
+          <Text style={st.codeModalTitle}>{cls.name} · Okul → “Derse katıl”</Text>
           <Text style={[st.codeModalCode, { fontSize: Math.min(150, (width - 32) / 7) }]} numberOfLines={1} adjustsFontSizeToFit>{code}</Text>
           <Text style={st.codeModalSub}>Bu kodu ve okul numaranı yaz · {joined}/{total} katıldı · kapatmak için dokun</Text>
         </Pressable>

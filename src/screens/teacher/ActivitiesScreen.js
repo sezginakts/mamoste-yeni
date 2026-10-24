@@ -1,6 +1,6 @@
 // Etkinlikler: branşın oyunları kart olarak. Yalnız kartın “▶ Oyna” düğmesi oyunu açar (sınıf düzeyi oyunun içinden değişir,
 // son seçilen hatırlanır). İçeriği olmayan oyun türleri gösterilmez. Türün `branches` listesi varsa yalnız o branşlarda.
-// "Akıllı tahta" kısayolundan açılınca (params.board) üstte tahtada kullanma adımları görünür.
+// Tahtaya taşıma yolları (flash bellek paketi, bağlantı) Akıllı Tahta ekranında (BoardScreen).
 import React from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
 import { spacing, font, radius } from '../../theme';
@@ -8,6 +8,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useRole } from '../../context/RoleContext';
 import { activitiesFor, ACTIVITY_TYPES } from '../../data/activities';
 import { Header, Card } from '../../teacher/ui';
+import { useBoardLink } from '../../teacher/BoardLink';
 
 const gradeRange = (gs) => {
   const u = [...new Set(gs.filter(Boolean))].sort((a, b) => a - b);
@@ -20,7 +21,6 @@ export default function ActivitiesScreen({ navigation, route }) {
   const { colors, shadow } = useTheme();
   const { branchId, branch } = useRole();
   const { width } = useWindowDimensions();
-  const board = !!(route.params && route.params.board);
   const list = activitiesFor(branchId);
   const games = Object.entries(ACTIVITY_TYPES)
     .filter(([, t]) => !t.branches || t.branches.includes(branchId))
@@ -28,27 +28,20 @@ export default function ActivitiesScreen({ navigation, route }) {
     .filter((g) => g.items.length);
   const cols = width >= 900 ? 3 : width >= 560 ? 2 : 1;
 
+  const link = useBoardLink();
   const open = (g) => navigation.navigate('ActivityPlay', { type: g.type });
+  // Tahtaya bağlıyken: oyunu tahtada aç, telefon kumanda olsun.
+  const onBoard = (g) => navigation.navigate('BoardRemote', { type: g.type });
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <Header title={board ? 'Akıllı Tahta' : 'Etkinlikler'} subtitle={branch ? `${branch.emoji} ${branch.name}` : ''} onBack={() => navigation.goBack()} />
+      <Header title="Etkinlikler" subtitle={branch ? `${branch.emoji} ${branch.name}` : ''} onBack={() => navigation.goBack()} />
       <ScrollView contentContainerStyle={{ padding: spacing.md, paddingBottom: spacing.xxl }}>
-        {board ? (
-          <Card style={{ borderLeftWidth: 4, borderLeftColor: colors.accent, marginBottom: spacing.md }}>
-            <Text style={{ color: colors.text, fontWeight: '900', fontSize: font.body, marginBottom: 6 }}>🖥️ Akıllı tahtada nasıl açılır?</Text>
-            {[
-              'Oyunu aç, üstteki ⬇ İndir’e dokun.',
-              'Dosyayı kendine WhatsApp’tan gönder ya da Dosyalar’a / bilgisayarına kaydet.',
-              'Dosyayı flash belleğe at, flash’ı akıllı tahtaya tak.',
-              'Dosyaya çift tıkla: tarayıcıda açılır. İnternet gerekmez.',
-            ].map((tx, i) => (
-              <Text key={i} style={{ color: colors.textMuted, fontSize: font.small, lineHeight: 21 }}>
-                <Text style={{ color: colors.accent, fontWeight: '900' }}>{i + 1}. </Text>
-                {tx}
-              </Text>
-            ))}
-          </Card>
+        {link.linked ? (
+          <Pressable onPress={() => navigation.navigate('BoardConnect')} style={[st.linked, { backgroundColor: colors.success + '1F', borderColor: colors.success }]}>
+            <Text style={{ color: colors.text, fontWeight: '800', flex: 1 }}>📺 Tahtaya bağlısın — oyunu “Tahtada” ile aç</Text>
+            <Text style={{ color: colors.success, fontWeight: '900' }}>›</Text>
+          </Pressable>
         ) : null}
 
         {games.length ? (
@@ -77,6 +70,17 @@ export default function ActivitiesScreen({ navigation, route }) {
                         >
                           <Text style={st.playT}>▶ Oyna</Text>
                         </Pressable>
+                        {link.linked ? (
+                          <Pressable
+                            onPress={() => onBoard(g)}
+                            accessibilityRole="button"
+                            accessibilityLabel={`${g.t.name} oyununu tahtada aç`}
+                            hitSlop={6}
+                            style={({ pressed }) => [st.play, { backgroundColor: colors.second, marginLeft: 6 }, pressed && { opacity: 0.8, transform: [{ scale: 0.97 }] }]}
+                          >
+                            <Text style={st.playT}>📺 Tahtada</Text>
+                          </Pressable>
+                        ) : null}
                       </View>
                     </View>
                   </View>
@@ -96,6 +100,7 @@ export default function ActivitiesScreen({ navigation, route }) {
 }
 
 const st = StyleSheet.create({
+  linked: { flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.md },
   grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -spacing.sm / 2 },
   card: { padding: spacing.sm / 2 },
   inner: { borderRadius: radius.lg, borderWidth: 1, overflow: 'hidden', flex: 1 },

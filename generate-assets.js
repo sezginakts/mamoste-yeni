@@ -1,6 +1,6 @@
-// Y2 logosu (tam yuvarlak mavi daire + beyaz "ing") -> tüm uygulama varlıkları.
-// Çalıştır: node generate-assets.js
-const sharp = require('sharp');
+// Okul logosu (tam yuvarlak mavi daire + beyaz "okul") -> tüm uygulama varlıkları.
+// Çalıştır: node generate-assets.js   (sharp gerekir: npm i --no-save sharp)
+const sharp = require(process.env.SHARP_PATH || 'sharp');
 const fs = require('fs');
 const path = require('path');
 
@@ -11,18 +11,18 @@ const BLUE1 = '#3B82F6';
 const BLUE2 = '#2563EB';
 const DARK = '#0F172A';
 
-// Daire + "ing" SVG. bg: arka plan ('transparent' | renk). pad: dairenin kenardan boşluğu (oran).
+// Daire + "okul" SVG. bg: arka plan ('transparent' | renk). pad: dairenin kenardan boşluğu (oran).
 function logoSVG(size, { bg = 'transparent', circle = true } = {}) {
   const cx = size / 2;
   const r = size * 0.46;
-  const fontSize = size * 0.34;
+  const fontSize = size * 0.27;
   const bgRect = bg === 'transparent' ? '' : `<rect width="${size}" height="${size}" fill="${bg}"/>`;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
   <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
     <stop offset="0" stop-color="${BLUE1}"/><stop offset="1" stop-color="${BLUE2}"/></linearGradient></defs>
   ${bgRect}
   ${circle ? `<circle cx="${cx}" cy="${cx}" r="${r}" fill="url(#g)"/>` : ''}
-  <text x="${cx}" y="${cx + fontSize * 0.35}" font-family="Arial, Helvetica, sans-serif" font-size="${fontSize}" font-weight="800" fill="#ffffff" text-anchor="middle" letter-spacing="${-size * 0.015}">ing</text>
+  <text x="${cx}" y="${cx + fontSize * 0.35}" font-family="Arial, Helvetica, sans-serif" font-size="${fontSize}" font-weight="800" fill="#ffffff" text-anchor="middle" letter-spacing="${-size * 0.012}">okul</text>
 </svg>`;
 }
 
@@ -30,15 +30,15 @@ function logoSVG(size, { bg = 'transparent', circle = true } = {}) {
 function splashSVG(w, h, bg) {
   const cx = w / 2, cy = h / 2;
   const r = Math.min(w, h) * 0.13;
-  const fontSize = r * 0.74;
+  const fontSize = r * 0.58;
   const textColor = bg === DARK ? '#F1F5F9' : '#0F172A';
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
   <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
     <stop offset="0" stop-color="${BLUE1}"/><stop offset="1" stop-color="${BLUE2}"/></linearGradient></defs>
   <rect width="${w}" height="${h}" fill="${bg}"/>
   <circle cx="${cx}" cy="${cy - r * 0.4}" r="${r}" fill="url(#g)"/>
-  <text x="${cx}" y="${cy - r * 0.4 + fontSize * 0.35}" font-family="Arial, Helvetica, sans-serif" font-size="${fontSize}" font-weight="800" fill="#fff" text-anchor="middle" letter-spacing="${-r * 0.03}">ing</text>
-  <text x="${cx}" y="${cy + r * 1.5}" font-family="Arial, Helvetica, sans-serif" font-size="${r * 0.42}" font-weight="800" fill="${textColor}" text-anchor="middle">Mamoste</text>
+  <text x="${cx}" y="${cy - r * 0.4 + fontSize * 0.35}" font-family="Arial, Helvetica, sans-serif" font-size="${fontSize}" font-weight="800" fill="#fff" text-anchor="middle" letter-spacing="${-r * 0.025}">okul</text>
+  <text x="${cx}" y="${cy + r * 1.5}" font-family="Arial, Helvetica, sans-serif" font-size="${r * 0.42}" font-weight="800" fill="${textColor}" text-anchor="middle">Okul</text>
 </svg>`;
 }
 
