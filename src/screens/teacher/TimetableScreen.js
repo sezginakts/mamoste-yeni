@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { View, Text, ScrollView, Pressable, Modal, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { spacing, font, radius } from '../../theme';
-import { accentColor } from '../../theme';
+import { pairColor } from '../../theme';
 import { useTheme } from '../../context/ThemeContext';
 import { useTeacher } from '../../teacher/TeacherContext';
 import { useDesk, weekdayOf, buildPeriods, periodAt } from '../../teacher/DeskContext';
@@ -13,9 +13,10 @@ import { Header, Chip } from '../../teacher/ui';
 const DAYS = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
 const SHORT = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum'];
 const GRADES = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-// Sınıf rengi: seçili uygulama rengi (Ayarlar → Uygulama Rengi). label imzası eski çağrılar için duruyor.
-export function classColor() {
-  return accentColor();
+// Sınıf rengi düzeye göre: 5, 7 ikinci renk; 6, 8 uygulama rengi (aynı düzeyin şubeleri aynı renk).
+export function classColor(label) {
+  const m = String(label || '').match(/^\s*(\d{1,2})/);
+  return pairColor(m ? +m[1] : 0);
 }
 
 export default function TimetableScreen({ navigation }) {

@@ -57,12 +57,18 @@ export const AMBER = '#D99A1E';
 // 5 kehribar, 6 gök mavisi, 7 mercan, 8 turkuaz; diğer düzeyler bu sırayla döner.
 export const GRADE_CYCLE = [AMBER, BRAND.sky, BRAND.coral, BRAND.ocean];
 
-// Seçili uygulama rengi (ThemeContext günceller). Tema bağlamı olmayan saf yardımcılar (ünite / sınıf rengi) bunu kullanır.
+// Seçili uygulama rengi ve ona eşlik eden ikinci renk (ThemeContext günceller).
+// Tema bağlamı olmayan saf yardımcılar (ünite / sınıf rengi) bunları kullanır.
 let accentNow = BRAND.ocean;
-export const setAccentNow = (c) => {
+let secondNow = BRAND.coral;
+export const setAccentNow = (c, second) => {
   accentNow = c;
+  if (second) secondNow = second;
 };
 export const accentColor = () => accentNow;
+export const secondColor = () => secondNow;
+// Sırayla iki renk: 0 → uygulama rengi, 1 → ikinci renk, 2 → uygulama rengi …
+export const pairColor = (i) => (Math.abs(i) % 2 ? secondNow : accentNow);
 
 // Varsayılan/yedek palet — modül seviyesinde colors importu için (statik referanslar).
 export const colors = LIGHT;

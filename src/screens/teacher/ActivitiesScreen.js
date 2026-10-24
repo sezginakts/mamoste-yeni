@@ -54,7 +54,7 @@ export default function ActivitiesScreen({ navigation, route }) {
         {games.length ? (
           <View style={st.grid}>
             {games.map((g, i) => {
-              const c = colors.accent;
+              const c = i % 2 ? colors.second : colors.accent;
               return (
                 <View key={g.type} style={[st.card, shadow, { width: `${100 / cols}%` }]}>
                   <View style={[st.inner, { backgroundColor: colors.card, borderColor: colors.border }]}>
