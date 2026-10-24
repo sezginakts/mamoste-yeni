@@ -22,7 +22,7 @@ export function accColor(acc, colors) {
   if (acc == null) return colors.border;
   if (acc < 0.5) return colors.danger;
   if (acc < 0.8) return colors.warning;
-  return colors.primary;
+  return colors.success;
 }
 
 export function studentPatternStats(student) {

@@ -118,7 +118,7 @@ export default function TeacherProfileScreen({ navigation }) {
             Telefon numarası ya da e-posta paylaşılmaz.
           </Text>
           <SmallButton title={busy ? '…' : 'Kaydet'} filled disabled={!dirty || busy} onPress={submit} style={{ alignSelf: 'flex-start' }} />
-          {msg ? <Text style={{ color: msg.ok ? colors.primary : colors.danger, fontSize: font.small, marginTop: 6 }}>{msg.text}</Text> : null}
+          {msg ? <Text style={{ color: msg.ok ? colors.success : colors.danger, fontSize: font.small, marginTop: 6 }}>{msg.text}</Text> : null}
         </Card>
 
         <SectionTitle>İSTATİSTİK</SectionTitle>
@@ -132,7 +132,7 @@ export default function TeacherProfileScreen({ navigation }) {
         <SectionTitle right={t.cloudOn && t.classes.some((c) => c.code) ? <SmallButton title={renewing ? '…' : '🔄 Tüm kodları yenile'} disabled={renewing} onPress={renewAll} /> : null}>
           SINIFLARIM · KODLAR
         </SectionTitle>
-        {codeMsg ? <Text style={{ color: codeMsg.ok ? colors.primary : colors.danger, fontSize: font.small, marginBottom: spacing.sm }}>{codeMsg.text}</Text> : null}
+        {codeMsg ? <Text style={{ color: codeMsg.ok ? colors.success : colors.danger, fontSize: font.small, marginBottom: spacing.sm }}>{codeMsg.text}</Text> : null}
         {t.classes.length === 0 ? (
           <Card>
             <Text style={{ color: colors.textMuted, fontSize: font.small }}>Henüz sınıf yok. Ana sayfadan sınıf ekle.</Text>

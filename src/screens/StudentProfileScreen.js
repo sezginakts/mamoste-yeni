@@ -154,7 +154,7 @@ export default function StudentProfileScreen({ navigation }) {
             Fotoğraf, telefon ya da tam adın istenmez. Öğretmenin seni okul numaranla tanır.
           </Text>
           <SmallButton title={busy ? '…' : 'Kaydet'} filled disabled={!dirty || busy} onPress={save} style={{ alignSelf: 'flex-start' }} />
-          {msg ? <Text style={{ color: msg.ok ? colors.primary : colors.danger, fontSize: font.small, marginTop: 6 }}>{msg.text}</Text> : null}
+          {msg ? <Text style={{ color: msg.ok ? colors.success : colors.danger, fontSize: font.small, marginTop: 6 }}>{msg.text}</Text> : null}
         </Card>
 
         <SectionTitle right={<SmallButton title="＋ Ders" onPress={() => navigation.navigate('StudentJoin')} />}>DERSLERİM</SectionTitle>

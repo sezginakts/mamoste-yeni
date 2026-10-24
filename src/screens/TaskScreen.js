@@ -60,7 +60,7 @@ export default function TaskScreen({ route, navigation }) {
           <>
             <SectionTitle>DURUM</SectionTitle>
             <Card>
-              <Text style={{ color: colors.primary, fontWeight: '900' }}>✓ Tamamladın · {new Date(hw.result.at).toLocaleDateString('tr-TR')}</Text>
+              <Text style={{ color: colors.success, fontWeight: '900' }}>✓ Tamamladın · {new Date(hw.result.at).toLocaleDateString('tr-TR')}</Text>
               {hw.result.note ? <Text style={{ color: colors.text, marginTop: 6 }}>Notun: {hw.result.note}</Text> : null}
               <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: 6 }}>
                 {hw.result.sent ? 'Öğretmenine iletildi.' : '⏳ İnternet gelince öğretmenine iletilecek.'}

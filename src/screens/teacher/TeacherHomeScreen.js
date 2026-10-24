@@ -382,17 +382,17 @@ export default function TeacherHomeScreen({ navigation }) {
         {/* ---- Kısayollar ---- */}
         <SectionTitle>KISAYOLLAR</SectionTitle>
         <View style={st.grid}>
-          <Tile icon="📅" tint="#0284C7" title="Yıllık plan" onPress={() => navigation.navigate('YearPlan')} />
-          <Tile icon="🗓️" tint="#0D9488" title="Ders programı" onPress={() => navigation.navigate('Timetable')} />
+          <Tile icon="📅" tint={colors.accent} title="Yıllık plan" onPress={() => navigation.navigate('YearPlan')} />
+          <Tile icon="🗓️" tint={colors.accent} title="Ders programı" onPress={() => navigation.navigate('Timetable')} />
           <Tile
             icon="📝"
-            tint="#E2574C"
+            tint={colors.accent}
             title="Notlarım"
             badge={todayNotes.length || null}
             onPress={() => navigation.navigate('Notes')}
           />
-          <Tile icon="🖥️" tint="#0284C7" title="Akıllı tahta" onPress={() => navigation.navigate('Activities', { board: true })} />
-          <Tile icon="🎯" tint="#0D9488" title="Etkinlikler" onPress={() => navigation.navigate('Activities')} />
+          <Tile icon="🖥️" tint={colors.accent} title="Akıllı tahta" onPress={() => navigation.navigate('Activities', { board: true })} />
+          <Tile icon="🎯" tint={colors.accent} title="Etkinlikler" onPress={() => navigation.navigate('Activities')} />
         </View>
 
         {/* ---- Sınıflarım ---- */}

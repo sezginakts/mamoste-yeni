@@ -161,12 +161,12 @@ export default function TeacherClassScreen({ route, navigation }) {
                             {t.cloudOn ? (s.joined ? '📱 ' : '◌ ') : ''}{s.no} {s.nk || s.nick || ''}
                           </Text>
                           <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
-                            <MiniPM label="+" color={colors.primary} onPress={() => t.addPoint(classId, s.id, 1)} />
+                            <MiniPM label="+" color={colors.success} onPress={() => t.addPoint(classId, s.id, 1)} />
                             <MiniPM label="−" color={colors.danger} onPress={() => t.addPoint(classId, s.id, -1)} />
                           </View>
                         </View>
                         {drills ? <Text style={[st.numCol, { color: colors.text }]}>{tot.t ? `%${Math.round(tot.acc * 100)}` : '—'}</Text> : null}
-                        <Text style={[st.numCol, { color: tot.points > 0 ? colors.primary : tot.points < 0 ? colors.danger : colors.textMuted, fontWeight: '800' }]}>
+                        <Text style={[st.numCol, { color: tot.points > 0 ? colors.success : tot.points < 0 ? colors.danger : colors.textMuted, fontWeight: '800' }]}>
                           {tot.points > 0 ? '+' : ''}{tot.points}
                         </Text>
                         {!drills ? <Text style={[st.numCol, { color: colors.textMuted }]}>{(s.submissions || []).length}</Text> : null}
@@ -238,7 +238,7 @@ export default function TeacherClassScreen({ route, navigation }) {
                           {hw.due ? formatDate(hw.due) : '—'}{late ? ' (geçti)' : ''}
                         </Text>
                       </Text>
-                      <Text style={{ color: s.done >= s.expected && s.expected ? colors.primary : colors.textMuted, fontSize: font.small, marginTop: 3, fontWeight: '700' }}>
+                      <Text style={{ color: s.done >= s.expected && s.expected ? colors.success : colors.textMuted, fontSize: font.small, marginTop: 3, fontWeight: '700' }}>
                         Teslim {s.done}/{s.expected}
                       </Text>
                     </View>
@@ -324,7 +324,7 @@ function JoinCodeCard({ cls, total }) {
         <SmallButton title={Platform.OS === 'web' ? '📋 Kopyala' : '📤 Gönder'} onPress={share} />
         <SmallButton title={busy ? '…' : '🔄 Kodu yenile'} disabled={busy} onPress={renew} />
       </View>
-      {msg ? <Text style={{ color: msg.ok ? colors.primary : colors.danger, fontSize: font.small, marginTop: 6 }}>{msg.text}</Text> : null}
+      {msg ? <Text style={{ color: msg.ok ? colors.success : colors.danger, fontSize: font.small, marginTop: 6 }}>{msg.text}</Text> : null}
       <Modal visible={big} transparent animationType="fade" onRequestClose={() => setBig(false)}>
         <Pressable onPress={() => setBig(false)} style={st.codeModal}>
           <Text style={st.codeModalTitle}>{cls.name} · Mamoste → “Derse katıl”</Text>

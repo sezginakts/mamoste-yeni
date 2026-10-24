@@ -2,17 +2,19 @@
 // Tercih AsyncStorage'da saklanır; tüm ekranlar useTheme() ile aktif paleti alır.
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { PALETTES, makeShadow } from '../theme';
+import { PALETTES, makeShadow, setAccentNow } from '../theme';
 
 const KEY = '@ingapp/theme/v1';
 const ACCENT_KEY = '@ingapp/accent/v1';
 const ThemeContext = createContext(null);
 
-// Uygulama rengi: light = aydınlık temada, dark = karanlık temada, deep = üst bant (karanlık).
+// Uygulama rengi: light = aydınlık temada, dark = karanlık temada, deep = üst bant (karanlık),
+// press = aydınlıkta düğme gölgesi / koyu ton, ink = karanlıkta renkli düğmenin yazısı.
+// Düğmeler, vurgular, ünite ve sınıf renkleri hep bu renkten. Anlamı olan renkler ayrı: doğru = success (turkuaz), hata = danger (mercan).
 export const ACCENTS = {
-  coral: { label: 'Mercan', light: '#E2574C', dark: '#FB8A7B', deep: '#9F2D24' },
-  ocean: { label: 'Turkuaz', light: '#0D9488', dark: '#2DD4BF', deep: '#115E59' },
-  sky: { label: 'Gök mavisi', light: '#0284C7', dark: '#38BDF8', deep: '#075985' },
+  coral: { label: 'Mercan', light: '#E2574C', dark: '#FB8A7B', deep: '#9F2D24', press: '#B4382E', ink: '#3D1A16' },
+  ocean: { label: 'Turkuaz', light: '#0D9488', dark: '#2DD4BF', deep: '#115E59', press: '#0F766E', ink: '#042F2B' },
+  sky: { label: 'Gök mavisi', light: '#0284C7', dark: '#38BDF8', deep: '#075985', press: '#075985', ink: '#082F49' },
 };
 // Eski sürümde seçilmiş, artık olmayan renkler (çivit, mor, yeşil, klasik mavi) turkuaza döner.
 const DEFAULT_ACCENT = 'ocean';
@@ -49,7 +51,20 @@ export function ThemeProvider({ children }) {
   const value = useMemo(() => {
     const a = ACCENTS[accent] || ACCENTS[DEFAULT_ACCENT];
     const base = PALETTES[mode] || PALETTES.light;
-    const colors = { ...base, accent: mode === 'dark' ? a.dark : a.light, accentDeep: mode === 'dark' ? a.deep : a.light };
+    const dark = mode === 'dark';
+    const accentC = dark ? a.dark : a.light;
+    const colors = {
+      ...base,
+      success: base.primary,
+      onSuccess: base.onPrimary,
+      accent: accentC,
+      accentDeep: dark ? a.deep : a.light,
+      primary: accentC,
+      primaryDark: dark ? a.light : a.press,
+      onPrimary: dark ? a.ink : '#FFFFFF',
+    };
+    // Sınıf / ünite kartları üstünde beyaz yazı var: karanlıkta da canlı (aydınlık) ton.
+    setAccentNow(a.light);
     return { mode, colors, shadow: makeShadow(colors), setThemeMode, toggleTheme, accent, setAccent, loaded };
   }, [mode, accent, loaded]);
 

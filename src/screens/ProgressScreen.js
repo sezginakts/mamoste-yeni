@@ -53,7 +53,7 @@ export default function ProgressScreen({ navigation }) {
           <Text style={styles.todayTitle}>Bugün</Text>
           {p.homeworkDone ? (
             <View style={[styles.statusPill, { backgroundColor: colors.successSoft }]}>
-              <Text style={[styles.statusPillText, { color: colors.primary }]}>✓ Tamamlandı</Text>
+              <Text style={[styles.statusPillText, { color: colors.success }]}>✓ Tamamlandı</Text>
             </View>
           ) : (
             <View style={[styles.statusPill, { backgroundColor: colors.bgSoft }]}>
@@ -102,9 +102,9 @@ export default function ProgressScreen({ navigation }) {
       </View>
       {p.dueToday.toplam > 0 && (
         <View style={styles.calBreakdown}>
-          {p.dueToday.gunluk > 0 && <CalChip styles={styles} color="#0284C7" label="Günlük" n={p.dueToday.gunluk} />}
-          {p.dueToday.haftalik > 0 && <CalChip styles={styles} color="#0D9488" label="Haftalık" n={p.dueToday.haftalik} />}
-          {p.dueToday.aylik > 0 && <CalChip styles={styles} color="#E2574C" label="Aylık" n={p.dueToday.aylik} />}
+          {p.dueToday.gunluk > 0 && <CalChip styles={styles} color={colors.accent} label="Günlük" n={p.dueToday.gunluk} />}
+          {p.dueToday.haftalik > 0 && <CalChip styles={styles} color={colors.accent} label="Haftalık" n={p.dueToday.haftalik} />}
+          {p.dueToday.aylik > 0 && <CalChip styles={styles} color={colors.accent} label="Aylık" n={p.dueToday.aylik} />}
         </View>
       )}
 
@@ -112,8 +112,8 @@ export default function ProgressScreen({ navigation }) {
       <Text style={styles.sectionTitle}>📈 Genel İlerleme</Text>
       <View style={styles.bigStatsRow}>
         <BigStat styles={styles} colors={colors} value={`${p.studied}`} sub={`/ ${p.totalSentences}`} label="Çalışılan cümle" color={colors.accent} />
-        <BigStat styles={styles} colors={colors} value={`%${masteredPct}`} label="Ustalaşma" color="#E2574C" />
-        <BigStat styles={styles} colors={colors} value={`%${accuracyPct}`} label="Doğruluk" color={colors.primary} />
+        <BigStat styles={styles} colors={colors} value={`%${masteredPct}`} label="Ustalaşma" color={colors.accent} />
+        <BigStat styles={styles} colors={colors} value={`%${accuracyPct}`} label="Doğruluk" color={colors.success} />
       </View>
 
       {/* ============ HANGİ AŞAMADA — DONUT ============ */}

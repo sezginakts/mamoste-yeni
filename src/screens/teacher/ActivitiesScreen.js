@@ -3,7 +3,7 @@
 // "Akıllı tahta" kısayolundan açılınca (params.board) üstte tahtada kullanma adımları görünür.
 import React from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
-import { spacing, font, radius, BRAND_CYCLE } from '../../theme';
+import { spacing, font, radius } from '../../theme';
 import { useTheme } from '../../context/ThemeContext';
 import { useRole } from '../../context/RoleContext';
 import { activitiesFor, ACTIVITY_TYPES } from '../../data/activities';
@@ -54,7 +54,7 @@ export default function ActivitiesScreen({ navigation, route }) {
         {games.length ? (
           <View style={st.grid}>
             {games.map((g, i) => {
-              const c = BRAND_CYCLE[i % BRAND_CYCLE.length];
+              const c = colors.accent;
               return (
                 <View key={g.type} style={[st.card, shadow, { width: `${100 / cols}%` }]}>
                   <View style={[st.inner, { backgroundColor: colors.card, borderColor: colors.border }]}>

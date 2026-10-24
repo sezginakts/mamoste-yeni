@@ -1,22 +1,16 @@
 // Yıllık plan görünümleri: renkli hafta kartı + plan haftalarını gösteren küçük takvim.
 import React, { useMemo, useState } from 'react';
 import { View, Text, Pressable, Modal, StyleSheet } from 'react-native';
-import { spacing, font, radius, BRAND } from '../theme';
+import { spacing, font, radius, accentColor } from '../theme';
 import { useTheme } from '../context/ThemeContext';
 import { formatDate } from './ui';
 import { dayKey } from '../utils/helpers';
 
-// Her üniteye sabit bir renk (ünite adından) — aynı ünite her yerde aynı renkte görünür.
-const UNIT_COLORS = [BRAND.ocean, BRAND.sky, BRAND.coral];
-const HOLIDAY_COLOR = BRAND.coral;
+// Plan haftalarının rengi: seçili uygulama rengi; tatil haftası gri.
+const HOLIDAY_COLOR = '#94A3B8';
 export function unitColor(w) {
   if (!w || w.holiday) return HOLIDAY_COLOR;
-  const name = String(w.unit || w.topic || '').toLowerCase();
-  const num = name.match(/(?:unit|ünite|unite|theme|tema)\s*(\d+)/);
-  if (num) return UNIT_COLORS[(+num[1] - 1) % UNIT_COLORS.length];
-  let h = 0;
-  for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-  return UNIT_COLORS[h % UNIT_COLORS.length];
+  return accentColor();
 }
 
 // Öğrenme çıktısı satırındaki beceri: ikon + Türkçe ad.

@@ -82,7 +82,7 @@ export default function TeacherStudentScreen({ route, navigation }) {
 
         <View style={{ flexDirection: 'row', gap: spacing.sm }}>
           {drills ? <Stat value={tot.t ? `%${Math.round(tot.acc * 100)}` : '—'} label={`${tot.p} doğru / ${tot.f} yanlış`} color={accColor(tot.acc, colors)} /> : null}
-          <Stat value={`${tot.points > 0 ? '+' : ''}${tot.points}`} label="puan" color={tot.points >= 0 ? colors.primary : colors.danger} />
+          <Stat value={`${tot.points > 0 ? '+' : ''}${tot.points}`} label="puan" color={tot.points >= 0 ? colors.success : colors.danger} />
           <Stat value={s.submissions.length} label="teslim" />
         </View>
         <Text style={{ color: colors.textMuted, fontSize: font.tiny, marginTop: 6 }}>Son çalışma: {formatTime(tot.last)}</Text>
@@ -137,7 +137,7 @@ export default function TeacherStudentScreen({ route, navigation }) {
           ))}
         </View>
         <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm }}>
-          <Pressable style={[st.big, { backgroundColor: colors.primary }]} onPress={() => { t.addPoint(classId, studentId, 1, tag); setTag(null); }}>
+          <Pressable style={[st.big, { backgroundColor: colors.success }]} onPress={() => { t.addPoint(classId, studentId, 1, tag); setTag(null); }}>
             <Text style={st.bigT}>＋1</Text>
           </Pressable>
           <Pressable style={[st.big, { backgroundColor: colors.danger }]} onPress={() => { t.addPoint(classId, studentId, -1, tag); setTag(null); }}>
@@ -146,7 +146,7 @@ export default function TeacherStudentScreen({ route, navigation }) {
         </View>
         {s.points.slice(-8).reverse().map((p) => (
           <View key={p.id} style={[st.line, { borderColor: colors.border }]}>
-            <Text style={{ color: p.d > 0 ? colors.primary : colors.danger, fontWeight: '900', width: 34 }}>{p.d > 0 ? '+1' : '−1'}</Text>
+            <Text style={{ color: p.d > 0 ? colors.success : colors.danger, fontWeight: '900', width: 34 }}>{p.d > 0 ? '+1' : '−1'}</Text>
             <Text style={{ color: colors.text, flex: 1 }}>{p.tag || '—'}</Text>
             <Text style={{ color: colors.textFaint, fontSize: font.tiny }}>{formatTime(p.at)}</Text>
             <Pressable onPress={() => t.removePoint(classId, studentId, p.id)} hitSlop={8} style={{ marginLeft: 10 }}>
@@ -207,7 +207,7 @@ export default function TeacherStudentScreen({ route, navigation }) {
               <View key={sen.id} style={[st.line, { borderColor: colors.border }]}>
                 <Text style={{ color: colors.text, flex: 1 }}>{sen.en}</Text>
                 <Text style={{ color: colors.danger, fontSize: font.small }}>✗{a.f}</Text>
-                <Text style={{ color: colors.primary, fontSize: font.small, marginLeft: 8 }}>✓{a.p}</Text>
+                <Text style={{ color: colors.success, fontSize: font.small, marginLeft: 8 }}>✓{a.p}</Text>
               </View>
             ))}
           </>

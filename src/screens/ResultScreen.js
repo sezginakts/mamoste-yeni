@@ -38,9 +38,9 @@ export default function ResultScreen({ route, navigation }) {
 
         {known.length > 0 && (
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.primary }]}>✅ Bildiklerin ({known.length})</Text>
+            <Text style={[styles.sectionTitle, { color: colors.success }]}>✅ Bildiklerin ({known.length})</Text>
             {known.map((r) => (
-              <Row key={r.id} r={r} color={colors.primary} />
+              <Row key={r.id} r={r} color={colors.success} />
             ))}
           </View>
         )}

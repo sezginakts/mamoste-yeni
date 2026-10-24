@@ -237,7 +237,7 @@ function TestPhase({ current, accent, autoSpeak, onFinish }) {
         {/* Sonuç */}
         {checked && (
           <View style={styles.feedbackBox}>
-            <Text style={[styles.feedbackTitle, { color: correct ? colors.primary : colors.danger }]}>
+            <Text style={[styles.feedbackTitle, { color: correct ? colors.success : colors.danger }]}>
               {correct ? '✅ Doğru!' : '❌ Yanlış'}
             </Text>
             {!correct && (
@@ -298,7 +298,7 @@ const makeStyles = (colors, shadow) => StyleSheet.create({
     textAlignVertical: 'top',
     ...(Platform.OS === 'web' ? { outlineStyle: 'none' } : {}),
   },
-  inputCorrect: { borderColor: colors.primary, backgroundColor: colors.successSoft },
+  inputCorrect: { borderColor: colors.success, backgroundColor: colors.successSoft },
   inputWrong: { borderColor: colors.danger, backgroundColor: colors.dangerSoft },
   feedbackBox: { alignItems: 'center', gap: 4 },
   feedbackTitle: { fontSize: font.h3, fontWeight: '900' },

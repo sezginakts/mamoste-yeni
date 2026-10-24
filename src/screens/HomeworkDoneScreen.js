@@ -27,7 +27,7 @@ export default function HomeworkDoneScreen({ route, navigation }) {
       <Header title="Ödev bitti 🎉" subtitle={hw.title} onBack={() => goTo(navigation, 'StudentHomework')} />
       <ScrollView contentContainerStyle={{ padding: spacing.md, paddingBottom: spacing.xxl }}>
         <View style={{ flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md }}>
-          <Stat value={`${c}/${entries.length}`} label="doğru" color={colors.primary} />
+          <Stat value={`${c}/${entries.length}`} label="doğru" color={colors.success} />
           <Stat value={hw.result.dur != null ? `${hw.result.dur} dk` : '—'} label="süre" />
         </View>
         {hw.cloud ? (
