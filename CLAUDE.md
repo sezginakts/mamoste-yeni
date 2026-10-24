@@ -40,6 +40,10 @@ Web testi: iki sekme = iki hesap — `http://localhost:8082` öğretmen, `http:/
   - Türkiye Haritası (`harita`, Sosyal 5–7): `tools/etkinlik/harita.html`, havuz `src/data/activities/haritaHavuzu.js`. Geometri `src/data/turkeyMap.js` OTOMATİK — `node generate-turkey-map.mjs <natural-earth geojson klasörü>` (Natural Earth 10m, public domain). Yerler + düzey (`MAP_LEVELS` 5–7, hata payı 150/120/100 km; 8. sınıfta coğrafya yok) `src/data/mapFeatures.js`. İlk kategori İller (81 il, plaka, düzeye göre 20/45/81 il; Bul'da dokunuş ilin içinde olmalı). Nokta eklersen hangi ilde düştüğünü kontrol et.
 - Ekranlar: `LearnScreen` (kalıplar), `src/screens/teacher/*` (panel, sınıf, öğrenci profili, ödev oluştur/paylaş, yedek, ActivityPlay = etkinlik oynatıcı), `ScanScreen`, `StudentHomeworkScreen`, `HomeworkDoneScreen`.
 
+## Derleme
+- EAS bulutu (`npx eas-cli build -p ios --profile preview`) ücretsiz planda saatlerce sırada bekleyebilir.
+- GitHub Actions: `.github/workflows/ios-build.yml` (depo `sezginakts/mamoste-yeni`, elle "Run workflow"): macOS'ta `eas build --local`, imza EAS'ten (gizli anahtar `EXPO_TOKEN`), çıktı artifact `Okul-iPhone` (okul.ipa). IPA'yı iPhone'a kurmak için ayrı araç gerekir (EAS'in kurulum bağlantısı burada yok).
+
 ## Ses
 - `generate-audio.py`: patterns.js'ten okur, `assets/audio/manifest.json` ile metin değişimini algılar, `src/utils/audioMap.js`'i (AUDIO_MAP + AUDIO_TEXT) yeniden yazar.
 - `tts.js` mp3'ü sadece metin eşleşirse çalar; değilse cihaz TTS'ine düşer.
