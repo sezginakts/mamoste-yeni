@@ -369,7 +369,7 @@ export default function YearPlanScreen({ route, navigation }) {
         )}
 
         <Text style={{ color: colors.textFaint, fontSize: font.tiny, marginTop: spacing.lg }}>
-          Plan dosyası bu cihazda okunur ve saklanır. Hafta sütununda tarih olmalı (ör. “08-12 Eylül” ya da “08.09.2025 - 12.09.2025”).
+          Plan dosyasında hafta sütununda tarih olmalı (ör. “08-12 Eylül” ya da “08.09.2025 - 12.09.2025”).
         </Text>
       </ScrollView>
     </View>

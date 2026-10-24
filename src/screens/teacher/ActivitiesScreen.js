@@ -90,9 +90,6 @@ export default function ActivitiesScreen({ navigation, route }) {
             <Text style={{ color: colors.textMuted, fontSize: font.small, flex: 1 }}>{branch ? `${branch.name} için` : 'Bu ders için'} oyunlar hazırlanıyor. Eklendiğinde burada görünecek.</Text>
           </Card>
         )}
-        <Text style={{ color: colors.textFaint, fontSize: font.tiny, marginTop: spacing.md }}>
-          Oyunlar internetsiz çalışır. Sınıf düzeyini oyunun içinden değiştirebilirsin; son seçtiğin hatırlanır.
-        </Text>
       </ScrollView>
     </View>
   );

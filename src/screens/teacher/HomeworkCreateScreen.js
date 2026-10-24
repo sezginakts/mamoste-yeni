@@ -1,5 +1,5 @@
 // Ödev oluşturucu — amaç: sınıfa ödev 3 dokunuşta.
-// Her şeyin akıllı varsayılanı var: sıradaki kalıp, 10 cümle, +3 kişisel tekrar, son gün = 2 gün sonra.
+// Her şeyin akıllı varsayılanı var: sıradaki kalıp, 10 cümle, +3 kişisel tekrar, son gün = gelecek hafta.
 import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { spacing, font } from '../../theme';
@@ -9,7 +9,7 @@ import { PATTERNS, PATTERN_BY_ID, CATEGORIES } from '../../data/patterns';
 import { weakSuggestion, addDays, nextWeekday, studentPatternStats } from '../../teacher/analytics';
 import { HW_KINDS, hwSummary } from '../../utils/homework';
 import { Header, Card, SectionTitle, Field, SmallButton, Chip, formatDate } from '../../teacher/ui';
-import { dayKey } from '../../utils/helpers';
+import DuePicker, { nextWeekDue } from '../../teacher/DuePicker';
 
 // Sınıfın son ödevindeki kalıptan bir sonraki kalıp (müfredat sırası = PATTERNS sırası).
 function nextPatternFor(cls) {
@@ -29,7 +29,6 @@ export default function HomeworkCreateScreen({ route, navigation }) {
   const t = useTeacher();
   const cls = t.getClass(classId);
   const student = studentId ? cls.students[studentId] : null;
-  const today = dayKey();
   const weak = useMemo(() => weakSuggestion(cls), [cls]);
 
   // Bireysel ödevde varsayılan: öğrencinin takıldığı cümleler.
@@ -59,7 +58,7 @@ export default function HomeworkCreateScreen({ route, navigation }) {
   const [pats, setPats] = useState(init.p);
   const [n, setN] = useState(10);
   const [r, setR] = useState(student ? 5 : 3);
-  const [due, setDue] = useState(addDays(today, 2));
+  const [due, setDue] = useState(nextWeekDue);
   const [target, setTarget] = useState(student ? student.id : 'all');
   const [title, setTitle] = useState('');
   const [showAll, setShowAll] = useState(false);
@@ -69,13 +68,6 @@ export default function HomeworkCreateScreen({ route, navigation }) {
   const weakIds = target !== 'all' && studentWeakIds.length ? studentWeakIds : weak.ids;
   const useIds = kind === 'weak' && weakIds.length ? weakIds.slice(0, n) : undefined;
   const autoTitle = kind === 'week' ? `Haftalık plan: ${patNames}` : `${patNames || 'Seçili cümleler'} · ${HW_KINDS[kind]?.label || ''}`;
-
-  const dueOpts = [
-    [addDays(today, 1), 'Yarın'],
-    [addDays(today, 2), '2 gün'],
-    [nextWeekday(5, new Date(Date.now() + 864e5)), 'Cuma'],
-    [addDays(today, 7), '1 hafta'],
-  ];
 
   const build = () => {
     const to = target === 'all' ? undefined : target;
@@ -174,11 +166,7 @@ export default function HomeworkCreateScreen({ route, navigation }) {
         {kind !== 'week' ? (
           <>
             <SectionTitle>SON GÜN</SectionTitle>
-            <View style={st.wrap}>
-              {dueOpts.map(([k, l]) => (
-                <Chip key={l} label={`${l} · ${formatDate(k)}`} active={due === k} onPress={() => setDue(k)} />
-              ))}
-            </View>
+            <DuePicker value={due} onChange={setDue} />
             <Field label="Başlık (boş bırakılırsa otomatik)" value={title} onChangeText={setTitle} placeholder={autoTitle} />
           </>
         ) : null}

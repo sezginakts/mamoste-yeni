@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacing, font, radius } from '../../theme';
 import { usePlans } from '../../teacher/PlanContext';
 import { weekForDay } from '../../teacher/yearPlan';
-import { useDesk, weekdayOf, sortNotes, periodAt } from '../../teacher/DeskContext';
+import { useDesk, weekdayOf, sortNotes, periodAt, gradeOfName } from '../../teacher/DeskContext';
 import { outcomesForLesson, splitOutcome, unitColor, lessonSlot } from '../../teacher/planUi';
 import { classColor } from './TimetableScreen';
 import { dayKey } from '../../utils/helpers';
@@ -13,7 +13,6 @@ import { useTheme } from '../../context/ThemeContext';
 import { useTeacher } from '../../teacher/TeacherContext';
 import { useRole } from '../../context/RoleContext';
 import StatusBarCover from '../../components/StatusBarCover';
-import { activitiesFor } from '../../data/activities';
 import { attentionItems, studentTotals } from '../../teacher/analytics';
 import { Card, SectionTitle, Field, SmallButton, formatJoinCode } from '../../teacher/ui';
 import { useTeacherProfile } from '../../teacher/profile';
@@ -46,6 +45,7 @@ export default function TeacherHomeScreen({ navigation }) {
   const { profile } = useTeacherProfile();
   const [newName, setNewName] = useState('');
   const [adding, setAdding] = useState(false);
+  const [weekPlanId, setWeekPlanId] = useState(null); // program yokken üst kartta gösterilen düzey
   const attention = useMemo(() => attentionItems(t.classes), [t.classes]);
   const { plans, planForGrade } = usePlans();
   const desk = useDesk();
@@ -96,6 +96,13 @@ export default function TeacherHomeScreen({ navigation }) {
     }
   }
   const live = focusLabel === 'ŞİMDİ';
+  // Ders programı yoksa üst kart bu haftanın öğrenme çıktılarını düzey düzey gösterir.
+  // Varsayılan: öğretmenin ilk sınıfının düzeyi (sınıf yoksa ilk plan).
+  const myGrades = t.classes.map((c) => gradeOfName(c.name)).filter(Boolean).sort((a, b) => a - b);
+  const weekPlan =
+    !focus && !desk.hasTimetable && plans.length
+      ? plans.find((p) => p.id === weekPlanId) || plans.find((p) => myGrades.includes(p.grade)) || plans[0]
+      : null;
   const openLesson = (l) => navigation.navigate('YearPlan', planForGrade(l.grade) ? { lessonKey: `${l.day}-${l.period}` } : {});
 
   const create = () => {
@@ -222,6 +229,84 @@ export default function TeacherHomeScreen({ navigation }) {
               </Pressable>
             );
           })()
+        ) : weekPlan ? (
+          (() => {
+            // Program yok: haftanın çıktıları haftalık ders saatine (yazmıyorsa 5 okul gününe; çıktı azsa çıktı sayısına) bölünür,
+            // bugüne düşen gösterilir. Hafta sonu pazartesinin çıktısı.
+            const wd = weekdayOf(now);
+            const dayK = wd > 5 ? dayKey(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 8 - wd)) : today;
+            const cur = weekForDay(weekPlan.weeks, dayK);
+            const w = cur && cur.status !== 'ended' ? cur.week : null;
+            // Yalnız beceri başlığı olan (metinsiz) satırlar sayılmaz.
+            const all = w && !w.holiday ? outcomesForLesson(w, 0, 1).lines.map(splitOutcome).filter((o) => o.text.trim()) : [];
+            const count = Math.max(1, Math.min((w && w.hours) || 5, all.length)); // her güne bir pay düşsün, tüm hafta tekrar gösterilmesin
+            const idx = wd > 5 ? 0 : Math.min(count - 1, Math.floor(((wd - 1) * count) / 5));
+            const skills = all.filter((_, i) => Math.floor((i * count) / all.length) === idx);
+            const c = unitColor(w);
+            return (
+              <Pressable onPress={() => navigation.navigate('YearPlan', { planId: weekPlan.id })} style={({ pressed }) => [st.focus, shadow, { backgroundColor: colors.card, borderColor: c }, pressed && { opacity: 0.94 }]}>
+                <View style={st.focusHead}>
+                  <View style={[st.pill, { backgroundColor: c + '1F' }]}>
+                    <Text style={[st.pillT, { color: c }]}>{wd > 5 ? 'PAZARTESİ' : 'BUGÜN'}</Text>
+                  </View>
+                  <View style={{ flex: 1 }} />
+                </View>
+                {plans.length > 1 ? (
+                  <View style={st.gradeChips}>
+                    {plans.map((p) => {
+                      const on = p.id === weekPlan.id;
+                      return (
+                        <Pressable key={p.id} onPress={() => setWeekPlanId(p.id)} hitSlop={4} style={[st.gradeChip, { borderColor: on ? c : colors.border, backgroundColor: on ? c : 'transparent' }]}>
+                          <Text style={{ color: on ? '#fff' : colors.text, fontWeight: '800', fontSize: font.small }}>{p.name}</Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                ) : (
+                  <Text style={[st.when, { color: colors.text }]}>{weekPlan.name}</Text>
+                )}
+                {!w ? (
+                  <Text style={[st.outText, { color: colors.text, marginTop: spacing.md }]}>Yıllık plan bitti.</Text>
+                ) : w.holiday ? (
+                  <Text style={[st.outText, { color: colors.text, marginTop: spacing.md }]}>🏖️ {w.unit || w.topic || 'Tatil haftası'}</Text>
+                ) : (
+                  <>
+                    {w.unit || w.topic ? (
+                      <Text style={[st.unit, { color: colors.textMuted }]} numberOfLines={1}>
+                        {(w.unit || w.topic).toLocaleUpperCase('tr')}
+                      </Text>
+                    ) : null}
+                    <Text style={[st.outHead, { color: colors.textFaint }]}>{skills.length > 1 ? 'BU DERSİN ÖĞRENME ÇIKTILARI' : 'BU DERSİN ÖĞRENME ÇIKTISI'}</Text>
+                    {skills.length ? (
+                      skills.map((o, i) => (
+                        <View key={i} style={[st.outRow, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border }]}>
+                          {o.code || o.label ? (
+                            <Text style={[st.outCode, { color: c }]}>
+                              {o.code || ''}{o.code && o.label ? '  ·  ' : ''}{o.label ? `${o.icon} ${o.label}` : ''}
+                            </Text>
+                          ) : null}
+                          <Text style={[st.outText, { color: colors.text }]}>{o.text}</Text>
+                        </View>
+                      ))
+                    ) : (
+                      <Text style={[st.outText, { color: colors.textMuted }]}>Planda bu haftanın öğrenme çıktısı yazmıyor.</Text>
+                    )}
+                    <View style={[st.focusFoot, { borderTopColor: colors.border }]}>
+                      <Text style={{ color: colors.textMuted, fontSize: font.tiny, fontWeight: '700', flex: 1 }}>
+                        📅 {w.week ? `${w.week}. hafta · ` : ''}{w.start ? `${shortDate(w.start)} – ${shortDate(w.end)}` : ''}
+                      </Text>
+                      <Text style={[st.more, { color: c, marginTop: 0 }]}>Planı aç ›</Text>
+                    </View>
+                  </>
+                )}
+                <Pressable onPress={() => navigation.navigate('Timetable')} style={[st.timesHint, { backgroundColor: colors.cardSoft }]}>
+                  <Text style={{ color: colors.textMuted, fontSize: font.tiny, fontWeight: '700' }}>
+                    🗓️ Ders programını girersen o saatteki dersin öğrenme çıktısı gelir ›
+                  </Text>
+                </Pressable>
+              </Pressable>
+            );
+          })()
         ) : (
           <Pressable
             onPress={() => navigation.navigate(desk.hasTimetable ? 'YearPlan' : 'Timetable')}
@@ -292,40 +377,22 @@ export default function TeacherHomeScreen({ navigation }) {
               })}
             </View>
           </>
-        ) : !desk.hasTimetable && plans.length ? (
-          <>
-            <SectionTitle>BU HAFTA</SectionTitle>
-            <View style={[st.flow, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              {plans.map((p) => {
-                const cur = weekForDay(p.weeks, today);
-                const w = cur && cur.week;
-                return (
-                  <Pressable key={p.id} onPress={() => navigation.navigate('YearPlan', { planId: p.id })} style={[st.flowCard, { backgroundColor: unitColor(w) + '14', marginVertical: 4 }]}>
-                    <Text style={{ color: colors.text, fontWeight: '900' }}>{p.name}</Text>
-                    <Text style={{ color: colors.textMuted, fontSize: font.small, flex: 1 }} numberOfLines={1}>{w.holiday ? '🏖️ Tatil' : w.unit || w.topic || '—'}</Text>
-                    <Text style={{ color: colors.textFaint, fontSize: 18 }}>›</Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </>
         ) : null}
 
         {/* ---- Kısayollar ---- */}
         <SectionTitle>KISAYOLLAR</SectionTitle>
         <View style={st.grid}>
-          <Tile icon="📅" tint="#0284C7" title="Yıllık plan" sub={plans.length ? `${plans.length} plan` : 'Yükle'} onPress={() => navigation.navigate('YearPlan')} />
-          <Tile icon="🗓️" tint="#0D9488" title="Ders programı" sub={desk.hasTimetable ? `Bugün ${todayLessons.length}` : 'Haftalık'} onPress={() => navigation.navigate('Timetable')} />
+          <Tile icon="📅" tint="#0284C7" title="Yıllık plan" onPress={() => navigation.navigate('YearPlan')} />
+          <Tile icon="🗓️" tint="#0D9488" title="Ders programı" onPress={() => navigation.navigate('Timetable')} />
           <Tile
             icon="📝"
             tint="#E2574C"
             title="Notlarım"
-            sub={pendingNotes.length ? `${pendingNotes.length} not` : 'Not al'}
             badge={todayNotes.length || null}
             onPress={() => navigation.navigate('Notes')}
           />
-          <Tile icon="🖥️" tint="#0284C7" title="Akıllı tahta" sub={branch?.board === 'english' ? 'Sınıf modu' : 'Etkinlik indir'} onPress={() => (branch?.board === 'english' ? navigation.navigate('Board', {}) : navigation.navigate('Activities', { board: true }))} />
-          <Tile icon="🎯" tint="#0D9488" title="Etkinlikler" sub={activitiesFor(branch?.id).length ? `${activitiesFor(branch?.id).length} oyun` : 'Pasaparola'} onPress={() => navigation.navigate('Activities')} />
+          <Tile icon="🖥️" tint="#0284C7" title="Akıllı tahta" onPress={() => navigation.navigate('Activities', { board: true })} />
+          <Tile icon="🎯" tint="#0D9488" title="Etkinlikler" onPress={() => navigation.navigate('Activities')} />
         </View>
 
         {/* ---- Sınıflarım ---- */}
@@ -402,9 +469,6 @@ export default function TeacherHomeScreen({ navigation }) {
           <Text style={{ color: colors.textFaint, fontSize: 22 }}>›</Text>
         </Pressable>
         ) : null}
-        <Text style={{ color: colors.textFaint, fontSize: font.tiny, textAlign: 'center', marginTop: spacing.lg }}>
-          {t.cloudOn ? '☁️ Sınıflar hesabına eşitlenir · öğrenci adları sunucuya gitmez' : '🔒 Veriler sadece bu cihazda tutulur'}
-        </Text>
       </View>
     </ScrollView>
     <StatusBarCover color={heroBg} />
@@ -440,7 +504,7 @@ function Tile({ icon, tint, title, sub, onPress, badge }) {
         <Text style={{ fontSize: 22 }}>{icon}</Text>
       </View>
       <Text style={{ color: colors.text, fontWeight: '800', fontSize: font.small, marginTop: spacing.sm }} numberOfLines={1}>{title}</Text>
-      <Text style={{ color: colors.textMuted, fontSize: font.tiny }} numberOfLines={1}>{sub}</Text>
+      {sub ? <Text style={{ color: colors.textMuted, fontSize: font.tiny }} numberOfLines={1}>{sub}</Text> : null}
       {badge ? (
         <View style={st.badge}>
           <Text style={{ color: '#fff', fontWeight: '900', fontSize: 11 }}>{badge}</Text>
@@ -478,6 +542,8 @@ const st = StyleSheet.create({
   outText: { fontSize: 18, lineHeight: 26, fontWeight: '600' },
   focusFoot: { flexDirection: 'row', alignItems: 'center', borderTopWidth: StyleSheet.hairlineWidth, marginTop: spacing.sm, paddingTop: spacing.md },
   more: { fontSize: font.small, fontWeight: '900', marginTop: spacing.md },
+  gradeChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: spacing.sm },
+  gradeChip: { borderWidth: 1.5, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 5 },
   timesHint: { borderRadius: radius.sm, paddingHorizontal: spacing.sm, paddingVertical: 6, marginTop: spacing.sm },
 
   sticky: { marginTop: spacing.lg, backgroundColor: '#C7EFEA', borderRadius: 4, padding: spacing.md, paddingTop: spacing.lg, transform: [{ rotate: '-0.8deg' }], shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 6, shadowOffset: { width: 0, height: 3 }, elevation: 3 },

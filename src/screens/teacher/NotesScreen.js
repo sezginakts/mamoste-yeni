@@ -46,9 +46,6 @@ export default function NotesScreen({ route, navigation }) {
             ) : null}
           </>
         ) : null}
-        <Text style={{ color: colors.textFaint, fontSize: font.tiny, marginTop: spacing.lg }}>
-          Notlar sadece bu cihazda saklanır. Hatırlatmalar telefona bildirim olarak gelir; web’de/akıllı tahtada ana sayfada görünür.
-        </Text>
       </ScrollView>
     </View>
   );

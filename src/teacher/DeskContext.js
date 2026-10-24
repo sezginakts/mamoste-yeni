@@ -1,11 +1,13 @@
 // Öğretmenin masası — SADECE bu cihazda: haftalık ders programı + ders saatleri + kişisel notlar / hatırlatıcılar.
+// Her branşın kendi programı, saatleri ve notları vardır (utils/branchStore).
 //
 // Ders:   lessons['<gün>-<ders>'] = { classId|null, grade, label }   gün: 1 = Pazartesi … 5 = Cuma
 // Saat:   periods = [{ start: 'HH:MM', end: 'HH:MM' }, …]           her okulun saati farklı; öğretmen düzenler
 // Not:    { id, text, color, remind: 'YYYY-MM-DD'|null, time: 'HH:MM'|null, done, at, nid }
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { shortId } from '../utils/codec';
+import { useRole } from '../context/RoleContext';
+import { getBranchItem, setBranchItem } from '../utils/branchStore';
 import { scheduleReminder, cancelReminder } from '../utils/notify';
 
 const TT_KEY = '@ingapp/teacher/v1/timetable';
@@ -58,34 +60,45 @@ export function DeskProvider({ children }) {
   const [lessons, setLessons] = useState({});
   const [periods, setPeriodsState] = useState(DEFAULT_PERIODS);
   const [notes, setNotes] = useState([]);
-  const [loaded, setLoaded] = useState(false);
+  const { branchId } = useRole();
+  const [loadedFor, setLoadedFor] = useState(null); // hangi branşın verisi yüklü
+  // Branş seçilmemişken (seçim ekranı) beklenecek bir şey yok.
+  const loaded = !branchId || loadedFor === branchId;
 
   useEffect(() => {
+    if (!branchId) return undefined;
+    let live = true;
     (async () => {
+      let d = { lessons: {}, periods: DEFAULT_PERIODS, notes: [] };
       try {
-        const [tt, ps, ns] = await Promise.all([AsyncStorage.getItem(TT_KEY), AsyncStorage.getItem(PERIODS_KEY), AsyncStorage.getItem(NOTES_KEY)]);
-        if (tt) setLessons(JSON.parse(tt));
-        if (ps) setPeriodsState(JSON.parse(ps));
-        if (ns) setNotes(JSON.parse(ns));
+        const [tt, ps, ns] = await Promise.all([getBranchItem(TT_KEY, branchId), getBranchItem(PERIODS_KEY, branchId), getBranchItem(NOTES_KEY, branchId)]);
+        d = { lessons: tt ? JSON.parse(tt) : {}, periods: ps ? JSON.parse(ps) : DEFAULT_PERIODS, notes: ns ? JSON.parse(ns) : [] };
       } catch (e) {
         console.warn('ders programı / notlar okunamadı', e);
       }
-      setLoaded(true);
+      if (!live) return;
+      setLessons(d.lessons);
+      setPeriodsState(d.periods);
+      setNotes(d.notes);
+      setLoadedFor(branchId);
     })();
-  }, []);
+    return () => {
+      live = false;
+    };
+  }, [branchId]);
 
   const saveLessons = (next) => {
     setLessons(next);
-    AsyncStorage.setItem(TT_KEY, JSON.stringify(next)).catch(() => {});
+    setBranchItem(TT_KEY, branchId, JSON.stringify(next)).catch(() => {});
   };
   const savePeriods = (next) => {
     setPeriodsState(next);
-    AsyncStorage.setItem(PERIODS_KEY, JSON.stringify(next)).catch(() => {});
+    setBranchItem(PERIODS_KEY, branchId, JSON.stringify(next)).catch(() => {});
   };
   const saveNotes = (fn) =>
     setNotes((prev) => {
       const next = fn(prev);
-      AsyncStorage.setItem(NOTES_KEY, JSON.stringify(next)).catch(() => {});
+      setBranchItem(NOTES_KEY, branchId, JSON.stringify(next)).catch(() => {});
       return next;
     });
 
@@ -170,7 +183,7 @@ export function DeskProvider({ children }) {
         }),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [lessons, periods, notes, loaded]
+    [lessons, periods, notes, loaded, branchId]
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

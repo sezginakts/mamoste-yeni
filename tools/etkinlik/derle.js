@@ -5,6 +5,7 @@ const path = require('path');
 
 const MOTORLAR = [
   { kaynak: 'cumle.html', hedef: '../../src/data/activities/cumleEngine.js' },
+  { kaynak: 'kalip.html', hedef: '../../src/data/activities/kalipEngine.js' },
   { kaynak: 'cark.html', hedef: '../../src/data/activities/carkEngine.js' },
   { kaynak: 'terazi.html', hedef: '../../src/data/activities/teraziEngine.js' },
   { kaynak: 'fiilimsi.html', hedef: '../../src/data/activities/fiilimsiEngine.js' },

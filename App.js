@@ -1,6 +1,6 @@
 import 'react-native-gesture-handler';
 import React, { useEffect, useRef } from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -27,7 +27,6 @@ import TeacherStudentScreen from './src/screens/teacher/TeacherStudentScreen';
 import HomeworkCreateScreen from './src/screens/teacher/HomeworkCreateScreen';
 import HomeworkShareScreen from './src/screens/teacher/HomeworkShareScreen';
 import TeacherBackupScreen from './src/screens/teacher/TeacherBackupScreen';
-import BoardScreen from './src/screens/teacher/BoardScreen';
 import RosterImportScreen from './src/screens/teacher/RosterImportScreen';
 import YearPlanScreen from './src/screens/teacher/YearPlanScreen';
 import { PlanProvider, usePlans } from './src/teacher/PlanContext';
@@ -196,7 +195,6 @@ function RootNavigator() {
             <Stack.Screen name="TaskCreate" component={TaskCreateScreen} />
             <Stack.Screen name="HomeworkShare" component={HomeworkShareScreen} />
             <Stack.Screen name="TeacherBackup" component={TeacherBackupScreen} />
-            <Stack.Screen name="Board" component={BoardScreen} options={{ orientation: 'default' }} />
             <Stack.Screen name="Activities" component={ActivitiesScreen} />
             <Stack.Screen name="ActivityPlay" component={ActivityPlayScreen} options={{ orientation: 'default', gestureEnabled: false }} />
           </>
@@ -230,7 +228,11 @@ export default function App() {
                   <TeacherProvider>
                     <PlanProvider>
                       <DeskProvider>
-                        <RootNavigator />
+                        {/* Klavye açılınca tüm ekran (oyunlar dahil) klavyenin üstüne sığsın.
+                            Android tam ekran (edge-to-edge) düzende pencere kendiliğinden küçülmüyor; iOS'ta hiç küçülmez. */}
+                        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
+                          <RootNavigator />
+                        </KeyboardAvoidingView>
                         <ConfirmHost />
                       </DeskProvider>
                     </PlanProvider>

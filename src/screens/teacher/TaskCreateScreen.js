@@ -5,9 +5,8 @@ import { View, Text, ScrollView, Image, Pressable, ActivityIndicator, StyleSheet
 import { spacing, font, radius } from '../../theme';
 import { useTheme } from '../../context/ThemeContext';
 import { useTeacher } from '../../teacher/TeacherContext';
-import { addDays, nextWeekday } from '../../teacher/analytics';
-import { Header, Card, SectionTitle, Field, SmallButton, Chip, formatDate } from '../../teacher/ui';
-import { dayKey } from '../../utils/helpers';
+import DuePicker, { nextWeekDue } from '../../teacher/DuePicker';
+import { Header, Card, SectionTitle, Field, SmallButton, Chip } from '../../teacher/ui';
 import { pickMedia, uploadMedia, removeMedia } from '../../teacher/media';
 
 export default function TaskCreateScreen({ route, navigation }) {
@@ -16,20 +15,13 @@ export default function TaskCreateScreen({ route, navigation }) {
   const t = useTeacher();
   const cls = t.getClass(classId);
   const student = studentId ? cls.students[studentId] : null;
-  const today = dayKey();
   const [target, setTarget] = useState(student ? student.id : 'all');
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [att, setAtt] = useState([]); // yüklenmiş: { path, url, type, name }
   const [busy, setBusy] = useState(null); // yükleniyor mesajı
   const [error, setError] = useState(null);
-  const dueOpts = [
-    [addDays(today, 1), 'Yarın'],
-    [addDays(today, 2), '2 gün'],
-    [nextWeekday(5, new Date(Date.now() + 864e5)), 'Cuma'],
-    [addDays(today, 7), '1 hafta'],
-  ];
-  const [due, setDue] = useState(dueOpts[3][0]);
+  const [due, setDue] = useState(nextWeekDue);
 
   const add = async (source) => {
     setError(null);
@@ -110,11 +102,7 @@ export default function TaskCreateScreen({ route, navigation }) {
         </Text>
 
         <SectionTitle>SON GÜN</SectionTitle>
-        <View style={st.wrap}>
-          {dueOpts.map(([k, l]) => (
-            <Chip key={l} label={`${l} · ${formatDate(k)}`} active={due === k} onPress={() => setDue(k)} />
-          ))}
-        </View>
+        <DuePicker value={due} onChange={setDue} />
 
         <Card style={{ marginTop: spacing.md }}>
           <Text style={{ color: colors.textMuted, fontSize: font.small }}>

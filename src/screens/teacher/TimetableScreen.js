@@ -119,10 +119,6 @@ export default function TimetableScreen({ navigation }) {
             );
           })}
         </View>
-
-        <Text style={{ color: colors.textFaint, fontSize: font.tiny, marginTop: spacing.md }}>
-          Hücreye dokun → sınıfı seç. Soldaki saate dokun → o dersin giriş-çıkış saatini değiştir. Yıllık plan, bugünkü derslerine göre açılır. Program sadece bu cihazda saklanır.
-        </Text>
       </ScrollView>
 
       {cell ? (

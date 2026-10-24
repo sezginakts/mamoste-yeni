@@ -1,7 +1,9 @@
 // Öğretmen verisi — cihazda (AsyncStorage) asıl kopya; öğretmen giriş yaptıysa sunucuyla eşitlenir (cloud.js).
 // Her sınıf ayrı anahtarda tutulur (tek dev JSON'un boyut sınırına takılmamak için).
 //
-// Sınıf: { id, rid (sunucu id), cc (eski sınıf kodu — sunucudan), code (davet kodu — sunucudan), name, createdAt, students: { [sid]: Öğrenci }, homeworks: [Ödev], subsSince }
+// Her sınıf bir branşa aittir (branch); öğretmen yalnız seçili branşın sınıflarını görür.
+//
+// Sınıf: { id, branch, rid (sunucu id), cc (eski sınıf kodu — sunucudan), code (davet kodu — sunucudan), name, createdAt, students: { [sid]: Öğrenci }, homeworks: [Ödev], subsSince }
 // Öğrenci: { id, rid, joined (uygulamadan katıldı mı), no, nk (öğretmenin yazdığı ad — sunucuya gitmez), nick (öğrencinin takma adı), createdAt,
 //            attempts: { [cümleId]: { p, f, last } },       // doğru / yanlış sayısı
 //            submissions: [{ h, at, c, t, dur }],             // teslim edilen ödevler
@@ -103,7 +105,7 @@ export function TeacherProvider({ children }) {
     let error = null;
     try {
       for (const cls of Object.values(classesRef.current)) {
-        const r = await syncClass(cls, userId, branchId || 'ingilizce');
+        const r = await syncClass(cls, userId, cls.branch || branchId || 'ingilizce');
         mutate(cls.id, (c) => applySync(c, r, { newId: shortId, emptyStudent }));
       }
     } catch (e) {
@@ -137,13 +139,22 @@ export function TeacherProvider({ children }) {
   }, [loaded, userId]);
   const cloud = (p) => userId && p && Promise.resolve(p).catch(() => {});
 
+  // Branş etiketi olmayan (eski) sınıflar o an seçili branşa aittir. Eşitleme sunucudaki branşla düzeltir.
+  useEffect(() => {
+    if (!loaded || !branchId) return;
+    Object.values(classesRef.current).forEach((c) => {
+      if (!c.branch) mutate(c.id, (x) => (x.branch = branchId));
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded, branchId]);
+
   // ---- Sınıf ----
   const addClass = (name) => {
     const used = new Set(Object.values(classes).map((c) => c.cc));
     let cc = classCode();
     while (used.has(cc)) cc = classCode();
     const id = shortId();
-    const cls = { id, cc, name: name.trim() || 'Yeni sınıf', createdAt: Date.now(), students: {}, homeworks: [] };
+    const cls = { id, branch: branchId, cc, name: name.trim() || 'Yeni sınıf', createdAt: Date.now(), students: {}, homeworks: [] };
     dirty.current.add(id);
     setClasses((p) => ({ ...p, [id]: cls }));
     setOrder((o) => [...o, id]);
@@ -354,16 +365,6 @@ export function TeacherProvider({ children }) {
     };
   };
 
-  // ---- Akıllı tahta: sınıf içinde sözlü cevap ----
-  const recordAttempt = (classId, sid, sentenceId, correct) =>
-    mutateStudent(classId, sid, (s) => {
-      const a = s.attempts[sentenceId] || { p: 0, f: 0, last: 0 };
-      if (correct) a.p += 1;
-      else a.f += 1;
-      a.last = Date.now();
-      s.attempts[sentenceId] = a;
-    });
-
   // ---- Yedek ----
   const exportBackup = () => JSON.stringify({ app: 'ingapp-teacher', v: 1, at: Date.now(), order, classes });
   const importBackup = (text) => {
@@ -372,6 +373,7 @@ export function TeacherProvider({ children }) {
       if (d.app !== 'ingapp-teacher' || !d.classes) return { ok: false, msg: 'Bu metin bir öğretmen yedeği değil.' };
       Object.keys(classes).forEach((id) => dirty.current.add(id));
       Object.keys(d.classes).forEach((id) => dirty.current.add(id));
+      Object.values(d.classes).forEach((c) => c && !c.branch && (c.branch = branchId)); // branş ayrımından önceki yedek
       setClasses(d.classes);
       setOrder((d.order || Object.keys(d.classes)).filter((id) => d.classes[id]));
       return { ok: true, msg: `${Object.keys(d.classes).length} sınıf geri yüklendi.` };
@@ -380,7 +382,10 @@ export function TeacherProvider({ children }) {
     }
   };
 
-  const list = useMemo(() => order.map((id) => classes[id]).filter(Boolean), [order, classes]);
+  const list = useMemo(
+    () => order.map((id) => classes[id]).filter((c) => c && (c.branch || branchId) === branchId),
+    [order, classes, branchId]
+  );
 
   const value = {
     loaded,
@@ -393,6 +398,7 @@ export function TeacherProvider({ children }) {
     giveFeedback,
     branchId,
     classes: list,
+    allClassCount: order.length,
     getClass: (id) => classes[id],
     addClass,
     renameClass,
@@ -410,7 +416,6 @@ export function TeacherProvider({ children }) {
     removeHomework,
     packHomeworks,
     importResult,
-    recordAttempt,
     exportBackup,
     importBackup,
   };

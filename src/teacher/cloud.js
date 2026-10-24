@@ -22,7 +22,7 @@ export async function syncClass(cls, userId, branch = 'ingilizce') {
     must(await supabase.from('classes').update({ name: cls.name.slice(0, 40) }).eq('id', sid));
   }
   // Davet kodu (öğretmen başka cihazda yenilemiş olabilir). Sunucuda migration yoksa hata verir; eşitleme yine de sürsün.
-  const join = (await supabase.from('classes').select('invite_code').eq('id', sid).single()).data || {};
+  const join = (await supabase.from('classes').select('invite_code, branch').eq('id', sid).single()).data || {};
 
   // Öğretmenin eklediği numaralar (isim değil) sunucuya.
   const nums = Object.values(cls.students)
@@ -70,7 +70,7 @@ export async function syncClass(cls, userId, branch = 'ingilizce') {
     if (cls.subsSince) q = q.gt('submitted_at', cls.subsSince);
     subs = must(await q);
   }
-  return { rid: sid, cc, code: join.invite_code || null, students, hwSids, subs, syncedName: cls.name };
+  return { rid: sid, cc, code: join.invite_code || null, branch: join.branch || null, students, hwSids, subs, syncedName: cls.name };
 }
 
 // syncClass sonucunu cihazdaki sınıf kopyasına uygula (mutate içinde çağrılır).
@@ -78,6 +78,7 @@ export function applySync(c, r, { newId, emptyStudent }) {
   c.rid = r.rid;
   c.cc = r.cc;
   c.code = r.code;
+  if (r.branch) c.branch = r.branch;
   c.syncedName = r.syncedName;
   const localByNo = {};
   Object.values(c.students).forEach((s) => (localByNo[String(s.no)] = s));

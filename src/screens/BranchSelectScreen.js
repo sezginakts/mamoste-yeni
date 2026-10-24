@@ -1,4 +1,4 @@
-// Öğretmen: branşını seç (ilk açılışta bir kez; kalıcı).
+// Öğretmen: branşını seç (ilk açılışta; sonra Ayarlar'dan değiştirilebilir, her branşın verisi ayrı).
 import React, { useState } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,21 +12,21 @@ import Button from '../components/Button';
 export default function BranchSelectScreen() {
   const insets = useSafeAreaInsets();
   const { colors, shadow } = useTheme();
-  const { setBranch, resetRole } = useRole();
+  const { setBranch, resetRole, prevBranch, cancelBranchChange } = useRole();
   const { isAdmin } = useAuth();
-  const [picked, setPicked] = useState(null);
+  const [picked, setPicked] = useState(prevBranch);
   const sel = BRANCHES.find((b) => b.id === picked);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingTop: insets.top + spacing.xl, paddingBottom: 140 }}>
-        {isAdmin ? (
-          <Pressable onPress={resetRole} hitSlop={10} style={{ alignSelf: 'flex-start', marginBottom: spacing.md }}>
+        {prevBranch || isAdmin ? (
+          <Pressable onPress={prevBranch ? cancelBranchChange : resetRole} hitSlop={10} style={{ alignSelf: 'flex-start', marginBottom: spacing.md }}>
             <Text style={{ color: colors.accent, fontWeight: '800', fontSize: font.body }}>‹ Geri</Text>
           </Pressable>
         ) : null}
         <Text style={[st.title, { color: colors.text }]}>Branşın hangisi?</Text>
-        <Text style={[st.sub, { color: colors.textMuted }]}>Mamoste seçtiğin branşa göre açılır. Bu seçim kalıcıdır.</Text>
+        <Text style={[st.sub, { color: colors.textMuted }]}>Mamoste seçtiğin branşa göre açılır. Her branşın sınıfları ve planları ayrı tutulur.</Text>
         <View style={st.grid}>
           {BRANCHES.map((b) => {
             const on = picked === b.id;

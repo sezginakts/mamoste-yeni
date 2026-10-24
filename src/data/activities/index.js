@@ -27,6 +27,15 @@ export const ACTIVITY_TYPES = {
     branches: ['ingilizce'],
     engine: () => require('./cumleEngine.js').default,
   },
+  // Akıllı tahta sınıf modu (eski Board ekranı). Kaynağı tools/etkinlik/kalip.html; değişince `node tools/etkinlik/derle.js`.
+  // Havuz: ingilizce/kalip.js — patterns.js'teki kalıplar ve cümleleri (tek kaynak).
+  kalip: {
+    icon: '🖥️',
+    name: 'Kalıp Tahtası',
+    desc: 'Kalıbı seç, cümleler tahtada büyük çıksın: oku-tekrarla ya da Türkçeden çevir. Dinle, cevabı aç, 🎲 ile söz ver; doğru/yanlışla sınıf ya da iki takım yarışır.',
+    branches: ['ingilizce'],
+    engine: () => require('./kalipEngine.js').default,
+  },
   // Kaynağı tools/etkinlik/cark.html; değişince `node tools/etkinlik/derle.js`.
   // Havuz: [["soru", "örnek cevap", "emoji", seviye, ["seçenek", …] (isteğe bağlı; doğru cevap aynen içinde)], …]
   cark: {
@@ -116,6 +125,7 @@ const LIST = {
   ],
   // Diğer branşların içeriği eklenecek (yukarıdaki açıklamaya bak).
   ingilizce: [
+    { type: 'kalip', grade: null, unit: null, unitName: 'Kalıp cümleleri', pool: () => require('./ingilizce/kalip.js').default, sesler: () => require('./ingilizce/ses/kalip.js').default },
     { type: 'cumle', grade: 5, unit: 1, unitName: 'School Life', pool: () => require('./ingilizce/cumle5_u1.js').default, sesler: () => require('./ingilizce/ses/cumle5_u1.js').default },
     { type: 'cumle', grade: 6, unit: 1, unitName: 'School Life', pool: () => require('./ingilizce/cumle6_u1.js').default, sesler: () => require('./ingilizce/ses/cumle6_u1.js').default },
     { type: 'cumle', grade: 7, unit: 1, unitName: 'Appearance and Personality', pool: () => require('./ingilizce/cumle7_u1.js').default, sesler: () => require('./ingilizce/ses/cumle7_u1.js').default },

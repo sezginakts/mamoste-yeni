@@ -17,8 +17,8 @@ export default function SettingsScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const { colors, mode, setThemeMode, accent, setAccent } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  // Rol ilk açılışta seçilir ve kalıcıdır; burada sadece gösterilir.
-  const { role, resetRole, resetBranch } = useRole();
+  // Rol kalıcıdır (yalnız yönetici sıfırlar); branş her öğretmen için değiştirilebilir, her branşın verisi ayrıdır.
+  const { role, branch, resetRole, resetBranch } = useRole();
   const auth = useAuth();
   const t = useTeacher();
 
@@ -36,18 +36,16 @@ export default function SettingsScreen({ navigation }) {
       {/* Kullanım modu */}
       <Text style={styles.sectionTitle}>Kullanım Modu</Text>
       <View style={styles.toggleRow}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.toggleLabel}>{role === 'teacher' ? '👩‍🏫 Öğretmen' : '🎒 Öğrenci'}</Text>
-          <Text style={styles.toggleDesc}>İlk açılışta seçildi; bu cihazda değiştirilemez.</Text>
-        </View>
+        <Text style={[styles.toggleLabel, { flex: 1 }]}>{role === 'teacher' ? '👩‍🏫 Öğretmen' : '🎒 Öğrenci'}</Text>
       </View>
+      {role === 'teacher' ? (
+        <Pressable onPress={resetBranch} style={[styles.toggleRow, { marginTop: spacing.sm }]}>
+          <Text style={[styles.toggleLabel, { flex: 1 }]}>{branch ? `${branch.emoji} ${branch.name}` : 'Branş'}</Text>
+          <Text style={[styles.back, { fontSize: font.small }]}>Branş değiştir ›</Text>
+        </Pressable>
+      ) : null}
       {auth.isAdmin ? (
         <View style={styles.adminRow}>
-          {role === 'teacher' ? (
-            <Pressable onPress={resetBranch} style={[styles.adminBtn, { borderColor: colors.accent }]}>
-              <Text style={[styles.back, { textAlign: 'center' }]}>‹ Branş seçimine dön</Text>
-            </Pressable>
-          ) : null}
           <Pressable onPress={resetRole} style={[styles.adminBtn, { borderColor: colors.accent }]}>
             <Text style={[styles.back, { textAlign: 'center' }]}>‹ Öğretmen / öğrenci seçimine dön</Text>
           </Pressable>
@@ -55,42 +53,19 @@ export default function SettingsScreen({ navigation }) {
       ) : null}
       {role === 'teacher' && auth.user ? (
         <View style={[styles.toggleRow, { marginTop: spacing.sm }]}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.toggleLabel}>☁️ {auth.user.email}</Text>
-            <Text style={styles.toggleDesc}>Sınıfların ve ödevlerin bu hesaba bağlı.</Text>
-          </View>
+          <Text style={[styles.toggleLabel, { flex: 1 }]} numberOfLines={1}>☁️ {auth.user.email}</Text>
           <Pressable onPress={auth.signOut} hitSlop={8}>
             <Text style={[styles.back, { color: colors.danger }]}>Çıkış yap</Text>
           </Pressable>
         </View>
       ) : null}
 
-      {/* Öğretmen verileri: eşitleme ve yedek (ana ekrandan buraya alındı) */}
+      {/* Öğretmen verileri: yedek (eşitleme arka planda kendiliğinden) */}
       {role === 'teacher' ? (
         <>
           <Text style={styles.sectionTitle}>Veriler</Text>
-          <Pressable onPress={t.cloudOn ? t.syncNow : undefined} disabled={!t.cloudOn || t.sync.busy} style={styles.toggleRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.toggleLabel}>{t.sync.error ? '⚠️' : '☁️'} Eşitle</Text>
-              <Text style={styles.toggleDesc}>
-                {!t.cloudOn
-                  ? 'Hesapla giriş yapılmadı; veriler yalnız bu cihazda.'
-                  : t.sync.busy
-                    ? 'Eşitleniyor…'
-                    : t.sync.error
-                      ? t.sync.error
-                      : t.sync.at
-                        ? `Son eşitleme: ${new Date(t.sync.at).toTimeString().slice(0, 5)} · öğrenci sonuçlarını almak için dokun`
-                        : 'Öğrenci sonuçlarını almak için dokun'}
-              </Text>
-            </View>
-            {t.cloudOn ? <Text style={[styles.back, { fontSize: font.small }]}>Şimdi ›</Text> : null}
-          </Pressable>
-          <Pressable onPress={() => navigation.navigate('TeacherBackup')} style={[styles.toggleRow, { marginTop: spacing.sm }]}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.toggleLabel}>💾 Yedek</Text>
-              <Text style={styles.toggleDesc}>Sınıflarını ve verilerini dosyaya al ya da yedekten geri yükle.</Text>
-            </View>
+          <Pressable onPress={() => navigation.navigate('TeacherBackup')} style={styles.toggleRow}>
+            <Text style={[styles.toggleLabel, { flex: 1 }]}>💾 Yedek</Text>
             <Text style={[styles.back, { fontSize: font.small }]}>›</Text>
           </Pressable>
         </>

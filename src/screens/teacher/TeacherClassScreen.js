@@ -77,7 +77,7 @@ export default function TeacherClassScreen({ route, navigation }) {
         title={cls.name}
         subtitle={`${rows.length} öğrenci`}
         onBack={() => navigation.goBack()}
-        right={<SmallButton title="🖥️ Tahta" onPress={() => (drills ? navigation.navigate('Board', { classId }) : navigation.navigate('Activities', { board: true }))} />}
+        right={<SmallButton title="🖥️ Tahta" onPress={() => navigation.navigate('Activities', { board: true })} />}
       />
       <View style={[st.tabs, { borderColor: colors.border }]}>
         {[['students', 'Öğrenciler'], ['homework', 'Ödevler']].map(([k, l]) => (
@@ -184,9 +184,11 @@ export default function TeacherClassScreen({ route, navigation }) {
                     ))}
                   </View>
                 </ScrollView>
-                <Text style={{ color: colors.textFaint, fontSize: font.tiny, marginTop: spacing.sm }}>
-                  {drills ? 'Renk: 🔴 %50 altı · 🟠 %50–79 · 🟢 %80+ · gri = henüz yeterli veri yok (en az 3 cevap). ' : ''}Satıra dokun → öğrenci profili.
-                </Text>
+                {drills ? (
+                  <Text style={{ color: colors.textFaint, fontSize: font.tiny, marginTop: spacing.sm }}>
+                    Renk: 🔴 %50 altı · 🟠 %50–79 · 🟢 %80+ · gri = henüz yeterli veri yok (en az 3 cevap).
+                  </Text>
+                ) : null}
               </>
             ) : null}
 

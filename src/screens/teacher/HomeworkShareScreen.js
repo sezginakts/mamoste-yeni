@@ -72,9 +72,6 @@ export default function HomeworkShareScreen({ route, navigation }) {
             </View>
           );
         })}
-        <Text style={{ color: colors.textFaint, fontSize: font.tiny, marginTop: spacing.lg }}>
-          Sonuçlar öğrenci ödevi bitirince kendiliğinden gelir (dakikada bir ve uygulamayı açınca yenilenir).
-        </Text>
         <SmallButton title="Ödevi sil" color={colors.danger} style={{ marginTop: spacing.md }} onPress={del} />
       </ScrollView>
     </View>

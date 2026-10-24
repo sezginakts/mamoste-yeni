@@ -1,9 +1,9 @@
-// Öğretmenin yıllık planları — SADECE bu cihazda. Her plan: { id, grade (5, 6, 7…), name, file, importedAt, weeks: [...] }.
+// Öğretmenin yıllık planları — SADECE bu cihazda, her branşın ayrı (utils/branchStore). Her plan: { id, grade (5, 6, 7…), name, file, importedAt, weeks: [...] }.
 // Branşın MEB çerçeve planları (data/yearPlans) hazır gelir: { builtin: true }. Öğretmen o düzeye kendi planını
 // yüklerse MEB planı gizlenir; kendi planını silerse MEB planı geri gelir.
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { shortId } from '../utils/codec';
+import { getBranchItem, setBranchItem } from '../utils/branchStore';
 import { useRole } from '../context/RoleContext';
 import { mebPlans, MEB_PLAN_YEAR } from '../data/yearPlans';
 
@@ -13,23 +13,32 @@ const Ctx = createContext(null);
 export function PlanProvider({ children }) {
   const [plans, setPlans] = useState([]); // öğretmenin yüklediği planlar
   const { branchId, branch } = useRole();
-  const [loaded, setLoaded] = useState(false);
+  const [loadedFor, setLoadedFor] = useState(null); // hangi branşın planları yüklü
+  const loaded = !branchId || loadedFor === branchId;
 
   useEffect(() => {
+    if (!branchId) return undefined;
+    let live = true;
     (async () => {
+      let list = [];
       try {
-        const raw = await AsyncStorage.getItem(KEY);
-        if (raw) setPlans(JSON.parse(raw));
+        const raw = await getBranchItem(KEY, branchId);
+        if (raw) list = JSON.parse(raw);
       } catch (e) {
         console.warn('yıllık plan okunamadı', e);
       }
-      setLoaded(true);
+      if (!live) return;
+      setPlans(list);
+      setLoadedFor(branchId);
     })();
-  }, []);
+    return () => {
+      live = false;
+    };
+  }, [branchId]);
 
   const save = (next) => {
     setPlans(next);
-    AsyncStorage.setItem(KEY, JSON.stringify(next)).catch((e) => console.warn('yıllık plan kaydedilemedi', e));
+    setBranchItem(KEY, branchId, JSON.stringify(next)).catch((e) => console.warn('yıllık plan kaydedilemedi', e));
   };
 
   // Branşın MEB planları; öğretmenin yüklediği bir düzey varsa o düzeyinki alınmaz.
@@ -61,7 +70,7 @@ export function PlanProvider({ children }) {
       planForGrade: (grade) => (grade ? shown.find((p) => p.grade === grade) : null),
       removePlan: (id) => save(plans.filter((p) => p.id !== id)),
     }),
-    [plans, shown, loaded]
+    [plans, shown, loaded, branchId]
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

@@ -2,7 +2,7 @@
 // src/data/activities/ingilizce/ses/<havuz>.js olarak yazar: { "metin": "<mp3 base64>" }. build.js bunu
 // oyunun HTML'ine SESLER olarak gömer; oyun önce bu sesi çalar (cihazdan ve internetten bağımsız).
 // Okunan metinler motorlardaki konus(...) çağrılarıyla aynı olmalı:
-//   cumle: cümle (q[0]) · cark: soru (q[0]), cevap (q[1]) ve cevabın ilk parçası (q[1] "/", "(", "…" öncesi).
+//   cumle: cümle (q[0]) · kalip: her kalıbın cümleleri (cumleler[][0]) · cark: soru (q[0]), cevap (q[1]) ve cevabın ilk parçası (q[1] "/", "(", "…" öncesi).
 // Kullanım: pip install -U edge-tts  →  node tools/etkinlik/sesler.mjs   (havuz değişince yeniden çalıştır;
 // yalnız yeni/değişen metinler üretilir, kullanılmayanlar silinir).
 import fs from 'fs';
@@ -22,6 +22,7 @@ const textsFor = (file, pool) => {
   const out = new Set();
   for (const q of pool) {
     if (file.startsWith('cumle')) out.add(String(q[0]).trim());
+    else if (file.startsWith('kalip')) q.cumleler.forEach((c) => out.add(String(c[0]).trim()));
     else if (file.startsWith('cark')) {
       out.add(String(q[0]).trim());
       out.add(String(q[1]).trim());
@@ -42,7 +43,7 @@ const tts = (text, file) =>
 async function run() {
   fs.mkdirSync(OUT, { recursive: true });
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mamoste-ses-'));
-  const files = fs.readdirSync(POOLS).filter((f) => /^(cumle|cark).*\.js$/.test(f));
+  const files = fs.readdirSync(POOLS).filter((f) => /^(cumle|cark|kalip).*\.js$/.test(f));
   for (const f of files) {
     const pool = (await import(pathToFileURL(path.join(POOLS, f)).href)).default;
     const texts = textsFor(f, pool);

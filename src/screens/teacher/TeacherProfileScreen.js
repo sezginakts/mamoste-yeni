@@ -115,7 +115,7 @@ export default function TeacherProfileScreen({ navigation }) {
           <Field label="İletişim saatleri" value={form.contact_hours} onChangeText={set('contact_hours')} placeholder="ör. Hafta içi 16.00–18.00" />
           <Field label={`Tanıtım notu (${form.bio.length}/${PROFILE_LIMITS.bio})`} value={form.bio} onChangeText={set('bio')} placeholder="ör. Ödevler pazar akşamına kadar. Sorularını derste sor." multiline />
           <Text style={{ color: colors.textFaint, fontSize: font.tiny, marginBottom: spacing.sm }}>
-            Branş ilk açılışta seçildi, değişmez. Telefon numarası ya da e-posta paylaşılmaz.
+            Telefon numarası ya da e-posta paylaşılmaz.
           </Text>
           <SmallButton title={busy ? '…' : 'Kaydet'} filled disabled={!dirty || busy} onPress={submit} style={{ alignSelf: 'flex-start' }} />
           {msg ? <Text style={{ color: msg.ok ? colors.primary : colors.danger, fontSize: font.small, marginTop: 6 }}>{msg.text}</Text> : null}
