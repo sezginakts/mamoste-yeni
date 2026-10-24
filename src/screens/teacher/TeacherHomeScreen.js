@@ -1,6 +1,6 @@
 // Öğretmen ana sayfası: karşılama bandı, şimdiki/sıradaki ders, bugünün akışı, kısayollar, sınıflar.
 import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Pressable, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacing, font, radius } from '../../theme';
 import { usePlans } from '../../teacher/PlanContext';
@@ -126,12 +126,10 @@ export default function TeacherHomeScreen({ navigation }) {
           <View style={[st.blob, { width: 220, height: 220, top: -80, right: -60 }]} />
           <View style={[st.blob, { width: 140, height: 140, bottom: -50, left: -40 }]} />
         </View>
+        {/* Üst satır: solda OKUL logosu (assets/logo.png: karakalem harfler, beyaz, saydam), sağda profil + ayarlar. */}
         <View style={st.heroTop}>
-          <View style={{ flex: 1 }}>
-            <Text style={st.heroHello}>{greeting(now.getHours())}{profile.display_name ? `, ${profile.display_name}` : ''} 👋</Text>
-            <Text style={st.heroDate}>{DAY_NAMES[now.getDay()]}, {now.getDate()} {MONTH_NAMES[now.getMonth()]}</Text>
-            {branch ? <Text style={st.heroBranch}>{branch.emoji} {branch.name}</Text> : null}
-          </View>
+          <Image source={require('../../../assets/logo.png')} style={st.logo} resizeMode="contain" accessibilityLabel="Okul" />
+          <View style={{ flex: 1 }} />
           {/* Profil + ayarlar: koyu yarı saydam tek hap içinde beyaz çizgi simgeler. */}
           <View style={st.tools}>
             <Pressable onPress={() => navigation.navigate('Profile')} style={({ pressed }) => [st.tool, pressed && st.toolOn]} accessibilityLabel="Profilim" hitSlop={4}>
@@ -143,6 +141,9 @@ export default function TeacherHomeScreen({ navigation }) {
             </Pressable>
           </View>
         </View>
+        <Text style={[st.heroHello, { marginTop: spacing.md }]}>{greeting(now.getHours())}{profile.display_name ? `, ${profile.display_name}` : ''} 👋</Text>
+        <Text style={st.heroDate}>{DAY_NAMES[now.getDay()]}, {now.getDate()} {MONTH_NAMES[now.getMonth()]}</Text>
+        {branch ? <Text style={st.heroBranch}>{branch.emoji} {branch.name}</Text> : null}
         <View style={st.stats}>
           <Stat icon="🏫" value={t.classes.length} label="sınıf" />
           <Stat icon="👥" value={totalStudents} label="öğrenci" />
@@ -521,7 +522,8 @@ function Tile({ icon, tint, title, sub, onPress, badge }) {
 const st = StyleSheet.create({
   hero: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xl + spacing.lg, overflow: 'hidden', borderBottomLeftRadius: 28, borderBottomRightRadius: 28 },
   blob: { position: 'absolute', borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.10)' },
-  heroTop: { flexDirection: 'row', alignItems: 'flex-start' },
+  heroTop: { flexDirection: 'row', alignItems: 'center' },
+  logo: { height: 34, width: Math.round((34 * 669) / 200) }, // assets/logo.png (beyaz harfler) oranı 669×200
   heroHello: { color: 'rgba(255,255,255,0.85)', fontSize: font.body, fontWeight: '700' },
   heroDate: { color: '#fff', fontSize: font.h2, fontWeight: '900', marginTop: 2 },
   heroBranch: { color: 'rgba(255,255,255,0.85)', fontSize: font.small, fontWeight: '800', marginTop: 4 },

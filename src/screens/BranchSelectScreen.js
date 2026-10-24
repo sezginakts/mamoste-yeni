@@ -40,7 +40,7 @@ export default function BranchSelectScreen() {
                 style={[st.card, shadow, { backgroundColor: colors.card, borderColor: on ? b.color : colors.border }, !b.enabled && { opacity: 0.45 }]}
               >
                 <View style={[st.icon, { backgroundColor: b.color + '22' }]}>
-                  <Text style={{ fontSize: 24 }}>{b.emoji}</Text>
+                  <Text style={/^[a-z]+$/i.test(b.emoji) ? { fontSize: 17, fontWeight: '900', color: b.color } : { fontSize: 24 }}>{b.emoji}</Text>
                 </View>
                 <Text style={[st.name, { color: colors.text }]} numberOfLines={2}>{b.name}</Text>
                 <Text style={{ color: b.enabled ? colors.textMuted : colors.textFaint, fontSize: font.tiny, marginTop: 2 }}>

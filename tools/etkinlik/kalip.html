@@ -73,7 +73,7 @@ h1{margin:0;font-size:calc(var(--f)*2.1);font-weight:900;line-height:1;backgroun
 .en .kal{color:var(--k);text-decoration:underline;text-decoration-thickness:.12em;text-underline-offset:.15em}
 .en.gizli{color:#CBD5E1;font-size:calc(var(--f)*1.6)}
 .trc{font-size:calc(var(--f)*.85);color:var(--soluk);font-weight:600;font-style:italic}
-.trc::before{content:"🇹🇷 ";font-style:normal}
+.trc::before{content:"TR  ";font-style:normal;font-weight:900;font-size:.7em;letter-spacing:.06em;color:var(--mercan)}
 .trc.buyuk-tr{font-size:calc(var(--f)*1.7);color:var(--yazi);font-weight:800;font-style:normal}
 .trc.gizli{visibility:hidden}
 .durum{font-size:calc(var(--f)*1.8);line-height:1;height:calc(var(--f)*1.8)}
@@ -271,7 +271,7 @@ function goster(){
   const q=liste[i],cevir=AYAR.mod==='cevir';
   $('gorev').textContent=cevir?'Say it in English!':'Read and repeat!';
   const enG=!cevir||acik;
-  $('en').innerHTML=enG?vurgula(q[0],q[2]):'🇬🇧 ?';$('en').classList.toggle('gizli',!enG);
+  $('en').innerHTML=enG?vurgula(q[0],q[2]):'❓';$('en').classList.toggle('gizli',!enG);
   const tr=$('trc');tr.textContent=q[1]||'';tr.classList.toggle('buyuk-tr',cevir&&!acik);tr.classList.toggle('gizli',!cevir&&!acik);
   $('durum').textContent=sonuclar[i]==='d'?'✅':sonuclar[i]==='y'?'❌':'';
   $('cevapBtn').textContent=acik?'👁 Gizle':'👁 Cevap';

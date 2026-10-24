@@ -33,6 +33,12 @@ h1{margin:0;font-size:calc(var(--f)*1.8);font-weight:900;line-height:1;backgroun
 @keyframes nabiz{0%,100%{transform:scale(1)}50%{transform:scale(1.5)}}
 .kucuk{display:flex;gap:1.4vmin;flex-wrap:wrap;justify-content:center}
 .kucuk button{background:#fff;font-weight:900;font-size:calc(var(--f)*.6);padding:1.1vmin 2.6vmin;border-radius:99px;box-shadow:0 .5vmin 0 #CBD5E1}
+.tamam{display:none;flex-direction:column;align-items:center;gap:1vmin;margin:1vmin 0}
+.tamam b{display:grid;place-items:center;width:calc(var(--f)*4);height:calc(var(--f)*4);border-radius:50%;background:var(--turkuaz);color:#fff;font-size:calc(var(--f)*2.4);box-shadow:0 1vmin 0 #0F766E;animation:gel .45s cubic-bezier(.2,.9,.3,1.3)}
+.tamam span{font-weight:900;font-size:calc(var(--f)*1.5)}
+.tamam small{color:var(--soluk);font-weight:700;font-size:calc(var(--f)*.8)}
+@keyframes gel{0%{transform:scale(.3);opacity:0}100%{transform:scale(1);opacity:1}}
+#bekle.bagli .tamam{display:flex}#bekle.bagli .kod,#bekle.bagli #yon{display:none}
 #oyun{position:fixed;inset:0;z-index:10;display:none;background:#fff}
 #oyun.acik{display:block}
 #oyun iframe{width:100%;height:100%;border:0;display:block}
@@ -49,6 +55,7 @@ h1{margin:0;font-size:calc(var(--f)*1.8);font-weight:900;line-height:1;backgroun
     <h1>Okul Tahta</h1>
     <div class="yon" id="yon">Telefonda <b>Okul → Akıllı tahta → Kodla bağlan</b>'a gir ve bu kodu yaz:</div>
     <div class="kod" id="kod"></div>
+    <div class="tamam"><b>✓</b><span>Telefon bağlandı</span><small>Telefonda bir etkinliğe “📺 Tahtada aç” de; burada açılacak.</small></div>
     <div class="durum" id="durum"><i></i><span id="durumYazi">Bağlanıyor…</span></div>
     <div class="kucuk"><button id="tamBtn">⛶ Tam ekran</button><button id="yeniBtn">↻ Yeni kod</button></div>
   </div>
@@ -76,7 +83,9 @@ function durum(tur,yazi){const d=$('durum');d.className='durum'+(tur?' '+tur:'')
 function telDurum(){
   const bagli=Date.now()-sonTel<75000;
   if(!abone)return;
-  durum(bagli?'bagli':'',bagli?'📱 Telefon bağlı — telefondan bir etkinlik seç':'Telefon bekleniyor');
+  // Bağlanınca kod yerine büyük "Telefon bağlandı" görünür; bağlantı düşerse kod geri gelir.
+  $('bekle').classList.toggle('bagli',bagli);
+  durum(bagli?'bagli':'',bagli?'📱 Telefon bağlı · kod '+KOD.slice(0,3)+' '+KOD.slice(3):'Telefon bekleniyor');
   $('rozet').classList.toggle('kopuk',!bagli);$('rozetYazi').textContent=bagli?'Telefon bağlı':'Telefon bağlantısı yok';
 }
 function gonder(event,payload){if(kanal&&abone)kanal.send({type:'broadcast',event,payload:payload||{}})}

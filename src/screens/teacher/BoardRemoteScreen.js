@@ -142,7 +142,7 @@ export default function BoardRemoteScreen({ navigation, route }) {
                 <Text style={{ color: d.sira === 0 ? '#E2574C' : '#0D9488', fontWeight: '900' }}>Sıra: {TEAMS[d.sira]} Takımı</Text>
               ) : null}
               <Text style={{ color: colors.text, fontSize: 26, fontWeight: '900', lineHeight: 34 }}>{d.en}</Text>
-              <Text style={{ color: colors.textMuted, fontSize: font.body, fontStyle: 'italic' }}>🇹🇷 {d.tr}</Text>
+              <Text style={{ color: colors.textMuted, fontSize: font.body, fontStyle: 'italic' }}>{d.tr}</Text>
               <Text style={{ color: colors.textFaint, fontSize: font.tiny }}>
                 Tahtada: {d.mod === 'cevir' ? (d.acik ? 'İngilizcesi açık' : 'yalnız Türkçesi') : d.acik ? 'Türkçesi açık' : 'yalnız İngilizcesi'}
               </Text>

@@ -199,7 +199,7 @@ function TestPhase({ current, accent, autoSpeak, onFinish }) {
         {/* Yön göstergesi */}
         <View style={[styles.dirTag, { borderColor: accent }]}>
           <Text style={[styles.dirTagText, { color: accent }]}>
-            {isEnDirection ? '🇹🇷 → 🇬🇧' : '🔊 🇬🇧 → 🇹🇷'}
+            {isEnDirection ? 'Türkçe → İngilizce' : '🔊 İngilizce → Türkçe'}
           </Text>
         </View>
 

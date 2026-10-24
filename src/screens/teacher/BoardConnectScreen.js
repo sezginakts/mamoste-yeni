@@ -6,7 +6,8 @@ import { spacing, font, radius } from '../../theme';
 import { useTheme } from '../../context/ThemeContext';
 import { Header } from '../../teacher/ui';
 import { useBoardLink, TAHTA_URL } from '../../teacher/BoardLink';
-import { activityById } from '../../data/activities';
+import { activityById, activitiesFor, ACTIVITY_TYPES } from '../../data/activities';
+import { useRole } from '../../context/RoleContext';
 
 const HOTSPOT_STEPS = [
   'Telefonunda Ayarlar → Kişisel Erişim Noktası (Android: Mobil Erişim Noktası) aç.',
@@ -16,6 +17,18 @@ const HOTSPOT_STEPS = [
 
 export const showCode = (c) => (c ? `${c.slice(0, 3)} ${c.slice(3)}` : '');
 
+// Numaralı adım. Ekran bileşeninin DIŞINDA: içeride tanımlanınca her yazışta yeniden kurulup kod kutusu odağı kaybediyordu.
+function Step({ n, color, children }) {
+  return (
+    <View style={st.step}>
+      <View style={[st.num, { backgroundColor: color }]}>
+        <Text style={{ color: '#fff', fontWeight: '900' }}>{n}</Text>
+      </View>
+      <View style={{ flex: 1 }}>{children}</View>
+    </View>
+  );
+}
+
 export default function BoardConnectScreen({ navigation, route }) {
   const { colors, shadow } = useTheme();
   const link = useBoardLink();
@@ -24,15 +37,11 @@ export default function BoardConnectScreen({ navigation, route }) {
   const ok = code.length === 6;
   const busy = link.status === 'connecting';
   const openAct = link.open && activityById(link.open.id);
-
-  const Step = ({ n, children }) => (
-    <View style={st.step}>
-      <View style={[st.num, { backgroundColor: colors.accent }]}>
-        <Text style={{ color: '#fff', fontWeight: '900' }}>{n}</Text>
-      </View>
-      <View style={{ flex: 1 }}>{children}</View>
-    </View>
-  );
+  const { branchId } = useRole();
+  // Bağlıyken: branşın oyun türleri, doğrudan "Tahtada aç".
+  const games = Object.entries(ACTIVITY_TYPES)
+    .filter(([type, t]) => (!t.branches || t.branches.includes(branchId)) && activitiesFor(branchId).some((a) => a.type === type))
+    .map(([type, t]) => ({ type, t }));
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -46,9 +55,19 @@ export default function BoardConnectScreen({ navigation, route }) {
               {link.status === 'lost' ? 'Bağlantı zayıf — yeniden deneniyor' : `Kod ${showCode(link.code)}`}
               {openAct ? ` · Tahtada: ${openAct.unitName}` : ''}
             </Text>
-            <Pressable onPress={() => navigation.navigate('Activities')} style={[st.btn, { backgroundColor: colors.primary }]}>
-              <Text style={{ color: colors.onPrimary, fontWeight: '900' }}>🎯 Etkinlik seç</Text>
-            </Pressable>
+            <Text style={{ color: colors.text, fontWeight: '800', marginTop: spacing.sm }}>Tahtada açılacak etkinliği seç:</Text>
+            {games.map(({ type, t }, i) => (
+              <Pressable
+                key={type}
+                onPress={() => navigation.navigate('BoardRemote', { type })}
+                style={({ pressed }) => [st.game, { borderColor: colors.border, backgroundColor: colors.cardSoft }, pressed && { opacity: 0.8 }]}
+              >
+                <Text style={{ fontSize: 24 }}>{t.icon}</Text>
+                <Text style={{ color: colors.text, fontWeight: '800', flex: 1 }}>{t.name}</Text>
+                <Text style={{ color: i % 2 ? colors.second : colors.accent, fontWeight: '900' }}>📺 Tahtada aç ›</Text>
+              </Pressable>
+            ))}
+            {!games.length ? <Text style={{ color: colors.textMuted }}>Bu branşta henüz etkinlik yok.</Text> : null}
             {openAct ? (
               <Pressable onPress={() => navigation.navigate('BoardRemote', { type: openAct.type })} style={[st.btn, { backgroundColor: colors.second }]}>
                 <Text style={{ color: '#fff', fontWeight: '900' }}>🎮 Kumanda</Text>
@@ -62,12 +81,12 @@ export default function BoardConnectScreen({ navigation, route }) {
           <View style={[st.card, shadow, { backgroundColor: colors.card, borderColor: colors.border }]}>
             {hotspot
               ? HOTSPOT_STEPS.map((tx, i) => (
-                  <Step key={i} n={i + 1}>
+                  <Step key={i} n={i + 1} color={colors.accent}>
                     <Text style={[st.body, { color: colors.text }]}>{tx}</Text>
                   </Step>
                 ))
               : null}
-            <Step n={hotspot ? 4 : 1}>
+            <Step n={hotspot ? 4 : 1} color={colors.accent}>
               <Text style={[st.body, { color: colors.text }]}>Tahtanın tarayıcısında şu adresi aç:</Text>
               {TAHTA_URL ? (
                 <Text selectable style={[st.url, { color: colors.accent, backgroundColor: colors.cardSoft }]}>{TAHTA_URL.replace(/^https?:\/\//, '')}</Text>
@@ -75,7 +94,7 @@ export default function BoardConnectScreen({ navigation, route }) {
                 <Text style={[st.body, { color: colors.danger }]}>Tahta sayfası henüz yayınlanmadı.</Text>
               )}
             </Step>
-            <Step n={hotspot ? 5 : 2}>
+            <Step n={hotspot ? 5 : 2} color={colors.accent}>
               <Text style={[st.body, { color: colors.text }]}>Tahtada görünen 6 haneli kodu yaz:</Text>
               <TextInput
                 value={code}
@@ -113,5 +132,6 @@ const st = StyleSheet.create({
   url: { fontSize: font.body, fontWeight: '900', marginTop: spacing.xs, paddingHorizontal: spacing.sm, paddingVertical: 8, borderRadius: radius.sm },
   code: { fontSize: 34, fontWeight: '900', letterSpacing: 10, textAlign: 'center', borderWidth: 2, borderRadius: radius.md, paddingVertical: 10, marginTop: spacing.sm },
   btn: { borderRadius: radius.pill, paddingVertical: 15, alignItems: 'center' },
+  game: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderWidth: 1, borderRadius: radius.md, padding: spacing.md },
   big: { fontSize: font.h2, fontWeight: '900', textAlign: 'center' },
 });

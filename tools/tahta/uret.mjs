@@ -37,7 +37,7 @@ const { buildHtml } = await import(pathToFileURL(path.join(ROOT, 'src/data/activ
 const { BRANCHES } = await import(pathToFileURL(path.join(ROOT, 'src/data/branches.js')).href);
 
 // Yalnız üretilen dosyalar yenilenir; tahta-site/.git (yayın deposu: github.com/sezginakts/mamoste-tahta) ve README kalır.
-fs.rmSync(path.join(OUT, 'e'), { recursive: true, force: true });
+// Oyunlar tek tek yazılır: biri üretilemezse (ör. motor dosyası eksik) sitedeki önceki sürümü olduğu gibi kalır.
 fs.mkdirSync(path.join(OUT, 'e'), { recursive: true });
 fs.writeFileSync(path.join(OUT, 'index.html'), page);
 fs.writeFileSync(path.join(OUT, '.nojekyll'), ''); // GitHub Pages dosyaları olduğu gibi sunsun
@@ -45,7 +45,13 @@ let n = 0;
 let bytes = 0;
 for (const b of BRANCHES) {
   for (const a of activitiesFor(b.id)) {
-    const html = buildHtml(a);
+    let html;
+    try {
+      html = buildHtml(a);
+    } catch (e) {
+      console.warn(`! ${a.id} üretilemedi, önceki sürüm kalıyor: ${String(e.message).split(/\n/)[0]}`);
+      continue;
+    }
     fs.writeFileSync(path.join(OUT, 'e', `${a.id}.html`), html);
     n++;
     bytes += html.length;
