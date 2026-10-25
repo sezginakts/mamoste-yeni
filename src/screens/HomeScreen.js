@@ -2,6 +2,7 @@
 import React from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import StatusBarCover from '../components/StatusBarCover';
+import Collapsible from '../components/Collapsible';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { radius, spacing, font } from '../theme';
 import { useProgress } from '../context/ProgressContext';
@@ -140,7 +141,7 @@ export default function HomeScreen({ navigation }) {
       </View>
 
       {/* DERSLERİM: her öğretmenin dersi; dokununca o dersin ödevleri */}
-      <Text style={styles.section}>DERSLERİM</Text>
+      <Collapsible title="DERSLERİM" storageKey="s-home-lessons" style={{ marginTop: spacing.xl }}>
       {classes.map((c) => {
         const b = branchOf(c.branch);
         const n = pendingIn(c.branch);
@@ -173,10 +174,11 @@ export default function HomeScreen({ navigation }) {
           onPress={() => navigation.navigate('StudentHomework')}
         />
       ) : null}
+      </Collapsible>
 
       {showEnglish ? (
         <>
-          <Text style={styles.section}>İNGİLİZCE ÇALIŞ</Text>
+          <Collapsible title="İNGİLİZCE ÇALIŞ" storageKey="s-home-english" style={{ marginTop: spacing.xl }}>
           <RowCard
             styles={styles}
             emoji="🧩"
@@ -186,6 +188,7 @@ export default function HomeScreen({ navigation }) {
           />
           <RowCard styles={styles} emoji="📖" title="Kütüphanem" desc="Çalıştığın cümleleri tekrar et ve test et" onPress={() => navigation.navigate('Library')} />
           <RowCard styles={styles} emoji="📊" title="Performansım" desc="Grafikler, öğrenme eğrisi ve tik dağılımı" onPress={() => navigation.navigate('Progress')} />
+          </Collapsible>
         </>
       ) : null}
     </ScrollView>

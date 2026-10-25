@@ -3,26 +3,27 @@
 import React, { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { View, Text, ScrollView, Pressable, Modal, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
-import { spacing, font, radius } from '../../theme';
-import { pairColor } from '../../theme';
+import { spacing, font, radius, classColorFor, timetableColorFor, inkOn } from '../../theme';
 import { useTheme } from '../../context/ThemeContext';
 import { useTeacher } from '../../teacher/TeacherContext';
 import { useDesk, weekdayOf, buildPeriods, periodAt } from '../../teacher/DeskContext';
+import { usePruneStaleLessons } from '../../teacher/pruneLessons';
 import { Header, Chip } from '../../teacher/ui';
 
 const DAYS = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
 const SHORT = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum'];
 const GRADES = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-// Sınıf rengi düzeye göre: 5, 7 ikinci renk; 6, 8 uygulama rengi (aynı düzeyin şubeleri aynı renk).
+// Sınıf rengi: önce şubeye özel renk (ör. 5-C fuşya), yoksa düzey rengi.
+// Düzey rengi sabit: 5 sarı, 6 gök mavisi, 7 mercan, 8 turkuaz (tema değişse de aynı).
 export function classColor(label) {
-  const m = String(label || '').match(/^\s*(\d{1,2})/);
-  return pairColor(m ? +m[1] : 0);
+  return classColorFor(label);
 }
 
 export default function TimetableScreen({ navigation }) {
   const { colors, shadow } = useTheme();
   const t = useTeacher();
   const desk = useDesk();
+  usePruneStaleLessons();
   const today = weekdayOf();
   const now = today <= 5 ? periodAt(desk.periods) : null;
   const [cell, setCell] = useState(null); // { day, period } sınıf seçimi
@@ -39,7 +40,7 @@ export default function TimetableScreen({ navigation }) {
         {/* Üst araçlar */}
         <View style={st.tools}>
           <Pressable onPress={() => setQuick(true)} style={[st.toolBtn, { backgroundColor: colors.accent }]}>
-            <Text style={{ color: '#fff', fontWeight: '800', fontSize: font.small }}>⏱️ {hasTimes ? 'Saatleri ayarla' : 'Okulun saatlerini gir'}</Text>
+            <Text style={{ color: colors.onAccent, fontWeight: '800', fontSize: font.small }}>⏱️ {hasTimes ? 'Saatleri ayarla' : 'Okulun saatlerini gir'}</Text>
           </Pressable>
           <View style={[st.stepper, { borderColor: colors.border, backgroundColor: colors.card }]}>
             <Pressable onPress={() => desk.setPeriodCount(desk.periods.length - 1)} hitSlop={6} style={st.stepBtn} accessibilityLabel="Bir ders azalt">
@@ -63,7 +64,7 @@ export default function TimetableScreen({ navigation }) {
               return (
                 <View key={d} style={[st.dayCol, st.headCell]}>
                   <View style={[st.dayPill, isToday && { backgroundColor: colors.accent }]}>
-                    <Text style={[st.headT, { color: isToday ? '#fff' : colors.text }]}>{d}</Text>
+                    <Text style={[st.headT, { color: isToday ? colors.onAccent : colors.text }]}>{d}</Text>
                   </View>
                 </View>
               );
@@ -89,7 +90,7 @@ export default function TimetableScreen({ navigation }) {
                 {SHORT.map((d, di) => {
                   const day = di + 1;
                   const l = desk.lessons[`${day}-${period}`];
-                  const c = l ? classColor(l.label) : null;
+                  const c = l ? timetableColorFor(l.label) : null;
                   const live = isNow && day === today && now.status === 'now';
                   return (
                     <Pressable
@@ -107,7 +108,7 @@ export default function TimetableScreen({ navigation }) {
                         ]}
                       >
                         {l ? (
-                          <Text style={[st.cellT, { color: c }]} numberOfLines={2}>{l.label}</Text>
+                          <Text style={[st.cellT, { color: colors.text }]} numberOfLines={2}>{l.label}</Text>
                         ) : (
                           <Text style={{ color: colors.textFaint, fontSize: 16 }}>+</Text>
                         )}
@@ -247,7 +248,7 @@ function ClassPicker({ cell, lesson, period, classes, onPick, onClose }) {
         disabled={!name}
         style={[st.primary, { backgroundColor: name ? classColor(name) : colors.accent, marginTop: spacing.md }, !name && { opacity: 0.4 }]}
       >
-        <Text style={{ color: '#fff', fontWeight: '900', fontSize: font.body }}>
+        <Text style={{ color: inkOn(name ? classColor(name) : colors.accent), fontWeight: '900', fontSize: font.body }}>
           {name ? `${name} olarak kaydet` : !grade ? 'Sınıfı seç' : 'Şubeyi seç'}
         </Text>
       </Pressable>
@@ -370,7 +371,7 @@ function TimeEditor({ index, value, onSave, onClose }) {
       </View>
       {!ok ? <Text style={{ color: colors.danger, fontSize: font.small, marginTop: spacing.sm, textAlign: 'center' }}>Çıkış saati girişten sonra olmalı.</Text> : null}
       <Pressable onPress={() => ok && onSave({ start, end })} style={[st.primary, { backgroundColor: colors.accent }, !ok && { opacity: 0.4 }]}>
-        <Text style={{ color: '#fff', fontWeight: '800' }}>Kaydet</Text>
+        <Text style={{ color: colors.onAccent, fontWeight: '800' }}>Kaydet</Text>
       </Pressable>
       {value.start ? (
         <Pressable onPress={() => onSave({ start: '', end: '' })} style={[st.sheetBtn, { borderColor: colors.danger, marginTop: spacing.sm }]}>
@@ -414,7 +415,7 @@ function QuickTimes({ count, onApply, onClose }) {
         <Text style={{ color: colors.textFaint, fontSize: font.small, marginTop: spacing.md }}>Ders süresini seç; saatler burada görünecek.</Text>
       )}
       <Pressable onPress={() => preview && onApply(preview)} style={[st.primary, { backgroundColor: colors.accent }, !preview && { opacity: 0.4 }]}>
-        <Text style={{ color: '#fff', fontWeight: '800' }}>Saatleri uygula</Text>
+        <Text style={{ color: colors.onAccent, fontWeight: '800' }}>Saatleri uygula</Text>
       </Pressable>
     </Sheet>
   );

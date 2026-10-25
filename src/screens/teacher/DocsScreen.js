@@ -8,6 +8,7 @@ import { useRole } from '../../context/RoleContext';
 import { Header, Field, SmallButton, notify, formatDate } from '../../teacher/ui';
 import { useTeacherProfile } from '../../teacher/profile';
 import { CATEGORIES, useDocList, loadDocInfo, saveDocInfo, downloadDoc, EMPTY_INFO } from '../../teacher/docs';
+import Collapsible from '../../components/Collapsible';
 
 export default function DocsScreen({ navigation }) {
   const { colors, shadow } = useTheme();
@@ -105,10 +106,13 @@ export default function DocsScreen({ navigation }) {
           groups.map((g, gi) => {
             const tint = gi % 2 ? colors.second : colors.accent;
             return (
-              <View key={g.id} style={{ gap: spacing.sm }}>
-                <Text style={[st.section, { color: colors.textMuted }]}>
-                  {g.icon} {g.name.toLocaleUpperCase('tr')}
-                </Text>
+              <Collapsible
+                key={g.id}
+                title={`${g.icon} ${g.name.toLocaleUpperCase('tr')}`}
+                storageKey={`doc-${g.id}`}
+                style={{ marginTop: spacing.sm }}
+              >
+                <View style={{ gap: spacing.sm }}>
                 {g.items.map((d) => {
                   const isNew = docs.seen[d.id] !== d.tarih;
                   return (
@@ -138,7 +142,8 @@ export default function DocsScreen({ navigation }) {
                     </View>
                   );
                 })}
-              </View>
+                </View>
+              </Collapsible>
             );
           })
         )}

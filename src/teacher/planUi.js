@@ -4,6 +4,7 @@ import { View, Text, Pressable, Modal, StyleSheet } from 'react-native';
 import { spacing, font, radius, pairColor } from '../theme';
 import { useTheme } from '../context/ThemeContext';
 import { formatDate } from './ui';
+import Collapsible from '../components/Collapsible';
 import { dayKey } from '../utils/helpers';
 
 // Ünite rengi: üniteler sırayla uygulama rengi / ikinci renk (aynı ünite her yerde aynı renk); tatil haftası gri.
@@ -83,14 +84,14 @@ export function WeekCard({ w, big }) {
   const { colors, shadow, mode } = useTheme();
   const c = unitColor(w);
   const tint = (alpha) => c + alpha;
-  const outcomes = (w.outcomes || '').split('\n').filter(Boolean).map(splitOutcome);
+  const outcomes = outcomeLines(w).map(splitOutcome);
   const bodySize = big ? font.body : font.small;
 
   if (w.holiday) {
     return (
       <View style={[s.card, shadow, { backgroundColor: colors.card, borderColor: tint('55') }]}>
         <View style={[s.hero, { backgroundColor: tint(mode === 'dark' ? '33' : '1F') }]}>
-          <Text style={[s.heroMeta, { color: colors.textMuted }]}>{formatDate(w.start)} – {formatDate(w.end)}</Text>
+          <Text style={[s.heroMeta, { color: colors.textMuted }]}>{formatDate(w.start)}</Text>
           <Text style={{ fontSize: 40, marginTop: spacing.sm }}>🏖️</Text>
           <Text style={[s.heroTitle, { color: colors.text }]}>{w.unit || 'Tatil'}</Text>
           <Text style={{ color: colors.textMuted, marginTop: 2 }}>Bu hafta ders yok — iyi dinlenmeler!</Text>
@@ -112,7 +113,7 @@ export function WeekCard({ w, big }) {
             </View>
           ) : null}
           <View style={{ flex: 1 }}>
-            <Text style={s.heroDate}>{formatDate(w.start)} – {formatDate(w.end)}</Text>
+            <Text style={s.heroDate}>{w.week ? `${w.week}. hafta` : 'Hafta'}</Text>
             <Text style={[s.heroUnit, !big && { fontSize: font.body }]} numberOfLines={2}>{w.unit || w.topic || 'Bu hafta'}</Text>
             {w.unit && w.topic ? <Text style={s.heroTopic}>{w.topic}</Text> : null}
           </View>
@@ -205,10 +206,73 @@ export function WeekCard({ w, big }) {
   );
 }
 
-// Bu ders haftanın kaçıncı ders saati? Haftalık ders saati plandan ("CLASS HOUR" / "SAAT"), yoksa programdan.
+// ---- Gün gün hafta görünümü ----
+// Hafta aralığı yazılmaz; her günün başında yalnız o günün tarihi olur, altında o güne düşen kazanımlar.
+const DAY_NAMES = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
+
+function addDays(key, n) {
+  const d = new Date(key + 'T00:00:00');
+  d.setDate(d.getDate() + n);
+  return dayKey(d);
+}
+
+export function WeekDaysCard({ w, today, lessons }) {
+  const { colors, shadow, mode } = useTheme();
+  if (w.holiday) return <WeekCard w={w} />;
+  const c = unitColor(w);
+  // Tek kaynak: gün + ders bazlı dağıtım (ders programı varsa gerçek günlere).
+  const days = weekDays(w, lessons);
+
+  return (
+    <View style={[s.card, shadow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <View style={[s.hero, { backgroundColor: c }]}>
+        <Text style={s.heroDate}>{w.week ? `${w.week}. hafta` : 'Hafta'}</Text>
+        <Text style={[s.heroUnit, { fontSize: font.h3 }]} numberOfLines={2}>{w.unit || w.topic || 'Bu hafta'}</Text>
+      </View>
+      <View style={{ padding: spacing.md, gap: spacing.sm }}>
+        {days.map((d, i) => {
+          const date = addDays(w.start, d.day - 1);
+          const isToday = date === today;
+          const title = `${DAY_NAMES[d.day - 1]} · ${formatDate(date)}${d.period ? ` · ${d.period}. ders` : ''}`;
+          return (
+            <Collapsible
+              key={i}
+              title={title}
+              defaultOpen={isToday}
+              titleStyle={[s.dayName, { color: isToday ? c : colors.text, fontSize: font.small, letterSpacing: 0 }]}
+              right={
+                isToday ? (
+                  <View style={[s.dayToday, { backgroundColor: c }]}>
+                    <Text style={s.dayTodayT}>BUGÜN</Text>
+                  </View>
+                ) : null
+              }
+              style={[s.dayRow, { borderColor: colors.border }, isToday && { borderColor: c + '66', backgroundColor: c + (mode === 'dark' ? '1F' : '12') }]}
+            >
+              <View style={{ gap: 6 }}>
+                {d.lines.map((line, k) => {
+                  const o = splitOutcome(line);
+                  return (
+                    <View key={k} style={s.dayOut}>
+                      <Text style={{ fontSize: 14 }}>{o.icon}</Text>
+                      {o.code ? <Text style={[s.codeText, { color: c }]}>{o.code}</Text> : null}
+                      <Text style={{ flex: 1, color: colors.text, fontSize: font.small, lineHeight: 20 }}>{o.text}</Text>
+                    </View>
+                  );
+                })}
+              </View>
+            </Collapsible>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+// Bu ders haftanın kaçıncı ders saati? Önce ders programındaki gerçek ders sayısı, yoksa plandaki saat.
 // Döner { idx (0'dan), count }.
 export function lessonSlot(w, lesson) {
-  const count = (w && w.hours) || (lesson && lesson.count) || 1;
+  const count = (lesson && lesson.count) || (w && w.hours) || 1;
   const idx = lesson && lesson.idx >= 0 ? Math.min(lesson.idx, count - 1) : 0;
   return { idx, count };
 }
@@ -217,12 +281,59 @@ export function lessonSlot(w, lesson) {
 // Döner { lines, review } — review: bu derse yeni çıktı düşmedi, tekrar/pekiştirme dersi.
 // Kazanım dersten azsa yeni kazanım haftanın İLK derslerine düşer, sonrakiler pekiştirme olur
 // (ör. 1 kazanım / 2 ders → 1. ders kazanım, 2. ders pekiştirme).
+// Pekiştirme dersinde haftanın tamamı basılmaz: en fazla 3 satır (ana sayfa şişmesin), tamamı `total`da.
+// Kazanım metnini tek tek kazanımlara ayırır.
+// Bazı planlarda (ör. 5/6. sınıf) kazanımlar yeni satır yerine boşlukla ayrılmış geliyor:
+// "… carefully. ENG.5.1.L2. Students can …". Kodun önünden bölerek her kazanımı ayrı satır yaparız.
+const CODE_BEFORE = /\s+(?=(?:ENG|[A-ZÇĞİÖŞÜ]{1,4})\.\d{1,2}\.\d+\.[A-ZÇĞİÖŞÜ]*\d+\.)/g;
+export function outcomeLines(w) {
+  const raw = String((w && w.outcomes) || '');
+  if (!raw.trim()) return [];
+  return raw
+    .split(/\n+/)
+    .flatMap((chunk) => chunk.replace(CODE_BEFORE, '\n').split('\n'))
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 export function outcomesForLesson(w, idx, count) {
-  const lines = (w.outcomes || '').split('\n').filter(Boolean);
+  const lines = outcomeLines(w);
   if (!count || count <= 1 || idx == null || idx < 0) return { lines, review: false };
   const mine = lines.filter((_, i) => Math.floor((i * count) / lines.length) === idx);
   if (mine.length) return { lines: mine, review: false };
-  return { lines, review: true };
+  return { lines: lines.slice(0, 3), review: true, total: lines.length };
+}
+
+// Haftanın kazanımlarını GÜN + DERS bazında böler. Tek doğru kaynak: ana sayfa, haftalık görünüm ve
+// ders kartı buradan beslenir.
+//   lessons: o sınıfın o haftadaki dersleri (DeskContext: day/period/idx/count). Varsa kazanım gün ve
+//            ders sırasına göre bölünür; kazanım düşmeyen gün hiç görünmez.
+//   Program yoksa: hafta 5 okul gününe yayılır, boş gün gösterilmez.
+// Döner: [{ day (1=Pzt), period?, start?, end?, label?, lines: [kazanım satırı] }]
+export function weekDays(w, lessons) {
+  const lines = outcomeLines(w);
+  if (!w || w.holiday || !lines.length) return [];
+  if (lessons && lessons.length) {
+    const n = lessons.length;
+    return lessons
+      .map((l, i) => ({
+        day: l.day,
+        period: l.period,
+        start: l.start,
+        end: l.end,
+        label: l.label,
+        lines: lines.filter((_, k) => Math.floor((k * n) / lines.length) === i),
+      }))
+      .filter((x) => x.lines.length);
+  }
+  const n = lines.length;
+  const dayCount = Math.min(5, n);
+  const out = Array.from({ length: dayCount }, (_, i) => ({ day: i + 1, lines: [] }));
+  lines.forEach((line, i) => {
+    const d = n <= 5 ? i : Math.floor((i * 5) / n);
+    out[Math.min(d, out.length - 1)].lines.push(line);
+  });
+  return out.filter((x) => x.lines.length);
 }
 
 // "CONTENT FRAME" hücresini başlıklarına göre böl: kelimeler, dil yapıları, sınıf dili…
@@ -305,8 +416,8 @@ export function LessonCard({ w, lesson, onShowWeek, onPickSlot }) {
       <View style={[s.hero, { backgroundColor: c }]}>
         <Text style={s.heroDate}>
           {lesson && lesson.period
-            ? `${lesson.dayName ? lesson.dayName + ' · ' : ''}${lesson.period}. ders${lesson.start ? ` (${lesson.start}–${lesson.end})` : ''} · ${lesson.label}`
-            : `${formatDate(w.start)} – ${formatDate(w.end)}${w.week ? ` · ${w.week}. hafta` : ''}`}
+            ? `${lesson.dayName || ''}${lesson.date ? `${lesson.dayName ? ' · ' : ''}${formatDate(lesson.date)}` : ''}`
+            : `${formatDate(w.start)}${w.week ? ` · ${w.week}. hafta` : ''}`}
         </Text>
         {lesson && lesson.upcoming ? (
           <View style={s.upcoming}>
@@ -314,6 +425,11 @@ export function LessonCard({ w, lesson, onShowWeek, onPickSlot }) {
           </View>
         ) : null}
         <Text style={s.heroUnit} numberOfLines={2}>{w.unit || w.topic || 'Bu hafta'}</Text>
+        {lesson && lesson.period ? (
+          <Text style={s.heroTopic}>
+            {lesson.period}. ders{lesson.start ? ` (${lesson.start}–${lesson.end})` : ''} · {lesson.label}
+          </Text>
+        ) : null}
         {slot.count > 1 ? (
           <View style={s.lessonSteps}>
             {Array.from({ length: slot.count }, (_, i) => (
@@ -395,7 +511,7 @@ export function LessonCard({ w, lesson, onShowWeek, onPickSlot }) {
           </Text>
         ) : null}
         <Pressable onPress={onShowWeek} style={[s.weekBtn, { borderColor: c }]}>
-          <Text style={{ color: c, fontWeight: '800' }}>Haftanın tamamını gör ▾</Text>
+          <Text style={{ color: c, fontWeight: '800' }}>Haftayı gün gün gör ▾</Text>
         </Pressable>
       </View>
     </View>
@@ -545,6 +661,13 @@ const s = StyleSheet.create({
   heroDate: { color: 'rgba(255,255,255,0.85)', fontSize: font.small, fontWeight: '700' },
   heroUnit: { color: '#fff', fontSize: font.h2, fontWeight: '900', marginTop: 2 },
   heroTopic: { color: 'rgba(255,255,255,0.9)', fontSize: font.small, marginTop: 2 },
+  dayRow: { borderWidth: 1, borderRadius: radius.md, padding: spacing.sm + 2, gap: 4 },
+  dayHead: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
+  dayName: { fontSize: font.small, fontWeight: '900' },
+  dayDate: { fontSize: font.tiny, fontWeight: '700' },
+  dayToday: { borderRadius: radius.pill, paddingHorizontal: 7, paddingVertical: 1 },
+  dayTodayT: { color: '#fff', fontSize: 9, fontWeight: '900', letterSpacing: 0.5 },
+  dayOut: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginTop: 2 },
   weekBadge: { width: 58, height: 58, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' },
   weekBadgeNum: { color: '#fff', fontSize: 24, fontWeight: '900', lineHeight: 26 },
   weekBadgeLbl: { color: 'rgba(255,255,255,0.85)', fontSize: 9, fontWeight: '900', letterSpacing: 1 },

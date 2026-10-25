@@ -11,10 +11,11 @@ const ThemeContext = createContext(null);
 // Uygulama rengi: light = aydınlık temada, dark = karanlık temada, deep = üst bant (karanlık),
 // press = aydınlıkta düğme gölgesi / koyu ton, ink = karanlıkta renkli düğmenin yazısı, second = eşlik eden renk.
 // Düğmeler, vurgular ve üst bant bu renkten; kısayollar, sınıf / ünite / etkinlik kartları iki renk arasında döner. Anlamı olan renkler ayrı: doğru = success (turkuaz), hata = danger (mercan).
+// Tema yalnız iki renk: mercan ve turkuaz. Gök mavisi ve fuşya tema değil;
+// sadece sınıf kutusu ve ders programı zeminlerinde kullanılan sınıf renkleri (theme.js → CLASS_COLORS / GRADE_COLORS).
 export const ACCENTS = {
   coral: { label: 'Mercan', light: '#E2574C', dark: '#FB8A7B', deep: '#9F2D24', press: '#B4382E', ink: '#3D1A16', second: 'ocean' },
   ocean: { label: 'Turkuaz', light: '#0D9488', dark: '#2DD4BF', deep: '#115E59', press: '#0F766E', ink: '#042F2B', second: 'coral' },
-  sky: { label: 'Gök mavisi', light: '#0284C7', dark: '#38BDF8', deep: '#075985', press: '#075985', ink: '#082F49', second: 'coral' },
 };
 // Eski sürümde seçilmiş, artık olmayan renkler (çivit, mor, yeşil, klasik mavi) turkuaza döner.
 const DEFAULT_ACCENT = 'ocean';
@@ -63,7 +64,9 @@ export function ThemeProvider({ children }) {
       accentDeep: dark ? a.deep : a.light,
       primary: accentC,
       primaryDark: dark ? a.light : a.press,
-      onPrimary: dark ? a.ink : '#FFFFFF',
+      onPrimary: a.darkInk ? a.ink : dark ? a.ink : '#FFFFFF',
+      // Üst bant ve renkli zemin üstündeki yazı: sarı gibi açık renklerde koyu.
+      onAccent: a.darkInk ? a.ink : '#FFFFFF',
     };
     // Sınıf / ünite kartları üstünde beyaz yazı var: karanlıkta da canlı (aydınlık) ton.
     setAccentNow(a.light, b.light);

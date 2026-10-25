@@ -1,12 +1,12 @@
 // Yıllık plan: bugünün haftası tek bakışta (öğrenme çıktıları, etkinlikler) + plan yükleme.
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet, Alert, Platform, ActivityIndicator } from 'react-native';
-import { spacing, font, radius } from '../../theme';
+import { spacing, font, radius, gradeColor, inkOn } from '../../theme';
 import { useTheme } from '../../context/ThemeContext';
 import { usePlans } from '../../teacher/PlanContext';
 import { parseYearPlan, weekForDay, guessGrade, assignDates, parseStartDate } from '../../teacher/yearPlan';
 import { pickTableFile, RosterFileError } from '../../teacher/rosterFile';
-import { WeekCard, LessonCard, PlanCalendar, unitColor } from '../../teacher/planUi';
+import { WeekCard, WeekDaysCard, LessonCard, PlanCalendar, unitColor } from '../../teacher/planUi';
 import { useDesk, weekdayOf, periodAt } from '../../teacher/DeskContext';
 import { Header, Card, SectionTitle, Field, SmallButton, Chip, formatDate, confirmAction } from '../../teacher/ui';
 import { dayKey } from '../../utils/helpers';
@@ -69,6 +69,7 @@ export default function YearPlanScreen({ route, navigation }) {
     ? {
         ...picked,
         dayName: offset === 0 && picked.day === todayDay ? 'Bugün' : `${nextWeekLesson ? 'Gelecek ' : ''}${DAY_NAMES[picked.day - 1]}`,
+        date: shown ? addDays(shown.start, picked.day - 1) : null,
         upcoming: (offset === 0 && picked.day !== todayDay && isUpcoming(picked)) || nextWeekLesson,
       }
     : null;
@@ -240,6 +241,7 @@ export default function YearPlanScreen({ route, navigation }) {
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={st.gradeTabs}>
                 {plans.map((p) => {
                   const on = p.id === plan.id;
+                  const gc = gradeColor(p.grade);
                   return (
                     <Pressable
                       key={p.id}
@@ -251,9 +253,9 @@ export default function YearPlanScreen({ route, navigation }) {
                         setLessonKey(null);
                         setFull(false);
                       }}
-                      style={[st.gradeTab, { backgroundColor: on ? colors.accent : colors.card, borderColor: on ? colors.accent : colors.border }]}
+                      style={[st.gradeTab, { backgroundColor: on ? gc : colors.card, borderColor: on ? gc : colors.border }]}
                     >
-                      <Text style={{ color: on ? '#fff' : colors.text, fontWeight: '800', fontSize: font.small }}>{p.name}</Text>
+                      <Text style={{ color: on ? inkOn(gc) : colors.text, fontWeight: '800', fontSize: font.small }}>{p.name}</Text>
                     </Pressable>
                   );
                 })}
@@ -272,7 +274,7 @@ export default function YearPlanScreen({ route, navigation }) {
                 <View style={st.navDateRow}>
                   <Text style={{ fontSize: 16 }}>📅</Text>
                   <Text style={{ color: colors.text, fontWeight: '800', fontSize: font.body }}>
-                    {shown ? longDate(shownDay) : '—'}
+                    {shown ? `${formatDate(shown.start)} haftası` : '—'}
                   </Text>
                   <Text style={{ color: colors.textFaint, fontSize: 12 }}>▾</Text>
                 </View>
@@ -307,12 +309,14 @@ export default function YearPlanScreen({ route, navigation }) {
             ) : null}
 
             {shown ? (
-              full ? (
+              !lesson || full ? (
                 <>
-                  <WeekCard w={shown} big />
-                  <Pressable onPress={() => setFull(false)} style={[st.backToday, { borderColor: colors.accent, marginTop: -spacing.sm }]}>
-                    <Text style={{ color: colors.accent, fontWeight: '800', fontSize: font.small }}>▴ {lesson ? 'Bugünkü derse dön' : 'Kısa görünüme dön'}</Text>
-                  </Pressable>
+                  <WeekDaysCard w={shown} today={today} lessons={gradeLessons} />
+                  {lesson ? (
+                    <Pressable onPress={() => setFull(false)} style={[st.backToday, { borderColor: colors.accent, marginTop: -spacing.sm }]}>
+                      <Text style={{ color: colors.accent, fontWeight: '800', fontSize: font.small }}>▴ Bugünkü derse dön</Text>
+                    </Pressable>
+                  ) : null}
                 </>
               ) : (
                 <LessonCard
@@ -346,7 +350,7 @@ export default function YearPlanScreen({ route, navigation }) {
                 {plan.weeks.map((w, i) => (
                   <Pressable key={`${w.start}-${i}`} onPress={() => { setOffset(i - baseIndex); setShowAll(false); }} style={[st.row, { borderColor: colors.border }, i === index && { backgroundColor: colors.cardSoft }]}>
                     <View style={[st.dot, { backgroundColor: unitColor(w) }]} />
-                    <Text style={{ color: colors.textMuted, fontSize: font.tiny, width: 84 }}>{formatDate(w.start)}</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: font.tiny, width: 44 }}>{w.week ? `${w.week}.` : '—'}</Text>
                     <Text style={{ color: w.holiday ? colors.textMuted : colors.text, fontSize: font.small, flex: 1, fontWeight: i === index ? '800' : '500' }} numberOfLines={1}>
                       {w.holiday ? '🏖️ ' : ''}{w.unit || w.topic || firstLine(w.outcomes) || firstLine(w.notes) || '—'}
                     </Text>

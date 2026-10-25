@@ -2,6 +2,7 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet, Alert, Platform, Modal, useWindowDimensions } from 'react-native';
 import { spacing, font, radius } from '../../theme';
+import { classColor } from './TimetableScreen';
 import { useTheme } from '../../context/ThemeContext';
 import { useTeacher } from '../../teacher/TeacherContext';
 import { PATTERNS, PATTERN_BY_ID } from '../../data/patterns';
@@ -22,6 +23,8 @@ export default function TeacherClassScreen({ route, navigation }) {
   const { branch } = useRole();
   const drills = !branch || branch.drills;
   const cls = t.getClass(classId);
+  // Ekranın vurgu rengi sınıfın kendi rengi: 5 sarı, 6 mavi, 7 mercan, 8 turkuaz; 5-C fuşya.
+  const col = cls ? classColor(cls.name) : colors.accent;
   const [tab, setTab] = useState(route.params.tab || 'students');
   const [sort, setSort] = useState('no');
   const [rename, setRename] = useState(null);
@@ -81,8 +84,8 @@ export default function TeacherClassScreen({ route, navigation }) {
       />
       <View style={[st.tabs, { borderColor: colors.border }]}>
         {[['students', 'Öğrenciler'], ['homework', 'Ödevler']].map(([k, l]) => (
-          <Pressable key={k} onPress={() => setTab(k)} style={[st.tab, tab === k && { borderBottomColor: colors.accent }]}>
-            <Text style={{ color: tab === k ? colors.accent : colors.textMuted, fontWeight: '800' }}>{l}</Text>
+          <Pressable key={k} onPress={() => setTab(k)} style={[st.tab, tab === k && { borderBottomColor: col }]}>
+            <Text style={{ color: tab === k ? colors.text : colors.textMuted, fontWeight: '800' }}>{l}</Text>
           </Pressable>
         ))}
       </View>
@@ -91,8 +94,8 @@ export default function TeacherClassScreen({ route, navigation }) {
         {tab === 'students' ? (
           <>
             {planWeek ? (
-              <Card onPress={() => navigation.navigate('YearPlan', { planId: gradePlan.id })} style={{ borderLeftWidth: 4, borderLeftColor: colors.accent }}>
-                <Text style={{ color: colors.accent, fontSize: font.tiny, fontWeight: '900', letterSpacing: 1 }}>
+              <Card onPress={() => navigation.navigate('YearPlan', { planId: gradePlan.id })} style={{ borderLeftWidth: 4, borderLeftColor: col }}>
+                <Text style={{ color: col, fontSize: font.tiny, fontWeight: '900', letterSpacing: 1 }}>
                   📅 {gradePlan.name.toLocaleUpperCase('tr')} · {planWeek.status === 'next' ? 'SIRADAKİ HAFTA' : planWeek.status === 'ended' ? 'PLAN BİTTİ' : 'BU HAFTA'}
                 </Text>
                 <Text style={{ color: colors.text, fontWeight: '800', marginTop: 4 }} numberOfLines={1}>

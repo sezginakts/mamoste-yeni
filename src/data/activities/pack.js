@@ -9,6 +9,21 @@ const esc = (t) => String(t || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').
 // Script içine gömülen metin: "</script>" erken kapanmasın.
 const js = (v) => JSON.stringify(v).replace(/<\//g, '<\\/');
 
+// Windows'ta emoji bayraklar "GB" harflerine düşüyor (Segoe UI Emoji'de ülke bayrağı yok).
+// Akıllı tahta çoğu zaman Windows/Pardus tarayıcısında açıldığı için bayrak SVG olarak gömülür.
+const UK_FLAG_SVG = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 30'>"
+  + "<rect width='60' height='30' fill='#012169'/>"
+  + "<path d='M0,0 L60,30 M60,0 L0,30' stroke='#fff' stroke-width='6'/>"
+  + "<path d='M0,0 L60,30 M60,0 L0,30' stroke='#C8102E' stroke-width='3'/>"
+  + "<path d='M0,15 L60,15 M30,0 L30,30' stroke='#fff' stroke-width='10'/>"
+  + "<path d='M0,15 L60,15 M30,0 L30,30' stroke='#C8102E' stroke-width='6'/>"
+  + '</svg>';
+const UK_FLAG_URI = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(UK_FLAG_SVG);
+const BRANCH_MARK = { ingilizce: `<img class="bayrak" src="${UK_FLAG_URI}" alt="">` };
+
+// Branş imi: bayrağı olan branşta görsel, diğerlerinde emoji.
+const branchMark = (b) => (b && BRANCH_MARK[b.id] ? BRANCH_MARK[b.id] : esc(b ? b.emoji : ''));
+
 export function packFileName(branchId) {
   const b = BRANCH_BY_ID[branchId];
   return `Okul Tahta Paketi - ${b ? b.name : 'Etkinlikler'}.html`.replace(/[\\/:*?"<>|]/g, '');
@@ -34,7 +49,7 @@ export function buildBoardPack(branchId) {
     .filter((g) => g.items.length);
   const baslik = `${b ? b.name : ''} Etkinlikleri`;
   return TEMPLATE.replace('__BASLIK__', () => esc(baslik))
-    .replace('__BRANS__', () => esc(b ? `${b.emoji} ${b.name}` : ''))
+    .replace('__BRANS__', () => (b ? `${branchMark(b)} ${esc(b.name)}` : ''))
     .replace('/*__VERI__*/', () => `const OYUNLAR=${js(games)};const HTMLLER=${js(htmls)};`);
 }
 
@@ -61,6 +76,7 @@ header{display:flex;align-items:center;gap:2vmin;flex-wrap:wrap;margin-bottom:3v
 .logo i:nth-child(3){background:var(--mercan);transform:rotate(7deg)}
 h1{margin:0;font-size:calc(var(--f)*1.9);font-weight:900;line-height:1;background:linear-gradient(90deg,var(--turkuaz),var(--gok));-webkit-background-clip:text;background-clip:text;color:transparent}
 .alt{color:var(--soluk);font-weight:700;font-size:calc(var(--f)*.7);margin-top:.6vmin}
+.alt .bayrak{height:1em;width:1.5em;vertical-align:-.14em;border-radius:.15em;box-shadow:0 0 0 1px rgba(15,23,42,.15);margin-right:.2em}
 .tam{margin-left:auto;background:#fff;border-radius:99px;padding:1.2vmin 2.6vmin;font-weight:900;font-size:calc(var(--f)*.7);box-shadow:0 .5vmin 0 #CBD5E1}
 .izgara{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,420px),1fr));gap:2.4vmin}
 .kart{--c:var(--turkuaz);background:rgba(255,255,255,.92);border-radius:3vmin;padding:2.6vmin;box-shadow:0 1.2vmin 3vmin rgba(2,132,199,.12);border-top:1vmin solid var(--c);display:flex;flex-direction:column;gap:1.4vmin}

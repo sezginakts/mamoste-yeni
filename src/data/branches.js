@@ -5,7 +5,7 @@
 //   hwKinds: verilebilecek ödev türleri — 'sentences' (cümle çalışması) | 'task' (görev/proje)
 //   board: akıllı tahta etkinlik seti
 export const BRANCHES = [
-  { id: 'ingilizce', name: 'İngilizce', emoji: 'ing', color: '#0D9488', grades: [2, 3, 4, 5, 6, 7, 8], enabled: true, drills: true, hwKinds: ['sentences', 'task'], board: 'english' },
+  { id: 'ingilizce', name: 'İngilizce', emoji: '🇬🇧', color: '#0D9488', grades: [2, 3, 4, 5, 6, 7, 8], enabled: true, drills: true, hwKinds: ['sentences', 'task'], board: 'english' },
   { id: 'teknoloji-tasarim', name: 'Teknoloji ve Tasarım', emoji: '🛠️', color: '#0284C7', grades: [7, 8], enabled: true, drills: false, hwKinds: ['task'], board: 'plan' },
   { id: 'turkce', name: 'Türkçe', emoji: '📖', color: '#E2574C', grades: [5, 6, 7, 8], enabled: true, drills: false, hwKinds: ['task'], board: 'plan' },
   { id: 'matematik', name: 'Matematik', emoji: '➗', color: '#0D9488', grades: [5, 6, 7, 8], enabled: true, drills: false, hwKinds: ['task'], board: 'plan' },
