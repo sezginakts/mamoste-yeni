@@ -34,21 +34,32 @@ function saveMap(map) {
 
 export default function Collapsible({ title, right, defaultOpen = true, storageKey, children, style, titleStyle }) {
   const { colors } = useTheme();
-  const [open, setOpen] = useState(defaultOpen);
+  // Kayıtlı tercih biliniyorsa (bu oturumda okunduysa) İLK ÇİZİMDEN önce uygula.
+  const save = (key) => (mapCache && typeof mapCache[key] === 'boolean' ? mapCache[key] : null);
+  const known = storageKey ? save(storageKey) : null;
+  const [open, setOpen] = useState(known == null ? defaultOpen : known);
   const [contentH, setContentH] = useState(0);
-  const anim = useRef(new Animated.Value(defaultOpen ? 1 : 0)).current;
+  // Tercih henüz okunmadıysa içeriği HİÇ çizme: bölüm bir an açık görünüp sonra kapanmasın
+  // (soğuk açılışta "göz kırpıyor", kullanıcı bunu "aç/kapa bozuk" olarak görüyordu).
+  const [ready, setReady] = useState(!storageKey || mapCache != null);
+  const anim = useRef(new Animated.Value((known == null ? defaultOpen : known) ? 1 : 0)).current;
+  const touched = useRef(false); // kullanıcı başlığa dokundu mu?
 
-  // Kayıtlı tercih varsa uygula.
+  // Kayıtlı tercihi oku. Kullanıcı bu arada dokunduysa kayıt onun seçimini EZMESİN
+  // (yavaş depoda açılıştan hemen sonraki dokunuş yok sayılıyordu).
   useEffect(() => {
-    if (!storageKey) return;
+    if (!storageKey || mapCache != null) return undefined;
     let alive = true;
     loadMap().then((map) => {
       if (!alive) return;
-      const saved = map[storageKey];
-      if (typeof saved === 'boolean' && saved !== defaultOpen) {
-        setOpen(saved);
-        anim.setValue(saved ? 1 : 0);
+      if (!touched.current) {
+        const saved = map[storageKey];
+        if (typeof saved === 'boolean' && saved !== defaultOpen) {
+          setOpen(saved);
+          anim.setValue(saved ? 1 : 0);
+        }
       }
+      setReady(true);
     });
     return () => {
       alive = false;
@@ -65,8 +76,10 @@ export default function Collapsible({ title, right, defaultOpen = true, storageK
   }, [open, anim]);
 
   const toggle = () => {
+    touched.current = true;
     const next = !open;
     setOpen(next);
+    setReady(true);
     if (storageKey) loadMap().then((map) => saveMap({ ...map, [storageKey]: next }));
   };
 
@@ -90,7 +103,7 @@ export default function Collapsible({ title, right, defaultOpen = true, storageK
       </Pressable>
       <Animated.View style={[boxStyle, { overflow: 'hidden' }]} pointerEvents={open ? 'auto' : 'none'}>
         <View onLayout={(e) => setContentH(Math.round(e.nativeEvent.layout.height))} style={{ paddingTop: spacing.sm }}>
-          {children}
+          {ready ? children : null}
         </View>
       </Animated.View>
     </View>

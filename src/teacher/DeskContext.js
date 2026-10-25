@@ -124,9 +124,16 @@ export function DeskProvider({ children }) {
       return next;
     });
 
-  // Bir sınıfın (ya da sadece düzeyin) haftadaki dersleri, gün/ders sırasıyla.
+  // Bir sınıfın haftadaki dersleri, gün/ders sırasıyla.
+  // Aynı sınıf nasıl bulunur: önce sınıf ADI (sınıf adları benzersiz; eski kayıtlarda classId yok),
+  // sonra classId, en son düzey. Yalnız düzeye bakmak 7-A ile 7-B'nin derslerini tek havuza düşürüyordu:
+  // iki şube aynı saatte derse girince her şube haftanın yalnız yarısını görüyordu.
   const lessonsOf = (lesson) => {
-    const same = (l) => (lesson.classId ? l.classId === lesson.classId : !l.classId && l.grade === lesson.grade);
+    const same = (l) => {
+      if (lesson.label && l.label) return String(lesson.label).trim() === String(l.label).trim();
+      if (lesson.classId || l.classId) return lesson.classId === l.classId;
+      return l.grade === lesson.grade;
+    };
     return Object.entries(lessons)
       .map(([k, l]) => ({ ...l, day: +k.split('-')[0], period: +k.split('-')[1] }))
       .filter(same)

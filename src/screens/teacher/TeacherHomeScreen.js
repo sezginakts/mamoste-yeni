@@ -1,13 +1,12 @@
-// Öğretmen ana sayfası: karşılama bandı, şimdiki/sıradaki ders, bugünün akışı, kısayollar, sınıflar.
+// Öğretmen ana sayfası: karşılama bandı, şimdiki/sıradaki ders, kısayollar, sınıflar.
 import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacing, font, radius, inkOn } from '../../theme';
 import { usePlans } from '../../teacher/PlanContext';
 import { weekForDay } from '../../teacher/yearPlan';
-import { useDesk, weekdayOf, sortNotes, periodAt, gradeOfName } from '../../teacher/DeskContext';
+import { useDesk, weekdayOf, sortNotes, gradeOfName } from '../../teacher/DeskContext';
 import { outcomesForLesson, splitOutcome, unitColor, lessonSlot } from '../../teacher/planUi';
-import { shortOutcome } from '../../data/yearPlans/outcomeShort';
 import { usePruneStaleLessons } from '../../teacher/pruneLessons';
 import { classColor } from './TimetableScreen';
 import { dayKey } from '../../utils/helpers';
@@ -36,7 +35,7 @@ const shortDate = (k) => {
 };
 
 const minOf = (t) => {
-  const m = /^(\d{2}):(\d{2})$/.exec(t || '');
+  const m = /^(\d{1,2}):(\d{2})$/.exec(t || '');
   return m ? +m[1] * 60 + +m[2] : null;
 };
 
@@ -74,8 +73,9 @@ export default function TeacherHomeScreen({ navigation }) {
   };
 
   // Ana kart: şimdiki ders, yoksa bugünün sıradaki dersi; bugün bitti/ders yoksa bir sonraki okul gününün ilk dersi.
-  const hasTimes = todayLessons.some((l) => l.start);
-  const at = periodAt(desk.periods);
+  // Saati girilmemiş ders ATLANMAZ: zamanı bilinmeyen ders "sıradaki" sayılır. (Eskiden saati olmayan dersler
+  // yok sayıldığı için, saatler kısmen girilmişse o günkü ders "gün bitti" diye atlanıp yarının dersine geçiliyordu.)
+  const hasTimes = todayLessons.some((l) => l.start && l.end);
   let focus = null;
   let focusLabel = '';
   let focusDay = today;
@@ -83,9 +83,23 @@ export default function TeacherHomeScreen({ navigation }) {
     if (!hasTimes) {
       focus = todayLessons[0];
       focusLabel = 'BUGÜN';
-    } else if (at) {
-      focus = todayLessons.find((l) => l.period >= at.period) || null;
-      if (focus) focusLabel = focus.period === at.period && at.status === 'now' ? 'ŞİMDİ' : 'SIRADAKİ';
+    } else {
+      const nowLesson = todayLessons.find((l) => {
+        const s = minOf(l.start);
+        const e = minOf(l.end);
+        return s != null && e != null && nowMin >= s && nowMin < e;
+      });
+      const nextLesson =
+        nowLesson ||
+        todayLessons.find((l) => {
+          const s = minOf(l.start);
+          const e = minOf(l.end);
+          if (s == null || e == null) return true; // saati yok: atlama, sıradaki ders say
+          return nowMin < s;
+        });
+      focus = nextLesson || null;
+      // Zamanı bilinmeyen ders için "SIRADAKİ" demek yanlış olur (gün bitmiş de olabilir): "BUGÜN" denir.
+      if (focus) focusLabel = nowLesson ? 'ŞİMDİ' : minOf(focus.start) == null || minOf(focus.end) == null ? 'BUGÜN' : 'SIRADAKİ';
     }
   }
   const dayOver = todayLessons.length > 0 && hasTimes && !focus;
@@ -169,8 +183,6 @@ export default function TeacherHomeScreen({ navigation }) {
           (() => {
             const { w, skills, review, p, slot } = planOf(focus, focusDay);
             const c = classColor(focus.label);
-            // 2, 3, 5, 6. sınıf İngilizce: kazanım bloğu çok uzun, kartta 1-2 cümlelik özet gösterilir.
-            const short = shortOutcome(focus.grade || (p && p.grade), w);
             return (
               <Pressable onPress={() => openLesson(focus)} style={({ pressed }) => [st.focus, shadow, { backgroundColor: colors.card, borderColor: colors.border }, pressed && { opacity: 0.94 }]}>
                 {/* Üst satır: ne zaman + hangi sınıf */}
@@ -214,19 +226,24 @@ export default function TeacherHomeScreen({ navigation }) {
                     <Text style={[st.outHead, { color: colors.textFaint }]}>
                       {review ? 'PEKİŞTİRME · BU HAFTANIN ÖĞRENME ÇIKTILARI' : skills.length > 1 ? 'BU DERSİN ÖĞRENME ÇIKTILARI' : 'BU DERSİN ÖĞRENME ÇIKTISI'}
                     </Text>
-                    {short ? (
-                      <Text style={[st.outText, { color: colors.text }]}>{short}</Text>
-                    ) : skills.length ? (
-                      skills.map((o, i) => (
-                        <View key={i} style={[st.outRow, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border }]}>
-                          {o.code || o.label ? (
-                            <Text style={[st.outCode, { color: colors.accent }]}>
-                              {o.code || ''}{o.code && o.label ? '  ·  ' : ''}{o.label ? `${o.icon} ${o.label}` : ''}
-                            </Text>
-                          ) : null}
-                          <Text style={[st.outText, { color: colors.text }]}>{o.text}</Text>
-                        </View>
-                      ))
+                    {skills.length ? (
+                      <>
+                        {skills.slice(0, 2).map((o, i) => (
+                          <View key={i} style={[st.outRow, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border }]}>
+                            {o.code || o.label ? (
+                              <Text style={[st.outCode, { color: colors.accent }]}>
+                                {o.code || ''}{o.code && o.label ? '  ·  ' : ''}{o.label ? `${o.icon} ${o.label}` : ''}
+                              </Text>
+                            ) : null}
+                            <Text style={[st.outText, { color: colors.text }]}>{o.text}</Text>
+                          </View>
+                        ))}
+                        {skills.length > 2 ? (
+                          <Text style={{ color: colors.textMuted, fontSize: font.small, fontWeight: '700', marginTop: 6 }}>
+                            +{skills.length - 2} öğrenme çıktısı daha · hepsini görmek için karta dokun
+                          </Text>
+                        ) : null}
+                      </>
                     ) : (
                       <Text style={[st.outText, { color: colors.textMuted }]}>Planda bu haftanın öğrenme çıktısı yazmıyor.</Text>
                     )}
@@ -237,6 +254,11 @@ export default function TeacherHomeScreen({ navigation }) {
                       </Text>
                       <Text style={[st.more, { color: colors.accent, marginTop: 0 }]}>Dersin planı ›</Text>
                     </View>
+                    {w.hours && slot.count !== w.hours ? (
+                      <Text style={{ color: colors.warning, fontSize: font.tiny, fontWeight: '700', marginTop: 6, lineHeight: 16 }}>
+                        ⚠️ Ders programında bu sınıfın {slot.count} dersi var, planda {w.hours} ders saati. Çıktılar {slot.count} derse bölündü.
+                      </Text>
+                    ) : null}
                   </>
                 )}
                 {!hasTimes && focusDay === today ? (
@@ -284,42 +306,6 @@ export default function TeacherHomeScreen({ navigation }) {
             ))}
             {todayNotes.length > 3 ? <Text style={[st.stickyLine, { opacity: 0.7 }]}>+{todayNotes.length - 3} not daha</Text> : null}
           </Pressable>
-        ) : null}
-
-        {/* ---- Bugünün akışı ---- */}
-        {todayLessons.length ? (
-          <>
-            <Collapsible title="BUGÜNÜN AKIŞI" storageKey="t-home-flow" style={{ marginTop: spacing.lg }}>
-            <View style={[st.flow, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              {todayLessons.map((l, i) => {
-                const { w, skills, review } = planOf(l);
-                const c = classColor(l.label);
-                const past = l.end && minOf(l.end) != null && minOf(l.end) <= nowMin;
-                const isLive = live && focusDay === today && focus.period === l.period;
-                const first = skills[0];
-                return (
-                  <Pressable key={l.period} onPress={() => openLesson(l)} style={[st.flowRow, past && { opacity: 0.45 }]}>
-                    <View style={st.flowTime}>
-                      <Text style={{ color: isLive ? c : colors.text, fontWeight: '900', fontSize: font.small }}>{l.start || `${l.period}.`}</Text>
-                      {l.start ? <Text style={{ color: colors.textFaint, fontSize: 10, fontWeight: '700' }}>{l.period}. ders</Text> : null}
-                    </View>
-                    <View style={st.flowRail}>
-                      <View style={[st.flowLine, { backgroundColor: colors.border }, i === 0 && { top: '50%' }, i === todayLessons.length - 1 && { bottom: '50%' }]} />
-                      <View style={[st.flowDot, { backgroundColor: c, borderColor: colors.card }, isLive && { width: 16, height: 16, borderRadius: 8 }]} />
-                    </View>
-                    <View style={[st.flowCard, { backgroundColor: c + (isLive ? '26' : '14'), borderColor: isLive ? c : 'transparent' }]}>
-                      <Text style={{ color: colors.text, fontWeight: '900', fontSize: font.body }}>{l.label}</Text>
-                      <Text style={{ color: colors.textMuted, fontSize: font.small, flex: 1 }} numberOfLines={2}>
-                        {!w ? (planForGrade(l.grade) ? '' : 'Plan yok') : w.holiday ? '🏖️ Tatil' : first ? `${review ? '↻ Pekiştirme · ' : ''}${first.text}` : w.unit || w.topic || ''}
-                      </Text>
-                      <Text style={{ color: colors.textFaint, fontSize: 18 }}>›</Text>
-                    </View>
-                  </Pressable>
-                );
-              })}
-            </View>
-            </Collapsible>
-          </>
         ) : null}
 
         {/* ---- Kısayollar ---- */}

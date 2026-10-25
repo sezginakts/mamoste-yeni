@@ -628,7 +628,7 @@ export function PlanCalendar({ visible, onClose, weeks = [], selected, onPick, l
           <View style={s.calFoot}>
             {legend ? (
               <View style={s.legend}>
-                <View style={[s.legendDot, { backgroundColor: UNIT_COLORS[0] + '55' }]} />
+                <View style={[s.legendDot, { backgroundColor: pairColor(0) + '55' }]} />
                 <Text style={{ color: colors.textMuted, fontSize: font.tiny }}>Ders haftası</Text>
                 <View style={[s.legendDot, { backgroundColor: HOLIDAY_COLOR + '55', marginLeft: spacing.sm }]} />
                 <Text style={{ color: colors.textMuted, fontSize: font.tiny }}>Tatil</Text>
