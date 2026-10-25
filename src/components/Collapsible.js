@@ -32,7 +32,7 @@ function saveMap(map) {
   AsyncStorage.setItem(STORE_KEY, JSON.stringify(map)).catch(() => {});
 }
 
-export default function Collapsible({ title, right, defaultOpen = true, storageKey, children, style, titleStyle }) {
+export default function Collapsible({ title, right, defaultOpen = true, storageKey, children, style, titleStyle, header }) {
   const { colors } = useTheme();
   // Kayıtlı tercih biliniyorsa (bu oturumda okunduysa) İLK ÇİZİMDEN önce uygula.
   const save = (key) => (mapCache && typeof mapCache[key] === 'boolean' ? mapCache[key] : null);
@@ -89,18 +89,22 @@ export default function Collapsible({ title, right, defaultOpen = true, storageK
 
   return (
     <View style={style}>
-      <Pressable
-        onPress={toggle}
-        hitSlop={6}
-        accessibilityRole="button"
-        accessibilityState={{ expanded: open }}
-        style={({ pressed }) => [styles.head, pressed && { opacity: 0.7 }]}
-      >
-        <Text style={[styles.title, { color: colors.textMuted }, titleStyle]}>{title}</Text>
-        <View style={{ flex: 1 }} />
-        {right}
-        <Text style={[styles.caret, { color: colors.textFaint }]}>{open ? '⌃' : '⌄'}</Text>
-      </Pressable>
+      {header ? (
+        header({ open, toggle })
+      ) : (
+        <Pressable
+          onPress={toggle}
+          hitSlop={6}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: open }}
+          style={({ pressed }) => [styles.head, pressed && { opacity: 0.7 }]}
+        >
+          <Text style={[styles.title, { color: colors.textMuted }, titleStyle]}>{title}</Text>
+          <View style={{ flex: 1 }} />
+          {right}
+          <Text style={[styles.caret, { color: colors.textFaint }]}>{open ? '⌃' : '⌄'}</Text>
+        </Pressable>
+      )}
       <Animated.View style={[boxStyle, { overflow: 'hidden' }]} pointerEvents={open ? 'auto' : 'none'}>
         <View onLayout={(e) => setContentH(Math.round(e.nativeEvent.layout.height))} style={{ paddingTop: spacing.sm }}>
           {ready ? children : null}

@@ -445,27 +445,43 @@ export function LessonCard({ w, lesson, onShowWeek, onPickSlot }) {
       <View style={{ padding: spacing.md, gap: spacing.md }}>
         {outs.length ? (
           <View style={[s.focus, { borderColor: c, backgroundColor: c + (mode === 'dark' ? '22' : '12') }]}>
-            <View style={[s.focusTag, { backgroundColor: c }]}>
-              <Text style={s.focusTagText}>🎯 {review ? 'TEKRAR VE PEKİŞTİRME' : 'BU DERSİN ÖĞRENME ÇIKTISI'}</Text>
-            </View>
-            <View style={{ gap: spacing.md, marginTop: spacing.sm }}>
-              {outs.map((o, i) => (
-                <View key={i}>
-                  {o.label || o.code ? (
-                    <View style={s.outHead}>
-                      <Text style={{ fontSize: 16 }}>{o.icon}</Text>
-                      {o.label ? <Text style={[s.outLabel, { color: colors.textMuted }]}>{o.label}</Text> : null}
-                      {o.code ? (
-                        <View style={[s.code, { borderColor: c + '66' }]}>
-                          <Text style={[s.codeText, { color: c }]}>{o.code}</Text>
-                        </View>
-                      ) : null}
-                    </View>
-                  ) : null}
-                  <Text style={[s.focusText, { color: colors.text }]}>{o.text}</Text>
-                </View>
-              ))}
-            </View>
+            {/* Başlık katlanır: kazanımlar uzun, ekranı kaplamasın. Kapalıyken sadece başlık + sayı görünür. */}
+            <Collapsible
+              defaultOpen={false}
+              header={({ open, toggle }) => (
+                <Pressable
+                  onPress={toggle}
+                  hitSlop={6}
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: open }}
+                  style={({ pressed }) => [s.focusTag, { backgroundColor: c, alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', gap: 8 }, pressed && { opacity: 0.85 }]}
+                >
+                  <Text style={s.focusTagText}>🎯 {review ? 'TEKRAR VE PEKİŞTİRME' : 'BU DERSİN ÖĞRENME ÇIKTISI'}</Text>
+                  <View style={{ flex: 1 }} />
+                  {outs.length > 1 ? <Text style={[s.focusTagText, { opacity: 0.9 }]}>{outs.length}</Text> : null}
+                  <Text style={[s.focusTagText, { opacity: 0.9 }]}>{open ? '⌃' : '⌄'}</Text>
+                </Pressable>
+              )}
+            >
+              <View style={{ gap: spacing.md, marginTop: spacing.sm }}>
+                {outs.map((o, i) => (
+                  <View key={i}>
+                    {o.label || o.code ? (
+                      <View style={s.outHead}>
+                        <Text style={{ fontSize: 16 }}>{o.icon}</Text>
+                        {o.label ? <Text style={[s.outLabel, { color: colors.textMuted }]}>{o.label}</Text> : null}
+                        {o.code ? (
+                          <View style={[s.code, { borderColor: c + '66' }]}>
+                            <Text style={[s.codeText, { color: c }]}>{o.code}</Text>
+                          </View>
+                        ) : null}
+                      </View>
+                    ) : null}
+                    <Text style={[s.focusText, { color: colors.text }]}>{o.text}</Text>
+                  </View>
+                ))}
+              </View>
+            </Collapsible>
           </View>
         ) : null}
 
