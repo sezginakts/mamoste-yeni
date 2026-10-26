@@ -55,6 +55,8 @@ h1{margin:0;font-size:calc(var(--f)*1.8);font-weight:900;line-height:1.05;backgr
 .kart{background:#fff;border-radius:3.2vmin;box-shadow:0 1.6vmin 4vmin rgba(15,23,42,.14);padding:3.4vmin 5vmin;min-width:min(72vmin,94vw);text-align:center;display:flex;flex-direction:column;gap:1vmin;animation:gel .3s ease-out}
 @keyframes gel{from{transform:translateY(3vmin) scale(.95);opacity:0}to{transform:none;opacity:1}}
 .kart .üst{font-size:calc(var(--f)*.44);letter-spacing:.18em;color:var(--soluk);font-weight:800}
+.kart .gorsel{font-size:12vmin;line-height:1;animation:sal .8s ease-in-out infinite}
+@keyframes sal{0%,100%{transform:translateY(-.5vmin) rotate(-2deg)}50%{transform:translateY(.5vmin) rotate(2deg)}}
 .kart .ad{font-size:calc(var(--f)*1.9);font-weight:900;line-height:1.1}
 .kart.dogru{box-shadow:0 0 0 .7vmin var(--turkuaz) inset,0 1.6vmin 4vmin rgba(15,23,42,.14)}
 .kart.yanlis{animation:titre .4s}
@@ -133,6 +135,7 @@ h1{margin:0;font-size:calc(var(--f)*1.8);font-weight:900;line-height:1.05;backgr
     <div class="deney"><b id="deneyAd">—</b><p id="deneyKurulum">—</p></div>
     <div class="sahne">
       <div class="kart" id="kart">
+        <div class="gorsel" id="kartGorsel">🔎</div>
         <div class="üst">BU TERİM NE?</div>
         <div class="ad" id="kartAd">—</div>
       </div>
@@ -222,6 +225,10 @@ function kartCiz(){
   if(!k){deneyBitti();return}
   $('kart').className='kart';
   $('kartAd').textContent=k.ad;
+  $('kartGorsel').textContent=k.gorsel||'🔎';
+  $('kartGorsel').style.animation='none';
+  void $('kartGorsel').offsetWidth;
+  $('kartGorsel').style.animation='';
   $('geri').textContent='';
   $('geri').className='geri';
   document.querySelectorAll('.bolge').forEach(b=>b.classList.remove('dogru','yanlis','kilitli'));
