@@ -16,6 +16,7 @@ const MOTORLAR = [
   { kaynak: 'harita.html', hedef: '../../src/data/activities/haritaEngine.js' },
   { kaynak: 'hucre.html', hedef: '../../src/data/activities/hucreEngine.js' },
   { kaynak: 'molekul.html', hedef: '../../src/data/activities/molekulEngine.js' },
+  { kaynak: 'hava.html', hedef: '../../src/data/activities/havaEngine.js' },
 ];
 
 for (const m of MOTORLAR) {
@@ -28,3 +29,4 @@ for (const m of MOTORLAR) {
   fs.writeFileSync(path.join(__dirname, m.hedef), js);
   console.log(`${m.kaynak} → ${m.hedef} (${(js.length / 1024).toFixed(1)} KB)`);
 }
+

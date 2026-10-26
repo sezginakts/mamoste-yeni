@@ -128,6 +128,16 @@ export const ACTIVITY_TYPES = {
     branches: ['fen'],
     engine: () => require('./molekulEngine.js').default,
   },
+  // Kaynağı tools/etkinlik/hava.html; değişince `node tools/etkinlik/derle.js`.
+  // Havuz: { zirve: 4000, senaryolar: [{ ad, denizSeviyesi, nem }] }
+  // Dağ kesiti: bayrağı yüksekliğe koy, yağışın başladığı seviyeyi bul (çiy noktası + sıcaklık gradyanı).
+  hava: {
+    icon: '🌦️',
+    name: 'Hava İstasyonu',
+    desc: 'Rüzgâr nemli havayı yamaç boyunca yukarı iter: yükseldikçe basınç ve sıcaklık düşer, çiy noktasında yoğuşma başlar. Bayrağı doğru yüksekliğe koy; yağışın hangi yamaçta düştüğünü ve zirvedeki basıncı bul.',
+    branches: ['fen'],
+    engine: () => require('./havaEngine.js').default,
+  },
 };
 
 // Zaman Şeridi havuzu: düzeyin olay setleri + zorluk ayarı.
@@ -174,6 +184,7 @@ const LIST = {
   fen: [
     { type: 'hucre', grade: 7, unit: null, unitName: 'Hücre ve Organeller', pool: () => require('./fen/hucre7.js').default },
     { type: 'molekul', grade: 7, unit: null, unitName: 'Saf Madde ve Karışımlar', pool: () => require('./fen/molekul7.js').default },
+    { type: 'hava', grade: 8, unit: null, unitName: 'İklim ve Hava Hareketleri', pool: () => require('./fen/hava8.js').default },
   ],
   sosyal: [
     { type: 'zaman', grade: 5, unit: null, unitName: 'Kültürel miras · demokrasi · ulaşım · icatlar · Anadolu', pool: () => zamanHavuzu(5) },
