@@ -2,7 +2,7 @@
 // Hücreye dokun → sınıf seç. Saate dokun → giriş/çıkış saatini düzenle. "Saatleri ayarla" → okulun saatlerini tek seferde doldur.
 import React, { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { View, Text, ScrollView, Pressable, Modal, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, ScrollView, Pressable, Modal, StyleSheet, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
 import { spacing, font, radius, classColorFor, timetableColorFor, inkOn } from '../../theme';
 import { useTheme } from '../../context/ThemeContext';
 import { useTeacher } from '../../teacher/TeacherContext';
@@ -25,11 +25,26 @@ export default function TimetableScreen({ navigation }) {
   const desk = useDesk();
   usePruneStaleLessons();
   const today = weekdayOf();
-  const now = today <= 5 ? periodAt(desk.periods) : null;
+  const now = today <= 5 ? periodAt(desk.todayPeriods) : null;
   const [cell, setCell] = useState(null); // { day, period } sınıf seçimi
   const [timeIdx, setTimeIdx] = useState(null); // saat düzenlenen ders
   const [quick, setQuick] = useState(false);
-  const hasTimes = desk.periods.some((p) => p.start);
+  const [renaming, setRenaming] = useState(null); // hangi düzenin adı düzenleniyor
+  const [yeniAd, setYeniAd] = useState('');
+
+  // İki okulun saat düzeni: seçili düzen düzenlenir; her gün bir düzene bağlıdır.
+  const SCHED_KEYS = ['a', 'b'];
+  const activeKey = desk.activeSchedule;
+  const activeSched = desk.schedules[activeKey] || desk.schedules.a;
+  const activePeriods = activeSched.periods || [];
+  const rowCount = Math.max(2, ...[1, 2, 3, 4, 5].map((g) => desk.periodsFor(g).length));
+  const hasTimes = SCHED_KEYS.some((k) => (desk.schedules[k].periods || []).some((p) => p.start));
+  const gunDuzeni = (day) => desk.schedules[desk.daySchedule[day] || 'a'] || desk.schedules.a;
+  const gunuDegistir = (day) => {
+    const cur = desk.daySchedule[day] || 'a';
+    const next = cur === 'a' ? 'b' : 'a';
+    desk.setDaySchedule(day, next);
+  };
 
   const lessonCount = Object.keys(desk.lessons).length;
 
@@ -37,17 +52,40 @@ export default function TimetableScreen({ navigation }) {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Header title="Ders Programı" subtitle={lessonCount ? `Haftada ${lessonCount} ders` : 'Hücreye dokun, sınıfı seç'} onBack={() => navigation.goBack()} />
       <ScrollView contentContainerStyle={{ padding: spacing.md, paddingBottom: spacing.xxl }}>
+        {/* Okul saat düzeni: iki okulun saatleri ayrı; gün başlığından hangi günün hangi okul olduğu seçilir */}
+        <View style={[st.schedBar, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={{ color: colors.textMuted, fontSize: font.tiny, fontWeight: '900', letterSpacing: 1 }}>SAAT DÜZENİ</Text>
+          <View style={{ flexDirection: 'row', gap: 6, marginTop: spacing.xs, alignItems: 'center', flexWrap: 'wrap' }}>
+            {SCHED_KEYS.map((k) => (
+              <Chip key={k} label={desk.schedules[k].name} active={activeKey === k} onPress={() => desk.setActiveSchedule(k)} />
+            ))}
+            <Pressable
+              onPress={() => {
+                setRenaming(activeKey);
+                setYeniAd(desk.schedules[activeKey].name);
+              }}
+              hitSlop={8}
+              accessibilityLabel="Saat düzeni adını değiştir"
+            >
+              <Text style={{ color: colors.accent, fontWeight: '900' }}>✎</Text>
+            </Pressable>
+          </View>
+          <Text style={{ color: colors.textFaint, fontSize: font.tiny, marginTop: 4 }}>
+            Gün başlığındaki harfe dokun: o gün hangi okulun saatleri geçerli olsun. Saat sütunu seçili düzenindir.
+          </Text>
+        </View>
+
         {/* Üst araçlar */}
         <View style={st.tools}>
           <Pressable onPress={() => setQuick(true)} style={[st.toolBtn, { backgroundColor: colors.accent }]}>
             <Text style={{ color: colors.onAccent, fontWeight: '800', fontSize: font.small }}>⏱️ {hasTimes ? 'Saatleri ayarla' : 'Okulun saatlerini gir'}</Text>
           </Pressable>
           <View style={[st.stepper, { borderColor: colors.border, backgroundColor: colors.card }]}>
-            <Pressable onPress={() => desk.setPeriodCount(desk.periods.length - 1)} hitSlop={6} style={st.stepBtn} accessibilityLabel="Bir ders azalt">
+            <Pressable onPress={() => desk.setPeriodCount(activePeriods.length - 1)} hitSlop={6} style={st.stepBtn} accessibilityLabel="Bir ders azalt">
               <Text style={[st.stepT, { color: colors.text }]}>−</Text>
             </Pressable>
-            <Text style={{ color: colors.text, fontWeight: '800', fontSize: font.small }}>{desk.periods.length} ders</Text>
-            <Pressable onPress={() => desk.setPeriodCount(desk.periods.length + 1)} hitSlop={6} style={st.stepBtn} accessibilityLabel="Bir ders ekle">
+            <Text style={{ color: colors.text, fontWeight: '800', fontSize: font.small }}>{activePeriods.length} ders</Text>
+            <Pressable onPress={() => desk.setPeriodCount(activePeriods.length + 1)} hitSlop={6} style={st.stepBtn} accessibilityLabel="Bir ders ekle">
               <Text style={[st.stepT, { color: colors.text }]}>+</Text>
             </Pressable>
           </View>
@@ -61,18 +99,27 @@ export default function TimetableScreen({ navigation }) {
             </View>
             {SHORT.map((d, i) => {
               const isToday = today === i + 1;
+              const gunKey = desk.daySchedule[i + 1] || 'a';
               return (
-                <View key={d} style={[st.dayCol, st.headCell]}>
+                <Pressable
+                  key={d}
+                  onPress={() => gunuDegistir(i + 1)}
+                  style={[st.dayCol, st.headCell]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${DAYS[i]} gününün saat düzeni: ${gunDuzeni(i + 1).name}. Değiştirmek için dokun.`}
+                >
                   <View style={[st.dayPill, isToday && { backgroundColor: colors.accent }]}>
                     <Text style={[st.headT, { color: isToday ? colors.onAccent : colors.text }]}>{d}</Text>
                   </View>
-                </View>
+                  <Text style={[st.schedBadge, { color: colors.textMuted, borderColor: colors.border }]}>{gunKey.toUpperCase()}</Text>
+                </Pressable>
               );
             })}
           </View>
 
-          {desk.periods.map((p, i) => {
+          {Array.from({ length: rowCount }, (_, i) => {
             const period = i + 1;
+            const p = activePeriods[i] || {};
             const isNow = now && now.period === period;
             return (
               <View key={period} style={[st.row, { borderTopColor: colors.border }, st.rowBorder]}>
@@ -126,7 +173,7 @@ export default function TimetableScreen({ navigation }) {
         <ClassPicker
           cell={cell}
           lesson={desk.lessons[`${cell.day}-${cell.period}`]}
-          period={desk.periods[cell.period - 1]}
+          period={desk.periodsFor(cell.day)[cell.period - 1]}
           classes={t.classes}
           onPick={(pick) => {
             if (!pick) desk.setLesson(cell.day, cell.period, null);
@@ -148,7 +195,7 @@ export default function TimetableScreen({ navigation }) {
       {timeIdx != null ? (
         <TimeEditor
           index={timeIdx}
-          value={desk.periods[timeIdx]}
+          value={activePeriods[timeIdx]}
           onSave={(v) => {
             desk.setPeriod(timeIdx, v);
             setTimeIdx(null);
@@ -156,9 +203,30 @@ export default function TimetableScreen({ navigation }) {
           onClose={() => setTimeIdx(null)}
         />
       ) : null}
+      {renaming ? (
+        <Sheet title="Saat düzeni adı" subtitle="Ör. Atatürk Ortaokulu / İnönü Ortaokulu" onClose={() => setRenaming(null)}>
+          <TextInput
+            value={yeniAd}
+            onChangeText={setYeniAd}
+            placeholder="1. Okul"
+            placeholderTextColor="#94A3B8"
+            autoFocus
+            style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.sm, color: colors.text, fontSize: font.body, backgroundColor: colors.card }}
+          />
+          <Pressable
+            onPress={() => {
+              desk.renameSchedule(renaming, yeniAd);
+              setRenaming(null);
+            }}
+            style={{ marginTop: spacing.md, backgroundColor: colors.accent, borderRadius: radius.pill, paddingVertical: spacing.sm + 2, alignItems: 'center' }}
+          >
+            <Text style={{ color: colors.onAccent, fontWeight: '900' }}>Kaydet</Text>
+          </Pressable>
+        </Sheet>
+      ) : null}
       {quick ? (
         <QuickTimes
-          count={desk.periods.length}
+          count={activePeriods.length}
           onApply={(ps) => {
             desk.setPeriods(ps);
             setQuick(false);
@@ -422,6 +490,8 @@ function QuickTimes({ count, onApply, onClose }) {
 }
 
 const st = StyleSheet.create({
+  schedBar: { borderWidth: 1, borderRadius: radius.lg, padding: spacing.md, marginBottom: spacing.md },
+  schedBadge: { fontSize: 10, fontWeight: '900', borderWidth: 1, borderRadius: 6, paddingHorizontal: 5, marginTop: 3, overflow: 'hidden' },
   tools: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.md },
   toolBtn: { flex: 1, borderRadius: radius.md, paddingVertical: 11, alignItems: 'center' },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderRadius: radius.md, paddingHorizontal: 4 },

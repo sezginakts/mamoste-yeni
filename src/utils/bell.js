@@ -12,10 +12,12 @@ const valid = (t) => /^([01]\d|2[0-3]):[0-5]\d$/.test(t || '');
 
 // Zil anları: [{ day (1 = Pzt … 5 = Cuma), time 'HH:MM', kind 'start'|'end', period, label }]
 // mode: 'mine' = yalnız ders programındaki derslerim · 'all' = her ders saati. end: ders bitişinde de çalsın.
-export function bellTimes({ periods = [], lessons = {}, mode = 'mine', end = true }) {
+// dayPeriods: iki okul için gün bazlı saat listeleri ([[Pzt], [Sal], …]); verilmezse tek `periods` kullanılır.
+export function bellTimes({ periods = [], dayPeriods = null, lessons = {}, mode = 'mine', end = true }) {
   const out = [];
   for (let day = 1; day <= 5; day++) {
-    periods.forEach((p, i) => {
+    const gunSaatleri = dayPeriods ? dayPeriods[day - 1] || [] : periods;
+    gunSaatleri.forEach((p, i) => {
       const period = i + 1;
       const l = lessons[`${day}-${period}`];
       if (mode === 'mine' && !l) return;

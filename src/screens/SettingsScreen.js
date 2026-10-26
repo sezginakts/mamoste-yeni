@@ -24,7 +24,7 @@ export default function SettingsScreen({ navigation }) {
   const auth = useAuth();
   const t = useTeacher();
   const desk = useDesk();
-  const hasTimes = desk.periods.some((p) => p.start);
+  const hasTimes = Object.values(desk.schedules || {}).some((s) => (s.periods || []).some((p) => p.start));
 
   return (
     <View style={styles.screen}>

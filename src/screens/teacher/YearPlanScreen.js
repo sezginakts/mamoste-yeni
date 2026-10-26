@@ -25,8 +25,8 @@ export default function YearPlanScreen({ route, navigation }) {
   // bugünkü / şimdiki ders, bugün yoksa o sınıfla bir sonraki ders.
   const todayDay = weekdayOf();
   const allWeek = desk.weekLessons().filter((l) => planForGrade(l.grade));
-  const at = periodAt(desk.periods);
-  const hasTimes = desk.periods.some((p) => p.start);
+  const at = periodAt(desk.todayPeriods);
+  const hasTimes = desk.todayPeriods.some((p) => p.start);
   const isUpcoming = (l) => l.day > todayDay || (l.day === todayDay && (!hasTimes || (at && l.period >= at.period)));
   const pickDefault = (list) => list.find(isUpcoming) || list[0] || null;
   const keyOf = (l) => `${l.day}-${l.period}`;
