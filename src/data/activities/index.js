@@ -138,6 +138,24 @@ export const ACTIVITY_TYPES = {
     branches: ['fen'],
     engine: () => require('./degiskenEngine.js').default,
   },
+  // Kaynağı tools/etkinlik/nota.html; değişince `node tools/etkinlik/derle.js`.
+  // Havuz: { isimler: [...], notalar: [{ step, ad, oktav }] } — porte okuma.
+  nota: {
+    icon: '🎼',
+    name: 'Nota Avcısı',
+    desc: 'Portede gösterilen notayı tanı: Do · Re · Mi · Fa · Sol · La · Si. Nota sesi de çalar, yardımcı çizgi Do demektir. Tek oyuncu ya da iki takım; 12/20/30 soru.',
+    branches: ['muzik'],
+    engine: () => require('./notaEngine.js').default,
+  },
+  // Kaynağı tools/etkinlik/davul.html; değişince `node tools/etkinlik/derle.js`.
+  // Havuz: { desenler: [{ ad, bpm, dizi: [8 x 0|1] }] } — ritim tekrarı (Web Audio ile sentez).
+  davul: {
+    icon: '🥁',
+    name: 'Davul Ustası',
+    desc: 'Ritmi dinle, sonra aynı ritmi davula vurarak tekrarla. Vuruşlar ±0,16 sn toleransla ölçülür; %70 üzeri geçer. Beş desen, tempo yükselir.',
+    branches: ['muzik'],
+    engine: () => require('./davulEngine.js').default,
+  },
   // Kaynağı tools/etkinlik/hava.html; değişince `node tools/etkinlik/derle.js`.
   // Havuz: { zirve: 4000, senaryolar: [{ ad, denizSeviyesi, nem }] }
   // Dağ kesiti: bayrağı yüksekliğe koy, yağışın başladığı seviyeyi bul (çiy noktası + sıcaklık gradyanı).
@@ -207,7 +225,10 @@ const LIST = {
   ],
   inkilap: [{ type: 'zaman', grade: 8, unit: null, unitName: 'Millî Mücadele · inkılaplar · Atatürk’ün hayatı · demokrasi', pool: () => zamanHavuzu(8) }],
   gorsel: [],
-  muzik: [],
+  muzik: [
+    { type: 'nota', grade: 5, unit: null, unitName: 'Porte ve Nota Okuma', pool: () => require('./muzik/nota.js').default },
+    { type: 'davul', grade: 5, unit: null, unitName: 'Ritim ve Vuruş', pool: () => require('./muzik/davul.js').default },
+  ],
   beden: [],
   bilisim: [],
 };

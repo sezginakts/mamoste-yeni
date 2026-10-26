@@ -18,6 +18,8 @@ const MOTORLAR = [
   { kaynak: 'molekul.html', hedef: '../../src/data/activities/molekulEngine.js' },
   { kaynak: 'hava.html', hedef: '../../src/data/activities/havaEngine.js' },
   { kaynak: 'degisken.html', hedef: '../../src/data/activities/degiskenEngine.js' },
+  { kaynak: 'nota.html', hedef: '../../src/data/activities/notaEngine.js' },
+  { kaynak: 'davul.html', hedef: '../../src/data/activities/davulEngine.js' },
 ];
 
 for (const m of MOTORLAR) {
