@@ -344,9 +344,33 @@ function gorselDongu(){
   if(!caliyor)return;
   const n=slotSay();
   const gecen=ac().currentTime-loopBas;
-  const idx=Math.floor(((gecen%barSure)+barSure)%barSure/slotSure);
-  for(let i=0;i<n;i++){const el=$('dilim'+i);if(!el)continue;el.classList.toggle('aktif',i===idx)}
+  const barIci=((gecen%barSure)+barSure)%barSure;
+  const idx=Math.floor(barIci/slotSure);
+  const dilimBas=idx*slotSure;
+  const yeni=barIci-dilimBas; // dilimin başlangıcından bu yana geçen süre
+  // Kare yalnızca vuruş anında kısa süre parlar (ses ile aynı an)
+  for(let i=0;i<n;i++){const el=$('dilim'+i);if(!el)continue;el.classList.toggle('aktif',i===idx&&yeni<0.13)}
   rafId=requestAnimationFrame(gorselDongu);
+}
+
+// Vuruş toleransı: ±150 ms, ama hızlı tempoda dilimin %40'ını geçmesin
+const tolerans=()=>Math.min(0.15, slotSure*0.4);
+
+// t anında basıldığında: doğru mu, hangi dilim, ses hangi ana kurulur?
+// Ses HER ZAMAN vuruşun tam anına oturur (erken basıldıysa o anı bekler).
+function vurusHesapla(t){
+  const gecen=((t-loopBas)%barSure+barSure)%barSure;
+  const n=slotSay();
+  const k=gecen/slotSure;
+  const ni=Math.round(k);                 // en yakın vuruş dilimi
+  const fark=gecen-ni*slotSure;           // <0 erken, >0 geç
+  const idx=((ni%n)+n)%n;
+  const d=desen();
+  const vurusVar=!!d.dizi[idx%d.dizi.length];
+  const dogruMu=Math.abs(fark)<=tolerans()&&vurusVar;
+  const vurusAbs=(t-gecen)+ni*slotSure;   // vuruşun mutlak ses zamanı
+  const calZ=(dogruMu&&vurusAbs>t)?vurusAbs:t;
+  return {dogruMu,idx,fark,vurusAbs,calZ};
 }
 
 function padVur(tip){
@@ -354,19 +378,10 @@ function padVur(tip){
   if(btn){btn.classList.add('vur');setTimeout(()=>btn.classList.remove('vur'),120)}
   const c=ac();const t=c.currentTime;
   if(!caliyor){calSes(tip,t);return}
-  const gecen=((t-loopBas)%barSure+barSure)%barSure;
-  const idx=Math.floor(gecen/slotSure);
-  const merkez=(idx+0.5)*slotSure;
-  const fark=gecen-merkez;                 // <0 erken, >0 geç
-  const d=desen();
-  const vurusVar=!!d.dizi[idx%d.dizi.length];
-  const dogruMu=Math.abs(fark)<=0.18&&vurusVar;
-  // SENKRON: doğru vuruşta öğrencinin davulu ızgaranın tam üstünde duyulsun
-  // (erken basıldıysa ses ileri zamana kurulur; geç basıldıysa hemen çalar)
-  const calZ=(dogruMu&&fark<0)?(t-fark):t;
-  calSes(tip,calZ);
-  const el=$('dilim'+idx);
-  if(dogruMu){
+  const h=vurusHesapla(t);
+  calSes(tip,h.calZ);
+  const el=$('dilim'+h.idx);
+  if(h.dogruMu){
     dogru++;
     const kazan=10;
     puan[AYAR.mod==='takim'?sira:0]+=kazan;
