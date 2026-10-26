@@ -4,7 +4,7 @@
 // Boş bilgi "……" olur; öğretmen dosyada elle doldurur. Tamamen büyük harfli satırda bilgi de büyük harfe çevrilir.
 import JSZip from 'jszip';
 
-export const PLACEHOLDERS = ['OGRETMEN', 'OKUL', 'IL', 'ILCE', 'MUDUR', 'BRANS', 'TARIH', 'EGITIM_YILI'];
+export const PLACEHOLDERS = ['OGRETMEN', 'OKUL', 'IL', 'ILCE', 'MUDUR', 'MUDUR_YRD', 'DANISMAN', 'BRANS', 'SINIF', 'OGRENCILER', 'TARIH', 'EGITIM_YILI'];
 const PH_RE = new RegExp(`\\{(${PLACEHOLDERS.join('|')})\\}`, 'g');
 
 const xmlEsc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');

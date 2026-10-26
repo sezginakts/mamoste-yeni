@@ -14,9 +14,12 @@ export const CATEGORIES = [
   { id: 'zumre', icon: '👥', name: 'Zümre tutanakları' },
   { id: 'sok', icon: '🏫', name: 'ŞÖK tutanakları' },
   { id: 'yillik-plan', icon: '📅', name: 'Yıllık planlar' },
+  { id: 'sinav', icon: '📝', name: 'Sınav evrakları' },
+  { id: 'olcme', icon: '📊', name: 'Ölçme ve değerlendirme araçları' },
   { id: 'kulup', icon: '🎭', name: 'Kulüp dosyaları' },
   { id: 'veli', icon: '👪', name: 'Veli toplantısı' },
   { id: 'rehberlik', icon: '🧭', name: 'Sınıf rehberlik planı' },
+  { id: 'sinif', icon: '🧑‍🏫', name: 'Sınıf ve danışman evrakları' },
 ];
 
 const BASE = TAHTA_URL ? `${TAHTA_URL.replace(/\/?$/, '/')}evrak/` : '';
@@ -72,8 +75,8 @@ export function useDocList() {
   return { list, seen, loading, error, refresh, markSeen };
 }
 
-// Evrak bilgilerim (yalnız bu cihazda): şablonlara yazılan ad, okul, il, ilçe, müdür.
-export const EMPTY_INFO = { ad: '', okul: '', il: '', ilce: '', mudur: '' };
+// Evrak bilgilerim (yalnız bu cihazda): şablonlara yazılan ad, okul, il, ilçe, müdür, müdür yardımcısı, danışman.
+export const EMPTY_INFO = { ad: '', okul: '', il: '', ilce: '', mudur: '', mudurYrd: '', danisman: '' };
 export async function loadDocInfo() {
   try {
     return { ...EMPTY_INFO, ...JSON.parse((await AsyncStorage.getItem(INFO_KEY)) || '{}') };
@@ -108,7 +111,8 @@ async function saveBytes(bytes, name) {
 }
 
 // Şablonu indir, bilgilerle doldur, kaydet / paylaş. branchName: ör. "İngilizce".
-export async function downloadDoc(doc, info, branchName) {
+// extra: { sinif, ogrenciler } — öğrenci listesi isteyen evraklarda seçili sınıfın adı ve öğrenci dizisi.
+export async function downloadDoc(doc, info, branchName, extra = {}) {
   const url = `${BASE}${String(doc.dosya).split('/').map(encodeURIComponent).join('/')}`; // alt klasör: yillik-plan/<branş>-<sınıf>.docx
   const r = await fetch(`${url}?t=${encodeURIComponent(doc.tarih || '')}`);
   if (!r.ok) throw new Error('Dosya indirilemedi.');
@@ -118,9 +122,13 @@ export async function downloadDoc(doc, info, branchName) {
     IL: info.il,
     ILCE: info.ilce,
     MUDUR: info.mudur,
+    MUDUR_YRD: info.mudurYrd,
+    DANISMAN: info.danisman,
     BRANS: branchName,
     TARIH: trDate(),
     EGITIM_YILI: schoolYear(),
+    SINIF: extra.sinif || '',
+    OGRENCILER: extra.ogrenciler || '',
   });
   await saveBytes(bytes, fileName(doc));
 }
