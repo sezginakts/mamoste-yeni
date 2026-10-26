@@ -108,6 +108,26 @@ export const ACTIVITY_TYPES = {
     branches: ['turkce'],
     engine: () => require('./hikayeEngine.js').default,
   },
+  // Kaynağı tools/etkinlik/hucre.html; değişince `node tools/etkinlik/derle.js`.
+  // Havuz: { bolumler: [{ id, ad, gorev, emoji, renk }], organeller: [{ ad, emoji, bolum, aciklama }] }
+  // Hücre bir fabrika: her organel doğru görev bölümüne yerleştirilir. Tek oyuncu ya da iki takım.
+  hucre: {
+    icon: '🏭',
+    name: 'Hücre Fabrikası',
+    desc: 'Hücre bir fabrika: kartta çıkan organeli doğru görev bölümüne yerleştir (enerji, üretim, paketleme, depo, geri dönüşüm, yönetim, güvenlik). Hızlı doğru cevap bonus kazandırır; yanlışta doğru bölüm ve görevi açıklanır.',
+    branches: ['fen'],
+    engine: () => require('./hucreEngine.js').default,
+  },
+  // Kaynağı tools/etkinlik/molekul.html; değişince `node tools/etkinlik/derle.js`.
+  // Havuz: { atomlar: [{ id, ad, renk }], molekuller: [{ ad, formul, atomlar:{H:2,O:1}, aciklama }] }
+  // Hedef molekülün atomlarını rafdan seçip kabı doldur; "Bağ kur" ile kontrol et.
+  molekul: {
+    icon: '⚛️',
+    name: 'Molekül Kur',
+    desc: 'Hedef molekül verilir; atom rafından doğru atomları seçip kabı doldurursun. H₂O, CO₂, CH₄, NH₃… Doğru kurulum puan kazandırır, yanlışta eksik/fazla atom söylenir.',
+    branches: ['fen'],
+    engine: () => require('./molekulEngine.js').default,
+  },
 };
 
 // Zaman Şeridi havuzu: düzeyin olay setleri + zorluk ayarı.
@@ -151,7 +171,10 @@ const LIST = {
     { type: 'terazi', grade: 7, unit: null, unitName: 'Birinci Dereceden Denklemler', pool: () => require('./matematik/terazi7.js').default },
     { type: 'terazi', grade: 8, unit: null, unitName: 'Doğrusal Denklemler', pool: () => require('./matematik/terazi8.js').default },
   ],
-  fen: [],
+  fen: [
+    { type: 'hucre', grade: 7, unit: null, unitName: 'Hücre ve Organeller', pool: () => require('./fen/hucre7.js').default },
+    { type: 'molekul', grade: 7, unit: null, unitName: 'Saf Madde ve Karışımlar', pool: () => require('./fen/molekul7.js').default },
+  ],
   sosyal: [
     { type: 'zaman', grade: 5, unit: null, unitName: 'Kültürel miras · demokrasi · ulaşım · icatlar · Anadolu', pool: () => zamanHavuzu(5) },
     { type: 'zaman', grade: 6, unit: null, unitName: 'Türk-İslam tarihi · bilginler · miras · ulaşım · icatlar', pool: () => zamanHavuzu(6) },

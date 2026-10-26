@@ -14,6 +14,8 @@ const MOTORLAR = [
   { kaynak: 'kronoloji.html', hedef: '../../src/data/activities/kronolojiEngine.js' },
   { kaynak: 'zaman.html', hedef: '../../src/data/activities/zamanEngine.js' },
   { kaynak: 'harita.html', hedef: '../../src/data/activities/haritaEngine.js' },
+  { kaynak: 'hucre.html', hedef: '../../src/data/activities/hucreEngine.js' },
+  { kaynak: 'molekul.html', hedef: '../../src/data/activities/molekulEngine.js' },
 ];
 
 for (const m of MOTORLAR) {
