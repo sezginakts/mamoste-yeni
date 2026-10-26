@@ -88,26 +88,69 @@ export const saveDocInfo = (info) => AsyncStorage.setItem(INFO_KEY, JSON.stringi
 
 const fileName = (doc) => `${doc.ad}.docx`.replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, ' ');
 
+const MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+const UTI = 'org.openxmlformats.wordprocessingml.document';
+
+// Uint8Array → base64 (eski FileSystem API'si base64 ister). RN'de btoa/Buffer olmayabilir: saf JS.
+const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+function base64le(bytes) {
+  let out = '';
+  for (let i = 0; i < bytes.length; i += 3) {
+    const b0 = bytes[i];
+    const b1 = i + 1 < bytes.length ? bytes[i + 1] : 0;
+    const b2 = i + 2 < bytes.length ? bytes[i + 2] : 0;
+    out += B64[b0 >> 2] + B64[((b0 & 3) << 4) | (b1 >> 4)];
+    out += i + 1 < bytes.length ? B64[((b1 & 15) << 2) | (b2 >> 6)] : '=';
+    out += i + 2 < bytes.length ? B64[b2 & 63] : '=';
+  }
+  return out;
+}
+
+async function paylas(uri, name, Sharing) {
+  const musait = Sharing && Sharing.isAvailableAsync ? await Sharing.isAvailableAsync() : false;
+  if (!musait) throw new Error('Bu cihazda dosya paylaşımı kullanılamıyor.');
+  await Sharing.shareAsync(uri, { mimeType: MIME, UTI, dialogTitle: name });
+}
+
 async function saveBytes(bytes, name) {
-  const mime = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
   if (Platform.OS === 'web') {
-    const url = URL.createObjectURL(new Blob([bytes], { type: mime }));
+    const url = URL.createObjectURL(new Blob([bytes], { type: MIME }));
+    // Akıllı tahta sayfası uygulamayı iframe içinde açıyorsa indirme engellenir: yeni sekmede aç.
+    if (typeof window !== 'undefined' && window.self !== window.top) {
+      window.open(url, '_blank');
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      return;
+    }
     const a = document.createElement('a');
     a.href = url;
     a.download = name;
+    a.rel = 'noopener';
     document.body.appendChild(a);
     a.click();
     a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
     return;
   }
-  const { File, Paths } = require('expo-file-system');
   const Sharing = require('expo-sharing');
-  const file = new File(Paths.cache, name);
-  if (file.exists) file.delete();
-  file.create();
-  file.write(bytes);
-  await Sharing.shareAsync(file.uri, { mimeType: mime, UTI: 'org.openxmlformats.wordprocessingml.document', dialogTitle: name });
+  // 1) Yeni FileSystem API'si (SDK 54)
+  try {
+    const { File, Paths } = require('expo-file-system');
+    if (File && Paths) {
+      const file = new File(Paths.cache, name);
+      if (file.exists) file.delete();
+      file.create();
+      file.write(bytes);
+      await paylas(file.uri, name, Sharing);
+      return;
+    }
+  } catch (e) {
+    // yeni API yoksa ya da yazamazsa aşağıdaki eski yola düşeriz
+  }
+  // 2) Eski FileSystem API'si (legacy) — base64 ile yazar
+  const FS = require('expo-file-system/legacy');
+  const hedef = `${FS.cacheDirectory}${name}`;
+  await FS.writeAsStringAsync(hedef, base64le(bytes), { encoding: FS.EncodingType.Base64 });
+  await paylas(hedef, name, Sharing);
 }
 
 // Şablonu indir, bilgilerle doldur, kaydet / paylaş. branchName: ör. "İngilizce".

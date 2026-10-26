@@ -67,7 +67,7 @@ export default function DocsScreen({ navigation }) {
       });
       docs.markSeen(doc);
     } catch (e) {
-      notify('İndirilemedi', 'Evrak indirilemedi. İnternet bağlantını kontrol edip tekrar dene.');
+      notify('İndirilemedi', `Evrak indirilemedi. Sebep: ${(e && e.message) || 'bilinmeyen hata'}`);
     } finally {
       setBusy(null);
     }
