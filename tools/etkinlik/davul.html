@@ -41,6 +41,10 @@ h1{margin:0;font-size:calc(var(--f)*1.7);font-weight:900;line-height:1.05;backgr
 .bar{display:flex;align-items:center;gap:1.4vmin;padding:1.1vmin 2vmin;background:rgba(255,255,255,.9);box-shadow:0 .4vmin 2vmin rgba(15,23,42,.08);flex-wrap:wrap}
 .etiket{font-weight:900;font-size:calc(var(--f)*.58);color:var(--mercan)}
 .gorevBar{flex:1;font-size:calc(var(--f)*.5);font-weight:800;min-width:16ch}
+.tempoKutu{display:flex;align-items:center;gap:.8vmin;background:var(--zemin);border-radius:99px;padding:.3vmin .8vmin}
+.tempoKutu button{width:5vmin;height:5vmin;min-width:30px;min-height:30px;border-radius:50%;background:#fff;font-weight:900;font-size:calc(var(--f)*.8);color:var(--yazi);box-shadow:0 .2vmin .8vmin rgba(15,23,42,.12)}
+.tempoKutu span{font-weight:900;font-size:calc(var(--f)*.8);min-width:3ch;text-align:center}
+.tempoKutu small{font-size:calc(var(--f)*.36);color:var(--soluk);font-weight:800;letter-spacing:.1em}
 .skorlar{display:flex;gap:1vmin}
 .skor{background:var(--zemin);border-radius:1.4vmin;padding:.45vmin 1.2vmin;font-weight:900;font-size:calc(var(--f)*.78);text-align:center;min-width:10vmin}
 .skor small{display:block;font-size:.42em;color:var(--soluk);font-weight:800;letter-spacing:.1em}
@@ -127,6 +131,7 @@ h1{margin:0;font-size:calc(var(--f)*1.7);font-weight:900;line-height:1.05;backgr
   <header class="bar">
     <div class="etiket">Davul Ustası</div>
     <div class="gorevBar" id="gorevBar"></div>
+    <div class="tempoKutu"><button id="bpmEksi">−</button><span id="bpmYazi">80</span><small>BPM</small><button id="bpmArti">+</button></div>
     <div class="skorlar" id="skorlar"></div>
     <div class="araclar"><button id="sesBtn" title="Ses">🔊</button><button id="tamBtn" title="Tam ekran">⛶</button><button id="cikBtn" title="Ana ekran">✕</button></div>
   </header>
@@ -245,7 +250,24 @@ const finalSes=()=>{[523,659,784,1046].forEach((f,i)=>setTimeout(()=>{const c=ac
 
 // ---- durum ----
 let puan=[0,0],sira=0,dogru=0,yanlis=0,caliyor=false;
-let slotSure=0.375,barSure=3,loopBas=0,rafId=0,sureTimer=0,kalanSure=60,puanGoster=0;
+let slotSure=0.375,barSure=3,loopBas=0,rafId=0,sureTimer=0,kalanSure=60,bitisZ=0,donguId=0;
+
+// Ekran üstünden tempo: − / + (0,4x – 2x)
+function bpmYaz(){
+  const d=desen();const bpm=Math.round(d.bpm*(+AYAR.tempo));
+  if($('bpmYazi'))$('bpmYazi').textContent=bpm;
+}
+function tempoDegistir(delta){
+  const yeni=Math.min(2,Math.max(0.4,Math.round(((+AYAR.tempo)+delta)*100)/100));
+  if(yeni===(+AYAR.tempo))return;
+  AYAR.tempo=String(yeni);yaz(ANAHTAR+':ayar',AYAR);
+  document.querySelectorAll('.sec[data-k="tempo"] button').forEach(b=>b.classList.remove('on'));
+  if(caliyor){
+    const kalan=(bitisZ>0)?Math.max(0,bitisZ-ac().currentTime):0;
+    donguBaslat(kalan);
+  }else bpmYaz();
+  tik();
+}
 const TAKIM=[{ad:'Takım A',renk:'#E2574C'},{ad:'Takım B',renk:'#0284C7'}];
 
 function desen(){return DESENLER[+AYAR.desen]||DESENLER[0]||{ad:'—',bpm:80,dizi:[1,0,1,0,1,0,1,0]}}
@@ -268,28 +290,36 @@ function satirCiz(){
 function sayacCiz(){$('dogruSay').textContent=dogru;$('yanlisSay').textContent=yanlis;$('sureSay').textContent=Math.max(0,Math.ceil(kalanSure))}
 
 function basla(){
-  const d=desen();const o=olcu();
-  const carpan=d.bpm*(+AYAR.tempo);
-  slotSure=(60/carpan)*o.beat/2;barSure=slotSure*slotSay();
   puan=[0,0];sira=0;dogru=0;yanlis=0;kalanSure=+AYAR.sure||0;
   satirCiz();skorCiz();sayacCiz();
   ekran('oyun');
+  donguBaslat(kalanSure);
+}
+
+// Döngüyü (yeniden) kur: tempoyu/ölçüyü değiştirdiğimizde de bunu çağırır
+function donguBaslat(sureSan){
+  const d=desen();const o=olcu();
+  const carpan=d.bpm*(+AYAR.tempo);
+  slotSure=(60/carpan)*o.beat/2;barSure=slotSure*slotSay();
+  donguId++;
+  caliyor=true;
+  bpmYaz();
   $('gorevBar').textContent=`${d.ad} · ${o.ad} · ${Math.round(carpan)} BPM`;
   $('durum').innerHTML=`${d.ad}<small>mavi kareler vuruş · döngü sürüyor</small>`;
   $('durdurBtn').textContent='■ Durdur';
-  caliyor=true;
   const c=ac();
-  loopBas=c.currentTime+0.6;
-  calBar(loopBas);
-  gorselDongu();
-  if(kalanSure>0){
-    const bitisZ=c.currentTime+kalanSure;
+  loopBas=c.currentTime+0.5;
+  calBar(loopBas,donguId);
+  cancelAnimationFrame(rafId);gorselDongu();
+  clearInterval(sureTimer);
+  if(sureSan>0){
+    bitisZ=c.currentTime+sureSan;
     sureTimer=setInterval(()=>{
       kalanSure=Math.max(0,bitisZ-ac().currentTime);
       sayacCiz();
       if(kalanSure<=0){clearInterval(sureTimer);durdur(true)}
     },200);
-  }
+  }else{kalanSure=0;bitisZ=0;sayacCiz()}
 }
 
 function calBar(t){
@@ -302,8 +332,9 @@ function calBar(t){
     if(d.dizi[i%d.dizi.length])sesTok(t+i*slotSure);
   }
   const sonraki=t+barSure;
+  const kimlik=donguId;
   setTimeout(()=>{
-    if(!caliyor)return;
+    if(!caliyor||kimlik!==donguId)return;
     if(AYAR.mod==='takim'){sira=1-sira;skorCiz()}
     calBar(sonraki);
   },Math.max(0,(sonraki-ac().currentTime)*1000));
@@ -322,15 +353,20 @@ function padVur(tip){
   const btn=document.querySelector(`.pad.${tip}`);
   if(btn){btn.classList.add('vur');setTimeout(()=>btn.classList.remove('vur'),120)}
   const c=ac();const t=c.currentTime;
-  calSes(tip,t);
-  if(!caliyor)return;
+  if(!caliyor){calSes(tip,t);return}
   const gecen=((t-loopBas)%barSure+barSure)%barSure;
   const idx=Math.floor(gecen/slotSure);
   const merkez=(idx+0.5)*slotSure;
-  const fark=Math.abs(gecen-merkez);
+  const fark=gecen-merkez;                 // <0 erken, >0 geç
   const d=desen();
+  const vurusVar=!!d.dizi[idx%d.dizi.length];
+  const dogruMu=Math.abs(fark)<=0.18&&vurusVar;
+  // SENKRON: doğru vuruşta öğrencinin davulu ızgaranın tam üstünde duyulsun
+  // (erken basıldıysa ses ileri zamana kurulur; geç basıldıysa hemen çalar)
+  const calZ=(dogruMu&&fark<0)?(t-fark):t;
+  calSes(tip,calZ);
   const el=$('dilim'+idx);
-  if(fark<=0.18&&d.dizi[idx%d.dizi.length]){
+  if(dogruMu){
     dogru++;
     const kazan=10;
     puan[AYAR.mod==='takim'?sira:0]+=kazan;
@@ -380,6 +416,8 @@ function konfeti(n){const k=$('konfeti');const r=['#E2574C','#0D9488','#0284C7',
 
 document.querySelectorAll('.pad').forEach(p=>p.addEventListener('pointerdown',e=>{e.preventDefault();padVur(p.dataset.ses)}));
 $('basla').onclick=basla;
+$('bpmEksi').onclick=()=>tempoDegistir(-0.05);
+$('bpmArti').onclick=()=>tempoDegistir(0.05);
 $('tekrarBtn').onclick=basla;
 $('ayarBtn').onclick=()=>ekran('giris');
 $('durdurBtn').onclick=()=>durdur(false);
