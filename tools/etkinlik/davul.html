@@ -53,9 +53,12 @@ h1{margin:0;font-size:calc(var(--f)*1.7);font-weight:900;line-height:1.05;backgr
 .araclar button{background:var(--zemin);border-radius:1.2vmin;width:5.6vmin;height:5.6vmin;min-width:32px;min-height:32px;font-size:calc(var(--f)*.66)}
 .orta{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2vmin;padding:2vmin;min-height:0}
 .satir{display:flex;gap:1vmin;align-items:center;justify-content:center;width:min(94vw,120vmin)}
-.dilim{flex:1 1 0;min-width:0;aspect-ratio:1;border-radius:1.6vmin;background:#fff;border:.45vmin solid #E2E8F0;transition:background .08s,transform .08s,border-color .08s}
+.dilim{flex:1 1 0;min-width:0;height:min(10vmin,62px);border-radius:1.2vmin;background:#fff;border:.45vmin solid #E2E8F0;transition:background .08s,transform .08s,border-color .08s;touch-action:none}
+.dilim.tok{background:#FDBA74;border-color:#EA580C}
+.dilim.orta{background:#86EFAC;border-color:#16A34A}
+.dilim.tik{background:#93C5FD;border-color:#0284C7}
 .dilim.bekle{border-color:#93C5FD;background:#EFF6FF}
-.dilim.aktif{border-color:var(--gok);background:#BFDBFE;transform:scale(1.12)}
+.dilim.aktif{box-shadow:0 0 0 .6vmin #0F172A inset;transform:scale(1.12)}
 .dilim.iyi{background:#34D399;border-color:#059669;transform:scale(1.14)}
 .dilim.kotu{background:#F87171;border-color:#DC2626;transform:scale(1.14)}
 .sayaclar{display:flex;gap:2.4vmin;align-items:center;justify-content:center}
@@ -64,10 +67,11 @@ h1{margin:0;font-size:calc(var(--f)*1.7);font-weight:900;line-height:1.05;backgr
 .sayaclar .d{color:#059669}.sayaclar .y{color:#DC2626}
 .padler{display:flex;gap:2vmin;align-items:flex-end;justify-content:center}
 .pad{width:min(24vmin,30vw);height:min(24vmin,30vw);border-radius:50%;display:grid;place-items:center;font-size:calc(var(--f)*1.9);
-  box-shadow:0 1.4vmin 3vmin rgba(15,23,42,.18),inset 0 -1.2vmin 0 rgba(0,0,0,.12);transition:transform .06s;font-weight:900;color:#fff}
+  box-shadow:0 1.4vmin 3vmin rgba(15,23,42,.18),inset 0 -1.2vmin 0 rgba(0,0,0,.12);transition:transform .06s;font-weight:900;color:#fff;
+  touch-action:none;-webkit-user-select:none;user-select:none}
 .pad small{font-size:calc(var(--f)*.4);letter-spacing:.1em}
 .pad.tok{background:radial-gradient(circle at 35% 30%,#FDBA74,#EA580C 60%,#9A3412)}
-.pad.orta{background:radial-gradient(circle at 35% 30%,#FDE68A,#D97706 60%,#92400E)}
+.pad.orta{background:radial-gradient(circle at 35% 30%,#86EFAC,#22C55E 60%,#15803D)}
 .pad.tik{background:radial-gradient(circle at 35% 30%,#BAE6FD,#0284C7 60%,#075985)}
 .pad:active,.pad.vur{transform:scale(.94)}
 .durum{font-size:calc(var(--f)*.66);font-weight:900;text-align:center;min-height:1.4em}
@@ -112,17 +116,19 @@ h1{margin:0;font-size:calc(var(--f)*1.7);font-weight:900;line-height:1.05;backgr
     <div class="ayarlar">
       <div class="ayar"><span>Oyuncu</span><div class="sec" data-k="mod"><button data-v="tek" class="on">👤 Tek</button><button data-v="takim">👥 İki takım</button></div></div>
       <div class="ayar"><span>Süre</span><div class="sec" data-k="sure"><button data-v="45">45 sn</button><button data-v="60" class="on">60 sn</button><button data-v="90">90 sn</button><button data-v="0">Sınırsız</button></div></div>
+      <div class="ayar"><span>Mod</span><div class="sec" data-k="zor"><button data-v="0" class="on">Normal</button><button data-v="1">Zor (renkli)</button></div></div>
+      <div class="ayar"><span>Şerit uzunluğu</span><div class="sec" data-k="serit"><button data-v="1" class="on">1 ölçü</button><button data-v="2">2 ölçü</button><button data-v="3">3 ölçü</button></div></div>
       <div class="ayar"><span>Vuruş (ölçü)</span><div class="sec" data-k="vurus"><button data-v="2/4" class="on">2 dörtlük</button><button data-v="3/4">3 dörtlük</button><button data-v="4/4">4 dörtlük</button><button data-v="4/2">4 ikilik</button><button data-v="6/8">6 sekizlik</button></div></div>
       <div class="ayar"><span>Desen</span><div class="sec" data-k="desen" id="desenSec"></div></div>
       <div class="ayar"><span>Tempo</span><div class="sec" data-k="tempo"><button data-v="0.8">Yavaş</button><button data-v="1" class="on">Normal</button><button data-v="1.25">Hızlı</button></div></div>
     </div>
     <button id="basla" class="buyuk">Başla ▶</button>
     <div class="not">
-      Desen <b>döngü hâlinde</b> çalar; <b>metronom</b> her vuruşta klasik ince tik sesi verir, desenin kendi vuruşları kalın
-      <b>tok</b> davulla duyulur. Mavi karelerin vuruş anında üç davuldan birine vur — kare <b>yeşil</b> yanar, puan ve
-      <b>doğru</b> sayısı artar. Kaçırırsan kare <b>kırmızı</b> yanar, puan düşer ve <b>yanlış</b> sayısı artar.
-      Döngü sen durdurana (ya da süre bitene) kadar devam eder. Ölçü seçenekleri: <b>2 dörtlük · 3 dörtlük · 4 dörtlük ·
-      4 ikilik · 6 sekizlik</b>.
+      Desen <b>döngü hâlinde</b> çalar; metronom her vuruşta klasik <b>ince tik</b> verir.
+      <b>Normal mod:</b> desenin vuruşları kalın tok davulla duyulur; vuruş anında herhangi bir davula vur → yeşil.
+      <b>Zor mod:</b> şeritteki kareler <b>renklidir</b> (🟠 TOK · 🟢 ORTA · 🔵 TIK); kare hangi renkse <b>o davula</b> vurmalısın.
+      Yanlış davulun sesi de duyulur. Şerit uzunluğu 1/2/3 ölçü seçilebilir; süre bitene ya da durdurana kadar döngü sürer.
+      Ölçüler: <b>2 dörtlük · 3 dörtlük · 4 dörtlük · 4 ikilik · 6 sekizlik</b>.
     </div>
   </div>
 </section>
@@ -179,7 +185,7 @@ const oku=(k,v)=>{try{const s=localStorage.getItem(k);return s?JSON.parse(s):v}c
 const yaz=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 
 const DESENLER=HAVUZ.desenler||[];
-const AYAR=Object.assign({mod:'tek',sure:'60',desen:'0',tempo:'1',vurus:'4/4'},oku(ANAHTAR+':ayar',{}));
+const AYAR=Object.assign({mod:'tek',sure:'60',desen:'0',tempo:'1',vurus:'4/4',zor:'0',serit:'1'},oku(ANAHTAR+':ayar',{}));
 
 // Ölçü türleri: beat = vuruş birimi (dörtlük=1, ikilik=2, sekizlik=0.5), beats = ölçüdeki vuruş sayısı
 const VURUSLAR={
@@ -284,14 +290,40 @@ function skorCiz(){
 }
 function satirCiz(){
   const el=$('satir');el.innerHTML='';
-  const d=desen();const n=slotSay();
-  for(let i=0;i<n;i++){const k=document.createElement('div');k.className='dilim'+(d.dizi[i%d.dizi.length]?' bekle':'');k.id='dilim'+i;el.appendChild(k)}
+  const n=slotSay()*(+AYAR.serit||1);
+  for(let i=0;i<n;i++){
+    const k=document.createElement('div');
+    const tip=serit[i];
+    k.className='dilim'+(tip?' '+tip:'');
+    k.id='dilim'+i;
+    el.appendChild(k);
+  }
+}
+
+// Zor mod şeridi: vuruş yerlerine renkler (en az 2 vuruş aynı renk)
+const RENK_TIP=['tok','orta','tik'];
+const RENK_AD={tok:'TOK (turuncu)',orta:'ORTA (yeşil)',tik:'TIK (mavi)'};
+function seritKur(){
+  const n=slotSay()*(+AYAR.serit||1);
+  const d=desen();
+  serit=new Array(n).fill(null);
+  if(AYAR.zor!=='1')return;
+  let kalanBlok=0,renkIdx=0;
+  for(let i=0;i<n;i++){
+    if(!d.dizi[i%d.dizi.length])continue;
+    if(kalanBlok<=0){
+      if(i>0)renkIdx++;                       // renk değişimi (blok bittiğinde)
+      kalanBlok=2+Math.floor(Math.random()*2); // 2-3 vuruş aynı renk
+    }
+    serit[i]=RENK_TIP[renkIdx%3];
+    kalanBlok--;
+  }
 }
 function sayacCiz(){$('dogruSay').textContent=dogru;$('yanlisSay').textContent=yanlis;$('sureSay').textContent=Math.max(0,Math.ceil(kalanSure))}
 
 function basla(){
   puan=[0,0];sira=0;dogru=0;yanlis=0;kalanSure=+AYAR.sure||0;
-  satirCiz();skorCiz();sayacCiz();
+  seritKur();satirCiz();skorCiz();sayacCiz();
   ekran('oyun');
   donguBaslat(kalanSure);
 }
@@ -304,8 +336,10 @@ function donguBaslat(sureSan){
   donguId++;
   caliyor=true;
   bpmYaz();
-  $('gorevBar').textContent=`${d.ad} · ${o.ad} · ${Math.round(carpan)} BPM`;
-  $('durum').innerHTML=`${d.ad}<small>mavi kareler vuruş · döngü sürüyor</small>`;
+  $('gorevBar').textContent=`${d.ad} · ${o.ad} · ${Math.round(carpan)} BPM · ${AYAR.zor==='1'?'ZOR':'NORMAL'}`;
+  $('durum').innerHTML=AYAR.zor==='1'
+    ? `${d.ad}<small>renkli kare = o renk davula vur</small>`
+    : `${d.ad}<small>mavi kareler vuruş · döngü sürüyor</small>`;
   $('durdurBtn').textContent='■ Durdur';
   const c=ac();
   loopBas=c.currentTime+0.5;
@@ -326,10 +360,10 @@ function calBar(t){
   if(!caliyor)return;
   const d=desen();const n=slotSay();
   for(let i=0;i<n;i++){
-    // metronom: her vuruşun başında klasik ince tik (ilk vuruş biraz vurgulu)
+    // metronom: HER modda sadece ince tik (ilk vuruş hafif vurgulu)
     if(i%2===0)metronom(t+i*slotSure,i===0);
-    // desenin kendi vuruşları kalın tok davulla
-    if(d.dizi[i%d.dizi.length])sesTok(t+i*slotSure);
+    // NORMAL modda desenin vuruşları kendiliğinden çalar; ZOR modda çalmaz (öğrenci çalar)
+    if(AYAR.zor!=='1'&&d.dizi[i%d.dizi.length])sesTok(t+i*slotSure);
   }
   const sonraki=t+barSure;
   const kimlik=donguId;
@@ -342,14 +376,15 @@ function calBar(t){
 
 function gorselDongu(){
   if(!caliyor)return;
-  const n=slotSay();
+  const bars=+AYAR.serit||1;
+  const toplam=slotSay()*bars;
+  const seritSure=barSure*bars;
   const gecen=ac().currentTime-loopBas;
-  const barIci=((gecen%barSure)+barSure)%barSure;
-  const idx=Math.floor(barIci/slotSure);
-  const dilimBas=idx*slotSure;
-  const yeni=barIci-dilimBas; // dilimin başlangıcından bu yana geçen süre
-  // Kare yalnızca vuruş anında kısa süre parlar (ses ile aynı an)
-  for(let i=0;i<n;i++){const el=$('dilim'+i);if(!el)continue;el.classList.toggle('aktif',i===idx&&yeni<0.13)}
+  const ic=((gecen%seritSure)+seritSure)%seritSure;
+  const idx=Math.floor(ic/slotSure);
+  const yeni=ic-idx*slotSure;
+  // Kare tam vuruş anında parlar (ses ile aynı an)
+  for(let i=0;i<toplam;i++){const el=$('dilim'+i);if(!el)continue;el.classList.toggle('aktif',i===idx&&yeni<0.13)}
   rafId=requestAnimationFrame(gorselDongu);
 }
 
@@ -359,18 +394,21 @@ const tolerans=()=>Math.min(0.15, slotSure*0.4);
 // t anında basıldığında: doğru mu, hangi dilim, ses hangi ana kurulur?
 // Ses HER ZAMAN vuruşun tam anına oturur (erken basıldıysa o anı bekler).
 function vurusHesapla(t){
-  const gecen=((t-loopBas)%barSure+barSure)%barSure;
-  const n=slotSay();
+  const toplamSlot=slotSay()*(+AYAR.serit||1);
+  const seritSure=barSure*(+AYAR.serit||1);
+  const gecen=((t-loopBas)%seritSure+seritSure)%seritSure;
   const k=gecen/slotSure;
   const ni=Math.round(k);                 // en yakın vuruş dilimi
   const fark=gecen-ni*slotSure;           // <0 erken, >0 geç
-  const idx=((ni%n)+n)%n;
-  const d=desen();
-  const vurusVar=!!d.dizi[idx%d.dizi.length];
-  const dogruMu=Math.abs(fark)<=tolerans()&&vurusVar;
+  const idx=((ni%toplamSlot)+toplamSlot)%toplamSlot;
+  let beklenen=null;
+  if(AYAR.zor==='1'){beklenen=serit[idx]||null}
+  else{const d=desen();beklenen=d.dizi[idx%d.dizi.length]?'tok':null}
+  const varMi=!!beklenen;
+  const dogruMu=Math.abs(fark)<=tolerans()&&varMi;
   const vurusAbs=(t-gecen)+ni*slotSure;   // vuruşun mutlak ses zamanı
   const calZ=(dogruMu&&vurusAbs>t)?vurusAbs:t;
-  return {dogruMu,idx,fark,vurusAbs,calZ};
+  return {dogruMu,idx,fark,vurusAbs,calZ,beklenen};
 }
 
 function padVur(tip){
@@ -379,9 +417,13 @@ function padVur(tip){
   const c=ac();const t=c.currentTime;
   if(!caliyor){calSes(tip,t);return}
   const h=vurusHesapla(t);
-  calSes(tip,h.calZ);
+  // Renk kontrolü: ZOR modda karenin rengiyle aynı davula vurulmalı
+  const renkDogru=AYAR.zor==='1'?(h.beklenen===tip):true;
+  const dogruMu=h.dogruMu&&renkDogru;
+  // Yanlış davulun sesi de duyulsun (öğrenci hatasını duysun)
+  calSes(tip,(dogruMu&&h.calZ>t)?h.calZ:t);
   const el=$('dilim'+h.idx);
-  if(h.dogruMu){
+  if(dogruMu){
     dogru++;
     const kazan=10;
     puan[AYAR.mod==='takim'?sira:0]+=kazan;
@@ -391,13 +433,18 @@ function padVur(tip){
     yanlis++;
     puan[AYAR.mod==='takim'?sira:0]-=3;
     if(el){el.classList.remove('aktif','iyi');el.classList.add('kotu');setTimeout(()=>el.classList.remove('kotu'),260)}
-    ucanPuan('−3','#DC2626');
+    // yanlış renk ise doğru rengi söyle
+    const uyari=(AYAR.zor==='1'&&h.beklenen&&h.beklenen!==tip)?`doğrusu: ${RENK_AD[h.beklenen]}`:'kaçırdın';
+    ucanPuan('−3','#DC2626',uyari);
   }
   skorCiz();sayacCiz();
 }
 
-function ucanPuan(txt,renk){
-  const p=document.createElement('div');p.className='ucan-puan';p.textContent=txt;p.style.color=renk;
+function ucanPuan(txt,renk,alt){
+  const p=document.createElement('div');p.className='ucan-puan';
+  p.appendChild(document.createTextNode(txt));
+  if(alt){const s=document.createElement('small');s.textContent=alt;s.style.display='block';s.style.fontSize='.42em';s.style.fontWeight='800';p.appendChild(s)}
+  p.style.color=renk;
   const r=$('satir').getBoundingClientRect();
   p.style.left=(r.left+r.width/2)+'px';p.style.top=(r.top-10)+'px';
   document.body.appendChild(p);setTimeout(()=>p.remove(),1000);
