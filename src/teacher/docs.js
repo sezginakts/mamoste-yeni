@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TAHTA_URL } from './BoardLink';
-import { fillDocx, schoolYear, trDate } from './docFill';
+import { fillDocx, schoolYear, trDate, OGRENCI_SAYI } from './docFill';
 
 export const CATEGORIES = [
   { id: 'zumre', icon: '👥', name: 'Zümre tutanakları' },
@@ -154,12 +154,17 @@ async function saveBytes(bytes, name) {
 }
 
 // Şablonu indir, bilgilerle doldur, kaydet / paylaş. branchName: ör. "İngilizce".
-// extra: { sinif, ogrenciler } — öğrenci listesi isteyen evraklarda seçili sınıfın adı ve öğrenci dizisi.
+// extra: { sinif } — evrakta gösterilecek şube (Bilgilerim → "Sınıf / şube").
+// Öğrenci adları Bilgilerim'deki tek alandan gelir; formlardaki ad hücrelerine SIRAYLA yazılır.
 export async function downloadDoc(doc, info, branchName, extra = {}) {
   const url = `${BASE}${String(doc.dosya).split('/').map(encodeURIComponent).join('/')}`; // alt klasör: yillik-plan/<branş>-<sınıf>.docx
   const r = await fetch(`${url}?t=${encodeURIComponent(doc.tarih || '')}`);
   if (!r.ok) throw new Error('Dosya indirilemedi.');
-  const bytes = await fillDocx(await r.arrayBuffer(), {
+  const adlar = String((info && info.ogrenci) || '')
+    .split(/[,;\n]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const degerler = {
     OGRETMEN: info.ad,
     OKUL: info.okul,
     IL: info.il,
@@ -171,7 +176,13 @@ export async function downloadDoc(doc, info, branchName, extra = {}) {
     TARIH: trDate(),
     EGITIM_YILI: schoolYear(),
     SINIF: extra.sinif || '',
-    OGRENCILER: info.ogrenci || '',
-  });
+    OGRENCILER: adlar.join(', '),
+    OGRENCI: adlar[0] || '',
+  };
+  // Form tablolarındaki ad hücreleri: 1..40 arası TÜM anahtarlar verilir; öğrenci yoksa boş kalır (……).
+  for (let i = 1; i <= OGRENCI_SAYI; i++) {
+    degerler[`OGRENCI${i}`] = adlar[i - 1] || '';
+  }
+  const bytes = await fillDocx(await r.arrayBuffer(), degerler);
   await saveBytes(bytes, fileName(doc));
 }

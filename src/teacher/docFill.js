@@ -1,10 +1,20 @@
-// Evrak şablonu (Word .docx) doldurma — cihazda, JSZip ile. Yer tutucular: {OGRETMEN} {OKUL} {IL} {ILCE} {MUDUR} {BRANS} {TARIH} {EGITIM_YILI}.
+// Evrak şablonu (Word .docx) doldurma — cihazda, JSZip ile.
+// Yer tutucular: {OGRETMEN} {OKUL} {IL} {ILCE} {MUDUR} {MUDUR_YRD} {DANISMAN} {BRANS} {SINIF} {TARIH} {EGITIM_YILI}
+// Öğrenci: {OGRENCI} (tek öğrenci — ilk isim), {OGRENCI1} … {OGRENCI40} (sıralı liste: form tablolarındaki ad hücreleri),
+//          {OGRENCILER} (tek satırda virgüllü liste; eski şablonlar için korunur).
 // Word bir yazıyı çoğu zaman birkaç parçaya (w:t) böler ("{OGR" + "ETMEN}"); bu yüzden her paragrafın parçaları birleştirilip
 // aranır. Yer tutucu bulunan paragrafta yazı ilk parçaya toplanır (o paragrafın içindeki biçim farkları — ör. yarısı kalın — tek biçime iner).
 // Boş bilgi "……" olur; öğretmen dosyada elle doldurur. Tamamen büyük harfli satırda bilgi de büyük harfe çevrilir.
 import JSZip from 'jszip';
 
-export const PLACEHOLDERS = ['OGRETMEN', 'OKUL', 'IL', 'ILCE', 'MUDUR', 'MUDUR_YRD', 'DANISMAN', 'BRANS', 'SINIF', 'OGRENCILER', 'TARIH', 'EGITIM_YILI'];
+// Satır satır öğrenci adı için kaç yer tutucu destekleniyor.
+export const OGRENCI_SAYI = 40;
+const OGRENCI_KODLARI = Array.from({ length: OGRENCI_SAYI }, (_, i) => `OGRENCI${i + 1}`);
+export const PLACEHOLDERS = [
+  ...OGRENCI_KODLARI,
+  'OGRENCILER', 'OGRENCI',
+  'OGRETMEN', 'OKUL', 'IL', 'ILCE', 'MUDUR', 'MUDUR_YRD', 'DANISMAN', 'BRANS', 'SINIF', 'TARIH', 'EGITIM_YILI',
+];
 const PH_RE = new RegExp(`\\{(${PLACEHOLDERS.join('|')})\\}`, 'g');
 
 const xmlEsc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
