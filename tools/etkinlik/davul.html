@@ -45,6 +45,10 @@ h1{margin:0;font-size:calc(var(--f)*1.7);font-weight:900;line-height:1.05;backgr
 .tempoKutu button{width:5vmin;height:5vmin;min-width:30px;min-height:30px;border-radius:50%;background:#fff;font-weight:900;font-size:calc(var(--f)*.8);color:var(--yazi);box-shadow:0 .2vmin .8vmin rgba(15,23,42,.12)}
 .tempoKutu span{font-weight:900;font-size:calc(var(--f)*.8);min-width:3ch;text-align:center}
 .tempoKutu small{font-size:calc(var(--f)*.36);color:var(--soluk);font-weight:800;letter-spacing:.1em}
+.seritKutu{display:flex;align-items:center;gap:.6vmin;background:var(--zemin);border-radius:99px;padding:.3vmin .8vmin}
+.seritKutu button{width:4.6vmin;height:4.6vmin;min-width:26px;min-height:26px;border-radius:50%;background:#fff;font-weight:900;font-size:calc(var(--f)*.6);color:var(--soluk);box-shadow:0 .2vmin .8vmin rgba(15,23,42,.12)}
+.seritKutu button.on{background:var(--gok);color:#fff}
+.seritKutu small{font-size:calc(var(--f)*.36);color:var(--soluk);font-weight:800;letter-spacing:.08em}
 .skorlar{display:flex;gap:1vmin}
 .skor{background:var(--zemin);border-radius:1.4vmin;padding:.45vmin 1.2vmin;font-weight:900;font-size:calc(var(--f)*.78);text-align:center;min-width:10vmin}
 .skor small{display:block;font-size:.42em;color:var(--soluk);font-weight:800;letter-spacing:.1em}
@@ -126,7 +130,7 @@ h1{margin:0;font-size:calc(var(--f)*1.7);font-weight:900;line-height:1.05;backgr
     <div class="not">
       Desen <b>döngü hâlinde</b> çalar; metronom her vuruşta klasik <b>ince tik</b> verir.
       <b>Normal mod:</b> desenin vuruşları kalın tok davulla duyulur; vuruş anında herhangi bir davula vur → yeşil.
-      <b>Zor mod:</b> şeritteki kareler <b>renklidir</b> (🟠 TOK · 🟢 ORTA · 🔵 TIK); kare hangi renkse <b>o davula</b> vurmalısın.
+      <b>Zor mod:</b> şeritteki kareler <b>renklidir</b> (🟠 TOK · 🟢 TUK · 🔵 TIK); kare hangi renkse <b>o davula</b> vurmalısın.
       Yanlış davulun sesi de duyulur. Şerit uzunluğu 1/2/3 ölçü seçilebilir; süre bitene ya da durdurana kadar döngü sürer.
       Ölçüler: <b>2 dörtlük · 3 dörtlük · 4 dörtlük · 4 ikilik · 6 sekizlik</b>.
     </div>
@@ -138,6 +142,7 @@ h1{margin:0;font-size:calc(var(--f)*1.7);font-weight:900;line-height:1.05;backgr
     <div class="etiket">Davul Ustası</div>
     <div class="gorevBar" id="gorevBar"></div>
     <div class="tempoKutu"><button id="bpmEksi">−</button><span id="bpmYazi">80</span><small>BPM</small><button id="bpmArti">+</button></div>
+    <div class="seritKutu"><small>ŞERİT</small><button data-s="1">1</button><button data-s="2">2</button><button data-s="3">3</button><small>ölçü</small></div>
     <div class="skorlar" id="skorlar"></div>
     <div class="araclar"><button id="sesBtn" title="Ses">🔊</button><button id="tamBtn" title="Tam ekran">⛶</button><button id="cikBtn" title="Ana ekran">✕</button></div>
   </header>
@@ -151,7 +156,7 @@ h1{margin:0;font-size:calc(var(--f)*1.7);font-weight:900;line-height:1.05;backgr
     </div>
     <div class="padler" id="padler">
       <button class="pad tok" data-ses="tok">🥁<small>TOK</small></button>
-      <button class="pad orta" data-ses="orta">🪘<small>ORTA</small></button>
+      <button class="pad orta" data-ses="orta">🪘<small>TUK</small></button>
       <button class="pad tik" data-ses="tik">✨<small>TIK</small></button>
     </div>
   </div>
@@ -274,6 +279,23 @@ function tempoDegistir(delta){
   }else bpmYaz();
   tik();
 }
+
+// Şerit uzunluğu: üst bardaki 1 / 2 / 3 (ölçü)
+function seritYaz(){
+  document.querySelectorAll('.seritKutu button').forEach(b=>b.classList.toggle('on',b.dataset.s===String(+AYAR.serit)));
+  document.querySelectorAll('.sec[data-k="serit"] button').forEach(b=>b.classList.toggle('on',b.dataset.v===String(+AYAR.serit)));
+}
+function seritDegistir(v){
+  const yeni=String(Math.min(3,Math.max(1,+v)));
+  if(yeni===String(+AYAR.serit))return;
+  AYAR.serit=yeni;yaz(ANAHTAR+':ayar',AYAR);
+  seritKur();satirCiz();seritYaz();
+  if(caliyor){
+    const kalan=(bitisZ>0)?Math.max(0,bitisZ-ac().currentTime):0;
+    donguBaslat(kalan);
+  }
+  tik();
+}
 const TAKIM=[{ad:'Takım A',renk:'#E2574C'},{ad:'Takım B',renk:'#0284C7'}];
 
 function desen(){return DESENLER[+AYAR.desen]||DESENLER[0]||{ad:'—',bpm:80,dizi:[1,0,1,0,1,0,1,0]}}
@@ -302,7 +324,7 @@ function satirCiz(){
 
 // Zor mod şeridi: vuruş yerlerine renkler (en az 2 vuruş aynı renk)
 const RENK_TIP=['tok','orta','tik'];
-const RENK_AD={tok:'TOK (turuncu)',orta:'ORTA (yeşil)',tik:'TIK (mavi)'};
+const RENK_AD={tok:'TOK (turuncu)',orta:'TUK (yeşil)',tik:'TIK (mavi)'};
 function seritKur(){
   const n=slotSay()*(+AYAR.serit||1);
   const d=desen();
@@ -480,6 +502,8 @@ document.querySelectorAll('.pad').forEach(p=>p.addEventListener('pointerdown',e=
 $('basla').onclick=basla;
 $('bpmEksi').onclick=()=>tempoDegistir(-0.05);
 $('bpmArti').onclick=()=>tempoDegistir(0.05);
+document.querySelectorAll('.seritKutu button').forEach(b=>b.onclick=()=>seritDegistir(b.dataset.s));
+seritYaz();
 $('tekrarBtn').onclick=basla;
 $('ayarBtn').onclick=()=>ekran('giris');
 $('durdurBtn').onclick=()=>durdur(false);
