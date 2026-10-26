@@ -362,11 +362,7 @@ export default function YearPlanScreen({ route, navigation }) {
               <PlanCalendar visible weeks={plan.weeks} selected={shown && shown.start} onClose={() => setCalOpen(false)} onPick={pickDay} />
             ) : null}
 
-            {plan.builtin ? (
-              <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: spacing.lg }}>
-                📋 {plan.file}. Okulunun planını yüklersen ({'＋ Plan'}) bu sınıf için onun yerine geçer.
-              </Text>
-            ) : (
+            {plan.builtin ? null : (
               <SmallButton title="Bu planı sil" color={colors.danger} onPress={confirmRemove} style={{ alignSelf: 'flex-start', marginTop: spacing.lg }} />
             )}
           </>

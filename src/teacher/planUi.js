@@ -407,7 +407,6 @@ export function LessonCard({ w, lesson, onShowWeek, onPickSlot }) {
   const fn = (w.functions || '').split(/\s(?=—)/);
   const content = contentSections(w.content);
   const evaluation = joinWrapped((w.evaluation || '').replace(/^EVALUATION FOR THE SKILLS AND THE CONTENT:\s*/i, ''));
-  const mismatch = lesson && lesson.count && w.hours && lesson.count !== w.hours;
   const details = !!(fn[0] || content.length || w.activities || evaluation);
 
   return (
@@ -521,11 +520,6 @@ export function LessonCard({ w, lesson, onShowWeek, onPickSlot }) {
 
         {w.notes ? <Notes text={w.notes} colors={colors} /> : null}
 
-        {mismatch ? (
-          <Text style={{ color: colors.warning, fontSize: font.tiny }}>
-            Planda bu hafta {w.hours} ders saati var; ders programında {lesson.label} için {lesson.count} ders görünüyor. Eksik dersleri programa eklersen çıktılar doğru günlere düşer.
-          </Text>
-        ) : null}
         <Pressable onPress={onShowWeek} style={[s.weekBtn, { borderColor: c }]}>
           <Text style={{ color: c, fontWeight: '800' }}>Haftayı gün gün gör ▾</Text>
         </Pressable>

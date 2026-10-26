@@ -254,11 +254,6 @@ export default function TeacherHomeScreen({ navigation }) {
                       </Text>
                       <Text style={[st.more, { color: colors.accent, marginTop: 0 }]}>Dersin planı ›</Text>
                     </View>
-                    {w.hours && slot.count !== w.hours ? (
-                      <Text style={{ color: colors.warning, fontSize: font.tiny, fontWeight: '700', marginTop: 6, lineHeight: 16 }}>
-                        ⚠️ Ders programında bu sınıfın {slot.count} dersi var, planda {w.hours} ders saati. Çıktılar {slot.count} derse bölündü.
-                      </Text>
-                    ) : null}
                   </>
                 )}
                 {!hasTimes && focusDay === today ? (
