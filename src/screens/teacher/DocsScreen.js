@@ -5,9 +5,8 @@ import { View, Text, ScrollView, Pressable, ActivityIndicator, StyleSheet } from
 import { spacing, font, radius } from '../../theme';
 import { useTheme } from '../../context/ThemeContext';
 import { useRole } from '../../context/RoleContext';
-import { Header, Field, SmallButton, notify, formatDate, Chip } from '../../teacher/ui';
+import { Header, Field, SmallButton, notify, formatDate } from '../../teacher/ui';
 import { useTeacherProfile } from '../../teacher/profile';
-import { useTeacher } from '../../teacher/TeacherContext';
 import { CATEGORIES, useDocList, loadDocInfo, saveDocInfo, downloadDoc, EMPTY_INFO } from '../../teacher/docs';
 import Collapsible from '../../components/Collapsible';
 
@@ -15,23 +14,10 @@ export default function DocsScreen({ navigation }) {
   const { colors, shadow } = useTheme();
   const { branchId, branch } = useRole();
   const { profile } = useTeacherProfile();
-  const t = useTeacher();
   const docs = useDocList();
   const [info, setInfo] = useState(null);
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(null);
-  const [sinifId, setSinifId] = useState(null);
-
-  // Öğrenci listesi isteyen evraklar için seçili sınıf (varsayılan: ilk sınıf)
-  const siniflar = t.classes || [];
-  const seciliSinif = siniflar.find((c) => c.id === (sinifId || (siniflar[0] && siniflar[0].id))) || null;
-  const ogrenciMetni = seciliSinif
-    ? Object.values(seciliSinif.students || {})
-        .sort((a, b) => Number(a.no) - Number(b.no))
-        .map((s) => `${s.no}. ${s.nk || ''}`.trim())
-        .join(', ')
-    : '';
-  const ogrenciGerekli = (docs.list || []).some((d) => d.ogrenci && (!d.brans || d.brans === branchId));
 
   // Bilgiler: kayıtlıysa o; yoksa öğretmen profilindeki ad ve okul.
   useEffect(() => {
@@ -55,15 +41,10 @@ export default function DocsScreen({ navigation }) {
   };
 
   const download = async (doc) => {
-    if (doc.ogrenci && !seciliSinif) {
-      notify('Sınıf seç', 'Öğrenci listesi isteyen evraklar için önce bir sınıf seç.');
-      return;
-    }
     setBusy(doc.id);
     try {
       await downloadDoc(doc, info || EMPTY_INFO, branch ? branch.name : '', {
-        sinif: doc.ogrenci && seciliSinif ? seciliSinif.name : '',
-        ogrenciler: doc.ogrenci ? ogrenciMetni : '',
+        sinif: (info || EMPTY_INFO).sinif || '',
       });
       docs.markSeen(doc);
     } catch (e) {
@@ -113,44 +94,21 @@ export default function DocsScreen({ navigation }) {
               <Field label="Okul müdürü" value={info.mudur} onChangeText={set('mudur')} placeholder="Adı soyadı" />
               <Field label="Müdür yardımcısı" value={info.mudurYrd} onChangeText={set('mudurYrd')} placeholder="Adı soyadı" />
               <Field label="Sınıf / danışman öğretmen" value={info.danisman} onChangeText={set('danisman')} placeholder="Adı soyadı" />
+              <View style={st.row}>
+                <View style={{ flex: 1.1 }}>
+                  <Field label="Sınıf / şube" value={info.sinif} onChangeText={set('sinif')} placeholder="ör. 5-B" />
+                </View>
+                <View style={{ flex: 2 }}>
+                  <Field label="Öğrenci adı / adları" value={info.ogrenci} onChangeText={set('ogrenci')} placeholder="ör. Ali Veli, Ayşe Kaya" />
+                </View>
+              </View>
+              <Text style={{ color: colors.textMuted, fontSize: font.tiny, marginBottom: spacing.sm }}>
+                Öğrenci adları, öğrenci isteyen evraklarda (gözlem formu, kontrol listesi, ürün dosyası, proje listesi…) şablona yazılır.
+              </Text>
               <SmallButton title="Kaydet" filled onPress={saveInfo} style={{ alignSelf: 'flex-start' }} />
             </View>
           ) : null}
         </View>
-
-        {/* Öğrenci listesi: sınıf seçimi (yalnız öğrenci isteyen evraklar için) */}
-        {ogrenciGerekli ? (
-          <View style={[st.card, shadow, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={st.row}>
-              <Text style={{ fontSize: 20 }}>👥</Text>
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: colors.text, fontWeight: '900', fontSize: font.body }}>Öğrenci listesi</Text>
-                <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: 2 }}>
-                  {seciliSinif
-                    ? `${seciliSinif.name} · ${Object.keys(seciliSinif.students || {}).length} öğrenci`
-                    : 'Sınıf bulunamadı — Sınıflarım ekranından sınıf ekle'}
-                </Text>
-              </View>
-            </View>
-            {siniflar.length ? (
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: spacing.sm }}>
-                {siniflar.map((c) => (
-                  <Chip
-                    key={c.id}
-                    label={c.name}
-                    active={(seciliSinif && seciliSinif.id) === c.id}
-                    onPress={() => setSinifId(c.id)}
-                  />
-                ))}
-              </View>
-            ) : null}
-            {ogrenciMetni ? (
-              <Text style={{ color: colors.textMuted, fontSize: font.tiny, marginTop: spacing.sm }} numberOfLines={2}>
-                {ogrenciMetni}
-              </Text>
-            ) : null}
-          </View>
-        ) : null}
 
         {docs.error && !docs.list ? (
           <View style={[st.card, { backgroundColor: colors.card, borderColor: colors.border, alignItems: 'center' }]}>

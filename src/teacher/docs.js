@@ -75,8 +75,8 @@ export function useDocList() {
   return { list, seen, loading, error, refresh, markSeen };
 }
 
-// Evrak bilgilerim (yalnız bu cihazda): şablonlara yazılan ad, okul, il, ilçe, müdür, müdür yardımcısı, danışman.
-export const EMPTY_INFO = { ad: '', okul: '', il: '', ilce: '', mudur: '', mudurYrd: '', danisman: '' };
+// Evrak bilgilerim (yalnız bu cihazda): şablonlara kendiliğinden yazılır.
+export const EMPTY_INFO = { ad: '', okul: '', il: '', ilce: '', mudur: '', mudurYrd: '', danisman: '', sinif: '', ogrenci: '' };
 export async function loadDocInfo() {
   try {
     return { ...EMPTY_INFO, ...JSON.parse((await AsyncStorage.getItem(INFO_KEY)) || '{}') };
@@ -171,7 +171,7 @@ export async function downloadDoc(doc, info, branchName, extra = {}) {
     TARIH: trDate(),
     EGITIM_YILI: schoolYear(),
     SINIF: extra.sinif || '',
-    OGRENCILER: extra.ogrenciler || '',
+    OGRENCILER: info.ogrenci || '',
   });
   await saveBytes(bytes, fileName(doc));
 }
