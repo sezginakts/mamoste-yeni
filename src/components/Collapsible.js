@@ -4,7 +4,7 @@
 // Yükseklik her zaman ölçülen içerik yüksekliğinden hesaplanır; ölçüm gelmeden açılırsa doğal yükseklik kullanılır,
 // böylece "bazen açılıyor bazen açılmıyor" durumu oluşmaz.
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Pressable, StyleSheet, Text, View, Platform } from 'react-native';
 import { useIsFocused } from '@react-navigation/native';
 import { font, spacing } from '../theme';
 import { useTheme } from '../context/ThemeContext';
@@ -52,28 +52,41 @@ export default function Collapsible({ title, right, defaultOpen = false, childre
 
   const toggle = () => setOpen((v) => !v);
 
+  const baslik = header ? (
+    header({ open, toggle })
+  ) : (
+    <Pressable
+      onPress={toggle}
+      hitSlop={6}
+      accessibilityRole="button"
+      accessibilityState={{ expanded: open }}
+      style={({ pressed }) => [styles.head, pressed && { opacity: 0.7 }]}
+    >
+      <Text style={[styles.title, { color: colors.textMuted }, titleStyle]}>{title}</Text>
+      <View style={{ flex: 1 }} />
+      {right}
+      <Text style={[styles.caret, { color: colors.textFaint }]}>{open ? '⌃' : '⌄'}</Text>
+    </Pressable>
+  );
+
+  // iOS/Android: ölçüm ve animasyon YOK — açıkken içerik takılır, kapalıyken hiç çizilmez.
+  // (Cihazda yükseklik ölçümüne bağlı takılmalar bu yüzden olamaz.)
+  if (Platform.OS !== 'web') {
+    return (
+      <View style={style}>
+        {baslik}
+        {open ? <View style={{ paddingTop: spacing.sm }}>{children}</View> : null}
+      </View>
+    );
+  }
+
   const boxStyle = contentH > 0
     ? { height: anim.interpolate({ inputRange: [0, 1], outputRange: [0, contentH] }) }
     : { height: open ? undefined : 0 };
 
   return (
     <View style={style}>
-      {header ? (
-        header({ open, toggle })
-      ) : (
-        <Pressable
-          onPress={toggle}
-          hitSlop={6}
-          accessibilityRole="button"
-          accessibilityState={{ expanded: open }}
-          style={({ pressed }) => [styles.head, pressed && { opacity: 0.7 }]}
-        >
-          <Text style={[styles.title, { color: colors.textMuted }, titleStyle]}>{title}</Text>
-          <View style={{ flex: 1 }} />
-          {right}
-          <Text style={[styles.caret, { color: colors.textFaint }]}>{open ? '⌃' : '⌄'}</Text>
-        </Pressable>
-      )}
+      {baslik}
       <Animated.View style={[boxStyle, { overflow: 'hidden' }]} pointerEvents={open ? 'auto' : 'none'}>
         <View onLayout={(e) => setContentH(Math.round(e.nativeEvent.layout.height))} style={{ paddingTop: spacing.sm }}>
           {children}
