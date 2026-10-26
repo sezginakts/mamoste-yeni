@@ -8,7 +8,7 @@ import { parseYearPlan, weekForDay, guessGrade, assignDates, parseStartDate } fr
 import { pickTableFile, RosterFileError } from '../../teacher/rosterFile';
 import { WeekCard, WeekDaysCard, LessonCard, PlanCalendar, unitColor } from '../../teacher/planUi';
 import { useDesk, weekdayOf, periodAt } from '../../teacher/DeskContext';
-import { Header, Card, SectionTitle, Field, SmallButton, Chip, formatDate, confirmAction } from '../../teacher/ui';
+import { Header, Card, SectionTitle, Field, SmallButton, Chip, formatDate, formatDateLong, confirmAction } from '../../teacher/ui';
 import { dayKey } from '../../utils/helpers';
 
 const GRADES = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
@@ -274,7 +274,7 @@ export default function YearPlanScreen({ route, navigation }) {
                 <View style={st.navDateRow}>
                   <Text style={{ fontSize: 16 }}>📅</Text>
                   <Text style={{ color: colors.text, fontWeight: '800', fontSize: font.body }}>
-                    {shown ? `${formatDate(shown.start)} haftası` : '—'}
+                    {shown ? formatDateLong(shown.start) : '—'}
                   </Text>
                   <Text style={{ color: colors.textFaint, fontSize: 12 }}>▾</Text>
                 </View>

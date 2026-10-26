@@ -149,6 +149,15 @@ export function formatDate(key) {
   return `${d.getDate()} ${months[d.getMonth()]} ${days[d.getDay()]}`;
 }
 
+// Uzun tarih: "26 Ekim Pazartesi" (gün ve ay adları tam)
+export function formatDateLong(key) {
+  if (!key) return '';
+  const d = new Date(key.length === 10 ? key + 'T00:00:00' : key);
+  const days = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+  const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+  return `${d.getDate()} ${months[d.getMonth()]} ${days[d.getDay()]}`;
+}
+
 export function formatTime(ts) {
   if (!ts) return '—';
   const d = new Date(ts);

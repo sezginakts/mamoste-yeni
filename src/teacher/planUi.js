@@ -447,7 +447,8 @@ export function LessonCard({ w, lesson, onShowWeek, onPickSlot }) {
           <View style={[s.focus, { borderColor: c, backgroundColor: c + (mode === 'dark' ? '22' : '12') }]}>
             {/* Başlık katlanır: kazanımlar uzun, ekranı kaplamasın. Kapalıyken sadece başlık + sayı görünür. */}
             <Collapsible
-              defaultOpen={false}
+              key={`${w.week || ''}-${lesson?.day || 0}-${lesson?.period || 0}-${lesson?.label || ''}`}
+              defaultOpen
               header={({ open, toggle }) => (
                 <Pressable
                   onPress={toggle}
@@ -543,11 +544,25 @@ function SectionLabel({ icon, text, color }) {
   );
 }
 
+// MEB planlarındaki "ölçme araçları" listesi karta gereksiz kalabalık yapıyor: o cümle süzülür.
+const NOT_AT = /gözlem formu|kontrol listesi|dereceli puanlama|akran değerlendirme|ürün dosyası|performans görevi/i;
+
+function notTemizle(text) {
+  return String(text || '')
+    .split(/\s*·\s*|\n+/)
+    .map((p) => p.trim())
+    .filter((p) => p && !NOT_AT.test(p))
+    .join(' · ')
+    .replace(/^[,;.\s]+|[,;.\s]+$/g, '');
+}
+
 function Notes({ text, colors }) {
+  const temiz = notTemizle(text);
+  if (!temiz) return null;
   return (
     <View style={[s.notes, { backgroundColor: HOLIDAY_COLOR + '1F', borderColor: HOLIDAY_COLOR + '55' }]}>
       <Text style={{ fontSize: 16 }}>📌</Text>
-      <Text style={{ color: colors.text, fontSize: font.small, flex: 1, lineHeight: 20 }}>{text.replace(/,\s*\n/g, ', ').replace(/\n/g, ' · ')}</Text>
+      <Text style={{ color: colors.text, fontSize: font.small, flex: 1, lineHeight: 20 }}>{temiz.replace(/,\s*\n/g, ', ').replace(/\n/g, ' · ')}</Text>
     </View>
   );
 }
