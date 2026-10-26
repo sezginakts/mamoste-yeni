@@ -129,24 +129,14 @@ export const ACTIVITY_TYPES = {
     engine: () => require('./molekulEngine.js').default,
   },
   // Kaynağı tools/etkinlik/degisken.html; değişince `node tools/etkinlik/derle.js`.
-  // Havuz: { deneyler: [{ ad, kurulum, kartlar: [{ ad, rol: 'bagimsiz'|'bagimli'|'sabit', aciklama }] }] }
-  // Deneyi oku, gelen terimi doğru kutuya koy: değiştirdim / ölçtüm / sabit tuttum.
+  // Havuz: { deneyler: [...] (temel), sorular: [...] (usta) }
+  // Tek etkinlik, iki seviye: TEMEL = terimi kutuya koy; USTA = deneyi tasarla (8. sınıf ve üstü).
   degisken: {
     icon: '🔎',
     name: 'Değişken Avcısı',
-    desc: 'Deney verilir; gelen terimi doğru kutuya yerleştir: 🎚️ değiştirdim (bağımsız), 📏 ölçtüm (bağımlı), 🔒 sabit tuttum (kontrol edilen). Yanlışta doğru kutu ve nedeni gösterilir.',
+    desc: 'İki seviyeli oyun. Temel: deney verilir, terimi doğru kutuya koy (🎚️ değiştirdim · 📏 ölçtüm · 🔒 sabit tuttum). Usta: araştırma sorusundan deneyi sen tasarla — değişkeni, ölçümü ve sabitleri seç (üst sınıflar).',
     branches: ['fen'],
     engine: () => require('./degiskenEngine.js').default,
-  },
-  // Kaynağı tools/etkinlik/degisken2.html; değişince `node tools/etkinlik/derle.js`.
-  // Havuz: { sorular: [{ soru, gorsel, bagimsiz:{dogru,secenekler}, bagimli:{...}, sabitler:{dogru:[],secenekler:[]}, aciklama }] }
-  // Üst sınıflar: deneyi öğrenci tasarlar (değişken + ölçüm + sabitler).
-  degisken2: {
-    icon: '🧪',
-    name: 'Değişken Ustası',
-    desc: 'Araştırma sorusu verilir; deneyi sen tasarlarsın: neyi değiştireceksin, neyi ölçeceksin, neleri sabit tutacaksın. Sabitler adımında birden çok seçim vardır — hepsi doğru olmalı. Üst sınıflar için.',
-    branches: ['fen'],
-    engine: () => require('./degisken2Engine.js').default,
   },
   // Kaynağı tools/etkinlik/hava.html; değişince `node tools/etkinlik/derle.js`.
   // Havuz: { zirve: 4000, senaryolar: [{ ad, denizSeviyesi, nem }] }
@@ -205,7 +195,6 @@ const LIST = {
     { type: 'hucre', grade: 7, unit: null, unitName: 'Hücre ve Organeller', pool: () => require('./fen/hucre7.js').default },
     { type: 'molekul', grade: 7, unit: null, unitName: 'Saf Madde ve Karışımlar', pool: () => require('./fen/molekul7.js').default },
     { type: 'degisken', grade: 7, unit: null, unitName: 'Bilimsel Yöntem · Değişkenler', pool: () => require('./fen/degisken7.js').default },
-    { type: 'degisken2', grade: 8, unit: null, unitName: 'Bilimsel Yöntem · Deney Tasarlama', pool: () => require('./fen/degisken8.js').default },
   ],
   sosyal: [
     { type: 'zaman', grade: 5, unit: null, unitName: 'Kültürel miras · demokrasi · ulaşım · icatlar · Anadolu', pool: () => zamanHavuzu(5) },
