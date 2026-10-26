@@ -128,6 +128,16 @@ export const ACTIVITY_TYPES = {
     branches: ['fen'],
     engine: () => require('./molekulEngine.js').default,
   },
+  // Kaynağı tools/etkinlik/degisken.html; değişince `node tools/etkinlik/derle.js`.
+  // Havuz: { deneyler: [{ ad, kurulum, kartlar: [{ ad, rol: 'bagimsiz'|'bagimli'|'sabit', aciklama }] }] }
+  // Deneyi oku, gelen terimi doğru kutuya koy: değiştirdim / ölçtüm / sabit tuttum.
+  degisken: {
+    icon: '🔎',
+    name: 'Değişken Avcısı',
+    desc: 'Deney verilir; gelen terimi doğru kutuya yerleştir: 🎚️ değiştirdim (bağımsız), 📏 ölçtüm (bağımlı), 🔒 sabit tuttum (kontrol edilen). Yanlışta doğru kutu ve nedeni gösterilir.',
+    branches: ['fen'],
+    engine: () => require('./degiskenEngine.js').default,
+  },
   // Kaynağı tools/etkinlik/hava.html; değişince `node tools/etkinlik/derle.js`.
   // Havuz: { zirve: 4000, senaryolar: [{ ad, denizSeviyesi, nem }] }
   // Dağ kesiti: bayrağı yüksekliğe koy, yağışın başladığı seviyeyi bul (çiy noktası + sıcaklık gradyanı).
@@ -184,6 +194,7 @@ const LIST = {
   fen: [
     { type: 'hucre', grade: 7, unit: null, unitName: 'Hücre ve Organeller', pool: () => require('./fen/hucre7.js').default },
     { type: 'molekul', grade: 7, unit: null, unitName: 'Saf Madde ve Karışımlar', pool: () => require('./fen/molekul7.js').default },
+    { type: 'degisken', grade: 7, unit: null, unitName: 'Bilimsel Yöntem · Değişkenler', pool: () => require('./fen/degisken7.js').default },
   ],
   sosyal: [
     { type: 'zaman', grade: 5, unit: null, unitName: 'Kültürel miras · demokrasi · ulaşım · icatlar · Anadolu', pool: () => zamanHavuzu(5) },
