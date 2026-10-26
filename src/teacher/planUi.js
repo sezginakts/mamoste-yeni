@@ -238,7 +238,6 @@ export function WeekDaysCard({ w, today, lessons }) {
             <Collapsible
               key={i}
               title={title}
-              defaultOpen={isToday}
               titleStyle={[s.dayName, { color: isToday ? c : colors.text, fontSize: font.small, letterSpacing: 0 }]}
               right={
                 isToday ? (

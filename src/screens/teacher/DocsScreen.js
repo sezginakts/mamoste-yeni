@@ -124,7 +124,6 @@ export default function DocsScreen({ navigation }) {
               <Collapsible
                 key={g.id}
                 title={`${g.icon} ${g.name.toLocaleUpperCase('tr')}`}
-                storageKey={`doc-${g.id}`}
                 style={{ marginTop: spacing.sm }}
               >
                 <View style={{ gap: spacing.sm }}>

@@ -53,3 +53,4 @@ Web testi: iki sekme = iki hesap — `http://localhost:8082` öğretmen, `http:/
 ## Kurallar
 - Kullanıcıyla Türkçe konuş. Kısa, doğrudan, abartısız.
 - Uydurma rakam verme; bilmiyorsan söyle.
+- **Katlanır bölümler (`components/Collapsible.js`):** durum HATIRLANMAZ, cihaza yazılmaz. Varsayılan **kapalı**; ekrandan çıkınca varsayılana döner (odak kaybında sıfırlanır), ekrana dönünce kapalı başlar. Tek istisna: yıllık plandaki "BU DERSİN ÖĞRENME ÇIKTISI" `defaultOpen` ile açık başlar ve ders sekmesi değişince yeniden açılır. Yükseklik ölçülen içerikten hesaplanır; ölçüm gelmeden açılırsa doğal yükseklik kullanılır (0'a takılıp "bazen açılmıyor" olmasın). Yeni ekranlarda `storageKey` kullanma.

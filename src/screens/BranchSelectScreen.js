@@ -39,7 +39,7 @@ export default function BranchSelectScreen() {
           const items = BRANCHES.filter((b) => b.level === sec.key);
           if (!items.length) return null;
           return (
-            <Collapsible key={sec.key} title={sec.label} storageKey={`branch-level-${sec.key}`} style={{ marginTop: spacing.lg }}>
+            <Collapsible key={sec.key} title={sec.label} style={{ marginTop: spacing.lg }}>
               <View style={st.grid}>
                 {items.map((b) => (
                   <BranchCard key={b.id} b={b} selected={picked === b.id} onPress={() => setPicked(b.id)} colors={colors} shadow={shadow} />

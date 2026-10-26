@@ -309,7 +309,7 @@ export default function TeacherHomeScreen({ navigation }) {
         ) : null}
 
         {/* ---- Kısayollar ---- */}
-        <Collapsible title="KISAYOLLAR" storageKey="t-home-shortcuts" style={{ marginTop: spacing.lg }}>
+        <Collapsible title="KISAYOLLAR" style={{ marginTop: spacing.lg }}>
         <View style={st.grid}>
           <Tile icon="📅" tint={colors.accent} title="Yıllık plan" onPress={() => navigation.navigate('YearPlan')} />
           <Tile icon="🗓️" tint={colors.second} title="Ders programı" onPress={() => navigation.navigate('Timetable')} />
@@ -329,7 +329,6 @@ export default function TeacherHomeScreen({ navigation }) {
         {/* ---- Sınıflarım ---- */}
         <Collapsible
           title="SINIFLARIM"
-          storageKey="t-home-classes"
           style={{ marginTop: spacing.lg }}
           right={<SmallButton title={adding ? 'Vazgeç' : '＋ Sınıf'} onPress={() => setAdding(!adding)} />}
         >
@@ -375,7 +374,7 @@ export default function TeacherHomeScreen({ navigation }) {
         {/* ---- Dikkat ---- */}
         {attention.length ? (
           <>
-            <Collapsible title="DİKKAT" storageKey="t-home-attention" style={{ marginTop: spacing.lg }}>
+            <Collapsible title="DİKKAT" style={{ marginTop: spacing.lg }}>
             <View style={[st.flow, { backgroundColor: colors.card, borderColor: colors.border, paddingVertical: 4 }]}>
               {attention.slice(0, 6).map((a, i) => (
                 <Pressable

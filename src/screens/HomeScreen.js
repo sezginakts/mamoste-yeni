@@ -141,7 +141,7 @@ export default function HomeScreen({ navigation }) {
       </View>
 
       {/* DERSLERİM: her öğretmenin dersi; dokununca o dersin ödevleri */}
-      <Collapsible title="DERSLERİM" storageKey="s-home-lessons" style={{ marginTop: spacing.xl }}>
+      <Collapsible title="DERSLERİM" style={{ marginTop: spacing.xl }}>
       {classes.map((c) => {
         const b = branchOf(c.branch);
         const n = pendingIn(c.branch);
@@ -178,7 +178,7 @@ export default function HomeScreen({ navigation }) {
 
       {showEnglish ? (
         <>
-          <Collapsible title="İNGİLİZCE ÇALIŞ" storageKey="s-home-english" style={{ marginTop: spacing.xl }}>
+          <Collapsible title="İNGİLİZCE ÇALIŞ" style={{ marginTop: spacing.xl }}>
           <RowCard
             styles={styles}
             emoji="🧩"
