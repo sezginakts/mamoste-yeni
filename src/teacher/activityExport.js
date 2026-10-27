@@ -10,11 +10,18 @@ async function saveHtml(html, name) {
     const a = document.createElement('a');
     a.href = url;
     a.download = name;
+    a.rel = 'noopener';
+    a.style.display = 'none';
     document.body.appendChild(a);
     a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 5000);
-    return;
+    // Tıklamadan hemen sonra DOM'dan silmek indirmeyi iptal edebiliyor (Edge/Chrome): bekle, sonra temizle.
+    setTimeout(() => {
+      try {
+        a.remove();
+      } catch (e) {}
+    }, 3000);
+    setTimeout(() => URL.revokeObjectURL(url), 120000);
+    return { url, name }; // indirme engellenirse ekranda "buradan al" bağlantısı gösterilebilir
   }
   const { File, Paths } = require('expo-file-system');
   const Sharing = require('expo-sharing');

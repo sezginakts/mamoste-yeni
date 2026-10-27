@@ -48,7 +48,7 @@ import ActivitiesScreen from './src/screens/teacher/ActivitiesScreen';
 import ActivityPlayScreen from './src/screens/teacher/ActivityPlayScreen';
 
 // Geliştirmede girişi atlamak için true yap (sunucu özellikleri — ödev gönderme, eşitleme — o zaman çalışmaz).
-const SKIP_TEACHER_LOGIN = false;
+const SKIP_TEACHER_LOGIN = true;
 import NewPasswordScreen from './src/screens/teacher/NewPasswordScreen';
 import { ConfirmHost } from './src/teacher/ui';
 import BellOverlay from './src/components/BellOverlay';

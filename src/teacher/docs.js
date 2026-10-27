@@ -114,22 +114,29 @@ async function paylas(uri, name, Sharing) {
 
 async function saveBytes(bytes, name) {
   if (Platform.OS === 'web') {
-    const url = URL.createObjectURL(new Blob([bytes], { type: MIME }));
+    const blob = new Blob([bytes], { type: MIME });
+    const url = URL.createObjectURL(blob);
     // Akıllı tahta sayfası uygulamayı iframe içinde açıyorsa indirme engellenir: yeni sekmede aç.
     if (typeof window !== 'undefined' && window.self !== window.top) {
       window.open(url, '_blank');
       setTimeout(() => URL.revokeObjectURL(url), 60000);
-      return;
+      return { url, name }; // ekranda "indir" bağlantısı göstermek için
     }
     const a = document.createElement('a');
     a.href = url;
     a.download = name;
     a.rel = 'noopener';
+    a.style.display = 'none';
     document.body.appendChild(a);
     a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 10000);
-    return;
+    // Anında DOM'dan çıkarmak bazı tarayıcılarda indirmeyi iptal ediyor: biraz bekle, sonra temizle.
+    setTimeout(() => {
+      try {
+        a.remove();
+      } catch (e) {}
+    }, 3000);
+    setTimeout(() => URL.revokeObjectURL(url), 120000);
+    return { url, name }; // indirme engellendiyse kullanıcı aynı blob'u yeni sekmede açabilsin
   }
   const Sharing = require('expo-sharing');
   // 1) Yeni FileSystem API'si (SDK 54)
@@ -184,5 +191,5 @@ export async function downloadDoc(doc, info, branchName, extra = {}) {
     degerler[`OGRENCI${i}`] = adlar[i - 1] || '';
   }
   const bytes = await fillDocx(await r.arrayBuffer(), degerler);
-  await saveBytes(bytes, fileName(doc));
+  return await saveBytes(bytes, fileName(doc)); // web'de { url, name } döner (indirme engellenirse yedek bağlantı)
 }

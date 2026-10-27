@@ -304,7 +304,8 @@ export default function TeacherHomeScreen({ navigation }) {
         ) : null}
 
         {/* ---- Kısayollar ---- */}
-        <Collapsible title="KISAYOLLAR" style={{ marginTop: spacing.lg }}>
+        {/* defaultOpen: ana sayfa açıldığında kısayollar görünür başlar; kullanıcı isterse kapatır. */}
+        <Collapsible title="KISAYOLLAR" defaultOpen style={{ marginTop: spacing.lg }}>
         <View style={st.grid}>
           <Tile icon="📅" tint={colors.accent} title="Yıllık plan" onPress={() => navigation.navigate('YearPlan')} />
           <Tile icon="🗓️" tint={colors.second} title="Ders programı" onPress={() => navigation.navigate('Timetable')} />
@@ -333,7 +334,7 @@ export default function TeacherHomeScreen({ navigation }) {
             <SmallButton title="Oluştur" filled onPress={create} disabled={!newName.trim()} />
           </Card>
         ) : null}
-        {t.classes.length ? (
+        {Array.isArray(t.classes) && t.classes.length ? (
           <View style={st.classGrid}>
             {/* Küçük sınıftan büyüğe (5-A, 5-B, 6-A …), iki sütun. */}
             {[...t.classes].sort((a, b) => classOrder(a.name, b.name)).map((c) => {
@@ -356,12 +357,17 @@ export default function TeacherHomeScreen({ navigation }) {
             })}
           </View>
         ) : !adding ? (
-          <Pressable onPress={() => setAdding(true)} style={[st.emptyClass, { borderColor: colors.border }]}>
+          <Pressable onPress={() => setAdding(true)} style={[st.emptyClass, { borderColor: colors.border }]} accessibilityRole="button" accessibilityLabel="Sınıf ekle">
             <Text style={{ fontSize: 28 }}>🏫</Text>
-            <Text style={{ color: colors.text, fontWeight: '800', marginTop: 4 }}>İlk sınıfını ekle</Text>
+            <Text style={{ color: colors.text, fontWeight: '800', marginTop: 4 }}>＋ Sınıf ekle</Text>
             <Text style={{ color: colors.textMuted, fontSize: font.small, textAlign: 'center', marginTop: 2 }}>
-              Ya da ders programında şube seçtiğinde sınıf kendiliğinden eklenir.
+              Sınıf adını yaz (ör. 7-B). Ya da ders programında şube seçtiğinde sınıf kendiliğinden eklenir.
             </Text>
+          </Pressable>
+        ) : null}
+        {Array.isArray(t.classes) && t.classes.length && !adding ? (
+          <Pressable onPress={() => setAdding(true)} style={{ alignSelf: 'flex-start', marginTop: spacing.sm }} accessibilityRole="button" accessibilityLabel="Yeni sınıf ekle">
+            <Text style={{ color: colors.accent, fontWeight: '800', fontSize: font.small }}>＋ Yeni sınıf ekle</Text>
           </Pressable>
         ) : null}
         </Collapsible>

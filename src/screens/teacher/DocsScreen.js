@@ -18,6 +18,7 @@ export default function DocsScreen({ navigation }) {
   const [info, setInfo] = useState(null);
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(null);
+  const [hazir, setHazir] = useState(null); // web: indirme engellenirse gösterilecek yedek bağlantı ({ url, name })
 
   // Bilgiler: kayıtlıysa o; yoksa öğretmen profilindeki ad ve okul.
   useEffect(() => {
@@ -43,9 +44,10 @@ export default function DocsScreen({ navigation }) {
   const download = async (doc) => {
     setBusy(doc.id);
     try {
-      await downloadDoc(doc, info || EMPTY_INFO, branch ? branch.name : '', {
+      const sonuc = await downloadDoc(doc, info || EMPTY_INFO, branch ? branch.name : '', {
         sinif: (info || EMPTY_INFO).sinif || '',
       });
+      if (sonuc && sonuc.url) setHazir(sonuc); // web: tarayıcı indirmeyi engellerse diye bağlantı
       docs.markSeen(doc);
     } catch (e) {
       notify('İndirilemedi', `Evrak indirilemedi. Sebep: ${(e && e.message) || 'bilinmeyen hata'}`);
