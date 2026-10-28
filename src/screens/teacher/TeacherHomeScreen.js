@@ -193,7 +193,7 @@ export default function TeacherHomeScreen({ navigation }) {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
     <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: spacing.xxl }}>
       {/* ---- Karşılama bandı ---- */}
-      <View style={[st.hero, { backgroundColor: heroBg, paddingTop: insets.top + spacing.lg }]}>
+      <View style={[st.hero, { backgroundColor: heroBg, paddingTop: insets.top + spacing.sm }]}>
         {/* Dekor ayrı katmanda: taşan daireler bant içinde odaklanınca bandı yana kaydırmasın (web). */}
         <View pointerEvents="none" style={[StyleSheet.absoluteFill, { overflow: 'hidden' }]}>
           <View style={[st.blob, { width: 220, height: 220, top: -80, right: -60 }]} />
@@ -232,7 +232,7 @@ export default function TeacherHomeScreen({ navigation }) {
         <Text style={[st.heroDate, { color: colors.onAccent }]}>{DAY_NAMES[now.getDay()]}, {now.getDate()} {MONTH_NAMES[now.getMonth()]}</Text>
       </View>
 
-      <View style={{ paddingHorizontal: spacing.md, marginTop: -spacing.xl }}>
+      <View style={{ paddingHorizontal: spacing.md, marginTop: -spacing.sm }}>
         {/* ---- Şimdi / sıradaki dersin kazanımı (ekranın asıl işi) ---- */}
         {focus ? (
           (() => {
@@ -568,12 +568,12 @@ const st = StyleSheet.create({
   ttBoxT: { fontSize: 10, fontWeight: '900' },
   ttBoxSaat: { fontSize: 8, fontWeight: '700', marginBottom: 1 },
   ttBoxTag: { fontSize: 8, fontWeight: '900', letterSpacing: 0.3 },
-  hero: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xl + spacing.lg, overflow: 'hidden', borderBottomLeftRadius: 28, borderBottomRightRadius: 28 },
+  hero: { paddingHorizontal: spacing.lg, paddingBottom: spacing.md, overflow: 'hidden', borderBottomLeftRadius: 28, borderBottomRightRadius: 28 },
   blob: { position: 'absolute', borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.10)' },
   heroTop: { flexDirection: 'row', alignItems: 'center' },
   logo: { height: 34, width: Math.round((34 * 669) / 200) }, // assets/logo.png (beyaz harfler) oranı 669×200
   logoText: { fontSize: 30, fontWeight: '900', letterSpacing: 3 },
-  heroDate: { color: '#fff', fontSize: font.h3, fontWeight: '900', marginTop: spacing.md },
+  heroDate: { color: '#fff', fontSize: font.h3, fontWeight: '900', marginTop: spacing.sm },
   // Branş: profil/ayarlar ikonlarının hemen altında, sağa yaslı sabit yazı.
   branchUnderIcons: { color: '#FFFFFF', fontSize: font.small, fontWeight: '800', letterSpacing: 0.3, marginTop: 5, maxWidth: 168, textAlign: 'right', opacity: 0.95 },
   tools: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(15,23,42,0.22)', borderRadius: radius.pill, padding: 3 },
