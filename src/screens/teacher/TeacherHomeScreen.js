@@ -31,6 +31,11 @@ const longDate = (k) => {
   const d = new Date(k + 'T00:00:00');
   return `${DAY_NAMES[d.getDay()]}, ${d.getDate()} ${MONTH_NAMES[d.getMonth()]}`;
 };
+// '2026-10-28' → '28.10.2026' (kutu başlığındaki kısa tarih)
+const noktaliTarih = (k) => {
+  const [y, m, d] = String(k || '').split('-');
+  return d && m && y ? `${d}.${m}.${y}` : '';
+};
 const shortDate = (k) => {
   if (!k) return '';
   const d = new Date(k + 'T00:00:00');
@@ -227,19 +232,15 @@ export default function TeacherHomeScreen({ navigation }) {
             const c = classColor(focus.label);
             return (
               <Pressable onPress={() => openLesson(focus)} style={({ pressed }) => [st.focus, shadow, { backgroundColor: colors.card, borderColor: colors.border }, pressed && { opacity: 0.94 }]}>
-                {/* Üst satır: ne zaman + hangi sınıf */}
+                {/* Üst satır: yalnız sınıf rozeti (durum yazısı kaldırıldı) */}
                 <View style={st.focusHead}>
-                  <View style={[st.pill, { backgroundColor: colors.cardSoft }]}>
-                    {live ? <View style={[st.liveDot, { backgroundColor: colors.accent }]} /> : null}
-                    <Text style={[st.pillT, { color: colors.accent }]}>{focusLabel}</Text>
-                  </View>
                   <View style={{ flex: 1 }} />
                   <View style={[st.classBadge, { backgroundColor: c }]}>
                     <Text style={[st.classBadgeT, { color: inkOn(c) }]}>{focus.label}</Text>
                   </View>
                 </View>
-                <Text style={[st.when, { color: colors.text }]}>
-                  {longDate(focusDay)} · {focus.period}. ders
+                <Text style={[st.when, { color: colors.text, fontSize: font.small }]}>
+                  {noktaliTarih(focusDay)} · {focus.period}. ders
                   {focus.start ? <Text style={{ color: colors.textMuted }}>{`  ${focus.start}–${focus.end}`}</Text> : null}
                 </Text>
 
@@ -351,7 +352,7 @@ export default function TeacherHomeScreen({ navigation }) {
             <Text style={[st.ttTitle, { color: colors.textMuted }]}>🗓️ HAFTALIK DERS PROGRAMI</Text>
             <View style={{ flex: 1 }} />
             <Pressable onPress={() => navigation.navigate('Timetable')} hitSlop={8} accessibilityLabel="Ders programını düzenle">
-              <Text style={{ color: colors.accent, fontWeight: '800', fontSize: font.small }}>Düzenle ›</Text>
+              <Text style={{ color: colors.accent, fontWeight: '800', fontSize: font.tiny }}>Düzenle ›</Text>
             </Pressable>
           </View>
           <Pressable
@@ -568,7 +569,7 @@ const st = StyleSheet.create({
   pill: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 4 },
   pillT: { fontSize: 11, fontWeight: '900', letterSpacing: 0.8 },
   liveDot: { width: 7, height: 7, borderRadius: 4 },
-  when: { fontSize: font.body, fontWeight: '800', marginTop: spacing.sm },
+  when: { fontSize: font.small, fontWeight: '800', marginTop: spacing.xs },
   classBadge: { borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6, minWidth: 54, alignItems: 'center' },
   classBadgeT: { color: '#fff', fontSize: font.h3, fontWeight: '900' },
   unit: { fontSize: font.tiny, fontWeight: '800', letterSpacing: 0.8, marginTop: spacing.md },
@@ -577,7 +578,7 @@ const st = StyleSheet.create({
   outCode: { fontSize: font.tiny, fontWeight: '900', letterSpacing: 0.4, marginBottom: 4 },
   outText: { fontSize: 18, lineHeight: 26, fontWeight: '600' },
   focusFoot: { flexDirection: 'row', alignItems: 'center', borderTopWidth: StyleSheet.hairlineWidth, marginTop: spacing.sm, paddingTop: spacing.md },
-  more: { fontSize: font.small, fontWeight: '900', marginTop: spacing.md },
+  more: { fontSize: font.tiny, fontWeight: '900', marginTop: spacing.sm },
   gradeChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: spacing.sm },
   gradeChip: { borderWidth: 1.5, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 5 },
   timesHint: { borderRadius: radius.sm, paddingHorizontal: spacing.sm, paddingVertical: 6, marginTop: spacing.sm },
