@@ -9,6 +9,7 @@ import { useDesk, weekdayOf, sortNotes, gradeOfName } from '../../teacher/DeskCo
 import { outcomesForLesson, splitOutcome, unitColor, lessonSlot } from '../../teacher/planUi';
 import { usePruneStaleLessons } from '../../teacher/pruneLessons';
 import { classColor } from './TimetableScreen';
+import { branchOf } from '../../data/branches';
 import { dayKey } from '../../utils/helpers';
 import { useTheme } from '../../context/ThemeContext';
 import { useTeacher } from '../../teacher/TeacherContext';
@@ -303,6 +304,72 @@ export default function TeacherHomeScreen({ navigation }) {
           </Pressable>
         ) : null}
 
+        {/* ---- Haftalık ders programı (salt okunur): değişiklik yalnız Ders Programı ekranından ---- */}
+        {desk.hasTimetable
+          ? (() => {
+              const week = desk.weekLessons();
+              const GUN = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum'];
+              const bugun = weekdayOf();
+              // Satır sayısı: en geç dersin sırası (en az 1)
+              const sonDers = week.reduce((m, l) => Math.max(m, l.period), 1);
+              const saatler = desk.periodsFor(bugun <= 5 ? bugun : 1);
+              const en = (day, period) => desk.lessons[`${day}-${period}`];
+              return (
+                <View style={[st.ttCard, shadow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <View style={st.ttHead}>
+                    <Text style={[st.ttTitle, { color: colors.textMuted }]}>🗓️ HAFTALIK DERS PROGRAMI</Text>
+                    <View style={{ flex: 1 }} />
+                    <Pressable onPress={() => navigation.navigate('Timetable')} hitSlop={8} accessibilityLabel="Ders programını düzenle">
+                      <Text style={{ color: colors.accent, fontWeight: '800', fontSize: font.small }}>Düzenle ›</Text>
+                    </Pressable>
+                  </View>
+
+                  {/* Günler üstte */}
+                  <View style={[st.ttGridRow, { borderBottomColor: colors.border }]}>
+                    <Text style={[st.ttSaat, { color: colors.textFaint }]}>SAAT</Text>
+                    {GUN.map((g, i) => {
+                      const isToday = i + 1 === bugun;
+                      return (
+                        <View key={g} style={[st.ttGun, isToday && { backgroundColor: colors.accent, borderRadius: radius.sm }]}>
+                          <Text style={[st.ttGunT, { color: isToday ? colors.onAccent : colors.textMuted }]}>{g}</Text>
+                        </View>
+                      );
+                    })}
+                  </View>
+
+                  {/* Saatler solda, günler sütun */}
+                  {Array.from({ length: sonDers }, (_, i) => {
+                    const period = i + 1;
+                    const s = saatler[i] || {};
+                    return (
+                      <View key={period} style={[st.ttGridRow, { borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth }]}>
+                        <View style={st.ttSaatCol}>
+                          <Text style={[st.ttSaatT, { color: colors.text }]}>{s.start || `${period}.`}</Text>
+                          {s.end ? <Text style={[st.ttSaatT, { color: colors.textFaint }]}>{s.end}</Text> : null}
+                        </View>
+                        {[1, 2, 3, 4, 5].map((d) => {
+                          const l = en(d, period);
+                          const col = l && l.label ? classColor(l.label) : null;
+                          const isToday = d === bugun;
+                          return (
+                            <View key={d} style={[st.ttCell, isToday && { backgroundColor: colors.accent + '0D' }]}>
+                              {l ? (
+                                <View style={[st.ttBox, { backgroundColor: col + '1F', borderColor: col + '66' }]}>
+                                  <Text style={[st.ttBoxT, { color: colors.text }]} numberOfLines={1}>{l.label || '—'}</Text>
+                                  {l.ders ? <Text style={[st.ttBoxTag, { color: col }]}>{branchOf(l.ders).short}</Text> : null}
+                                </View>
+                              ) : null}
+                            </View>
+                          );
+                        })}
+                      </View>
+                    );
+                  })}
+                </View>
+              );
+            })()
+          : null}
+
         {/* ---- Kısayollar ---- */}
         {/* defaultOpen: ana sayfa açıldığında kısayollar görünür başlar; kullanıcı isterse kapatır. */}
         <Collapsible title="KISAYOLLAR" defaultOpen style={{ marginTop: spacing.lg }}>
@@ -453,6 +520,20 @@ function Tile({ icon, tint, title, sub, onPress, badge }) {
 }
 
 const st = StyleSheet.create({
+  // Haftalık ders programı kartı (ana sayfa, salt okunur): günler üstte, saatler solda
+  ttCard: { borderWidth: 1, borderRadius: radius.lg, padding: spacing.md, marginTop: spacing.lg },
+  ttHead: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm },
+  ttTitle: { fontSize: font.tiny, fontWeight: '900', letterSpacing: 1 },
+  ttGridRow: { flexDirection: 'row', alignItems: 'stretch' },
+  ttSaat: { width: 44, fontSize: 9, fontWeight: '900', letterSpacing: 0.5, paddingVertical: 4 },
+  ttGun: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 4 },
+  ttGunT: { fontSize: 10, fontWeight: '900' },
+  ttSaatCol: { width: 44, justifyContent: 'center', paddingVertical: 6 },
+  ttSaatT: { fontSize: 9, fontWeight: '700' },
+  ttCell: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 1, paddingVertical: 3, minHeight: 34 },
+  ttBox: { width: '100%', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderRadius: 7, paddingVertical: 4, paddingHorizontal: 2 },
+  ttBoxT: { fontSize: 10, fontWeight: '900' },
+  ttBoxTag: { fontSize: 8, fontWeight: '900', letterSpacing: 0.3 },
   hero: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xl + spacing.lg, overflow: 'hidden', borderBottomLeftRadius: 28, borderBottomRightRadius: 28 },
   blob: { position: 'absolute', borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.10)' },
   heroTop: { flexDirection: 'row', alignItems: 'center' },
