@@ -158,8 +158,10 @@ export default function TeacherHomeScreen({ navigation }) {
               Ders adı bu ikonların hemen ALTINDA sabit durur. */}
           <View style={{ alignItems: 'flex-end' }}>
             <View style={st.tools}>
+              {/* Profil: öğretmenin kendi avatarı (Profil → AVATAR'dan emoji/ikon seçilir).
+                  Eski çizgi "kullanıcı" ikonu istendiğinde: <LineIcon name="user" /> */}
               <Pressable onPress={() => navigation.navigate('Profile')} style={({ pressed }) => [st.tool, pressed && st.toolOn]} accessibilityLabel="Profilim" hitSlop={4}>
-                <LineIcon name="user" />
+                <Text style={{ fontSize: 20 }}>{profile.avatar || '🧑‍🏫'}</Text>
               </Pressable>
               <View style={st.toolLine} />
               <Pressable onPress={() => navigation.navigate('Settings')} style={({ pressed }) => [st.tool, pressed && st.toolOn]} accessibilityLabel="Ayarlar" hitSlop={4}>
