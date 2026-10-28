@@ -312,7 +312,19 @@ export default function TeacherHomeScreen({ navigation }) {
               const bugun = weekdayOf();
               // Satır sayısı: en geç dersin sırası (en az 1)
               const sonDers = week.reduce((m, l) => Math.max(m, l.period), 1);
-              const saatler = desk.periodsFor(bugun <= 5 ? bugun : 1);
+              // Saat sütunu: bugünün düzeni doluysa o; boşsa saatleri girilmiş ilk günün düzeni.
+              const doluSaat = (liste) => Array.isArray(liste) && liste.some((p) => p && p.start);
+              let saatler = desk.periodsFor(bugun <= 5 ? bugun : 1);
+              if (!doluSaat(saatler)) {
+                for (let g = 1; g <= 5; g++) {
+                  const s = desk.periodsFor(g);
+                  if (doluSaat(s)) {
+                    saatler = s;
+                    break;
+                  }
+                }
+              }
+              const saatVar = doluSaat(saatler);
               const en = (day, period) => desk.lessons[`${day}-${period}`];
               return (
                 <View style={[st.ttCard, shadow, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -344,8 +356,14 @@ export default function TeacherHomeScreen({ navigation }) {
                     return (
                       <View key={period} style={[st.ttGridRow, { borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth }]}>
                         <View style={st.ttSaatCol}>
-                          <Text style={[st.ttSaatT, { color: colors.text }]}>{s.start || `${period}.`}</Text>
-                          {s.end ? <Text style={[st.ttSaatT, { color: colors.textFaint }]}>{s.end}</Text> : null}
+                          {s.start ? (
+                            <>
+                              <Text style={[st.ttSaatT, { color: colors.text }]}>{s.start}</Text>
+                              {s.end ? <Text style={[st.ttSaatT, { color: colors.textFaint }]}>{s.end}</Text> : null}
+                            </>
+                          ) : saatVar ? (
+                            <Text style={[st.ttSaatT, { color: colors.textFaint }]}>—</Text>
+                          ) : null}
                         </View>
                         {[1, 2, 3, 4, 5].map((d) => {
                           const l = en(d, period);
