@@ -67,6 +67,17 @@ export default function TeacherHomeScreen({ navigation }) {
     setTamEkran(false);
     dikeyKilitle();
   };
+  // Tam ekranda da çift dokunuşla kapanır (✕ tek dokunuş).
+  const sonKapatDokunus = useRef(0);
+  const tamEkrandaDokun = () => {
+    const simdi = Date.now();
+    if (simdi - sonKapatDokunus.current < 320) {
+      sonKapatDokunus.current = 0;
+      tamEkraniKapat();
+    } else {
+      sonKapatDokunus.current = simdi;
+    }
+  };
   // Ekrandan çıkınca tam ekranı kapat ve dikey kilide dön.
   useEffect(() => {
     const off = navigation.addListener('blur', () => {
@@ -469,7 +480,7 @@ export default function TeacherHomeScreen({ navigation }) {
             </Pressable>
           </View>
           <ScrollView contentContainerStyle={{ paddingBottom: spacing.lg }}>
-            <Pressable onPress={tamEkraniKapat} accessibilityLabel="Kapatmak için çift dokun">
+            <Pressable onPress={tamEkrandaDokun} accessibilityLabel="Kapatmak için çift dokun">
               <HomeTimetable buyuk />
             </Pressable>
             <Text style={{ color: colors.textFaint, fontSize: font.small, marginTop: spacing.md, textAlign: 'center' }}>Kapatmak için çift dokun ya da ✕</Text>
