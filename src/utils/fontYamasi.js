@@ -1,8 +1,7 @@
-// Global yazı tipi yaması: StyleSheet.create ile üretilen TÜM stillere fontFamily ekler.
-// Böylece yüzlerce dosyaya dokunmadan uygulama genelinde yazı tipi değişir.
-// Kapatmak için: src/theme/fontAilesi.js → YENI_FONT_AKTIF = false (bu dosya hiçbir şey yapmaz).
+// Global yazı tipi: StyleSheet.create ile üretilen TÜM stillere Manrope fontFamily ekler.
+// Böylece yüzlerce dosyaya dokunmadan uygulama genelinde Manrope kullanılır.
 import { StyleSheet } from 'react-native';
-import { YENI_FONT_AKTIF, agirligaGoreAile } from '../theme/fontAilesi';
+import { agirligaGoreAile } from '../theme/fontAilesi';
 
 function stilIsle(stil) {
   if (!stil || typeof stil !== 'object' || Array.isArray(stil)) return stil;
@@ -19,9 +18,8 @@ function stilleriIsle(kayit) {
   return cikti;
 }
 
-if (YENI_FONT_AKTIF && !StyleSheet.__fontYamasi) {
+if (!StyleSheet.__fontYamasi) {
   const orijinalCreate = StyleSheet.create.bind(StyleSheet);
   StyleSheet.create = (kayit) => orijinalCreate(stilleriIsle(kayit));
-  StyleSheet.create = StyleSheet.create;
   StyleSheet.__fontYamasi = true;
 }

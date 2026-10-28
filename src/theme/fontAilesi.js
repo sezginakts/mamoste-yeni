@@ -1,6 +1,5 @@
-// Yazı tipi: uygulama genelinde Manrope kullanılır.
-// ESKİYE DÖNMEK İÇİN: YENI_FONT_AKTIF = false yap (hiçbir stil değişmez, sistem yazı tipi geri gelir).
-export const YENI_FONT_AKTIF = true;
+// Uygulama yazı tipi: Manrope (tek ve kalıcı). Eski sistem yazı tipi kaldırıldı.
+import { Manrope_400Regular, Manrope_500Medium, Manrope_600SemiBold, Manrope_800ExtraBold } from '@expo-google-fonts/manrope';
 
 export const AİLE = {
   regular: 'Manrope_400Regular',
@@ -18,7 +17,5 @@ export function agirligaGoreAile(weight) {
   return AİLE.regular;
 }
 
-// Font yüklenene kadar kullanılacak yedek (font yüklenmeden metin görünmesin diye App bekler).
-import { Manrope_400Regular, Manrope_500Medium, Manrope_600SemiBold, Manrope_800ExtraBold } from '@expo-google-fonts/manrope';
-
+// Açılışta yüklenen font dosyaları (yüklenene kadar uygulama bekler).
 export const FONT_YUKLEME = { Manrope_400Regular, Manrope_500Medium, Manrope_600SemiBold, Manrope_800ExtraBold };
