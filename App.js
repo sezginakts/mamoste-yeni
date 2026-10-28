@@ -10,6 +10,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ProgressProvider, useProgress } from './src/context/ProgressContext';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { warmUpVoices } from './src/utils/tts';
+import { dikeyKilitle } from './src/utils/orientation';
 
 import ErrorBoundary from './src/components/ErrorBoundary';
 import HomeScreen from './src/screens/HomeScreen';
@@ -225,6 +226,11 @@ export default function App() {
   // En kaliteli TTS sesini açılışta önceden seç (ilk okumada gecikme olmasın).
   useEffect(() => {
     warmUpVoices();
+  }, []);
+
+  // Uygulama normalde DİKEY: yalnız tam ekran ders programı yatay kilidi açar (src/utils/orientation.js).
+  useEffect(() => {
+    dikeyKilitle();
   }, []);
 
   return (

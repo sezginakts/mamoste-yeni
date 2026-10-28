@@ -1,6 +1,6 @@
 // Öğretmen ana sayfası: karşılama bandı, şimdiki/sıradaki ders, kısayollar, sınıflar.
-import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable, Image } from 'react-native';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
+import { View, Text, ScrollView, StyleSheet, Pressable, Image, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacing, font, radius, inkOn } from '../../theme';
 import { usePlans } from '../../teacher/PlanContext';
@@ -20,6 +20,8 @@ import LineIcon from '../../components/LineIcon';
 import { attentionItems, studentTotals } from '../../teacher/analytics';
 import { Card, SectionTitle, Field, SmallButton, formatJoinCode } from '../../teacher/ui';
 import { useTeacherProfile } from '../../teacher/profile';
+import HomeTimetable from '../../teacher/HomeTimetable';
+import { yatayKilitle, dikeyKilitle } from '../../utils/orientation';
 
 const DAY_NAMES = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
 const MONTH_NAMES = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
@@ -49,6 +51,34 @@ export default function TeacherHomeScreen({ navigation }) {
   const [newName, setNewName] = useState('');
   const [adding, setAdding] = useState(false);
   const [weekPlanId, setWeekPlanId] = useState(null); // program yokken üst kartta gösterilen düzey
+  const [tamEkran, setTamEkran] = useState(false); // ders programı tam ekran (yatay) modu
+  const sonDokunus = useRef(0);
+  const programaDokun = () => {
+    const simdi = Date.now();
+    if (simdi - sonDokunus.current < 320) {
+      sonDokunus.current = 0;
+      setTamEkran(true);
+      yatayKilitle();
+    } else {
+      sonDokunus.current = simdi;
+    }
+  };
+  const tamEkraniKapat = () => {
+    setTamEkran(false);
+    dikeyKilitle();
+  };
+  // Ekrandan çıkınca tam ekranı kapat ve dikey kilide dön.
+  useEffect(() => {
+    const off = navigation.addListener('blur', () => {
+      setTamEkran(false);
+      dikeyKilitle();
+    });
+    return () => {
+      off && off();
+      dikeyKilitle();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigation]);
   const attention = useMemo(() => attentionItems(t.classes), [t.classes]);
   const { plans, planForGrade } = usePlans();
   const desk = useDesk();
@@ -304,92 +334,22 @@ export default function TeacherHomeScreen({ navigation }) {
           </Pressable>
         ) : null}
 
-        {/* ---- Haftalık ders programı (salt okunur): değişiklik yalnız Ders Programı ekranından ---- */}
-        {desk.hasTimetable
-          ? (() => {
-              const week = desk.weekLessons();
-              const GUN = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum'];
-              const bugun = weekdayOf();
-              // Satır sayısı: en geç dersin sırası (en az 1)
-              const sonDers = week.reduce((m, l) => Math.max(m, l.period), 1);
-              // İki okul: günlerin saat düzeni farklı olabilir (Pzt 07:30, Sal 08:10…).
-              // Günler aynı saatleri kullanıyorsa solda TEK saat sütunu; farklıysa her hücrede o günün saati.
-              const doluSaat = (liste) => Array.isArray(liste) && liste.some((p) => p && p.start);
-              const gunSaatleri = [1, 2, 3, 4, 5].map((g) => desk.periodsFor(g));
-              const imza = (liste) => (liste || []).map((p) => `${(p && p.start) || ''}-${(p && p.end) || ''}`).join('|');
-              const ayniSaat = gunSaatleri.every((s) => imza(s) === imza(gunSaatleri[0]));
-              let saatler = gunSaatleri.find((s) => doluSaat(s)) || gunSaatleri[0] || [];
-              const saatVar = gunSaatleri.some((s) => doluSaat(s));
-              // Hücre: günün saatleri (start/end) weekLessons'tan gelir (gün bazlı ders saati).
-              const en = (day, period) => week.find((w) => w.day === day && w.period === period) || null;
-              return (
-                <View style={[st.ttCard, shadow, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                  <View style={st.ttHead}>
-                    <Text style={[st.ttTitle, { color: colors.textMuted }]}>🗓️ HAFTALIK DERS PROGRAMI</Text>
-                    <View style={{ flex: 1 }} />
-                    <Pressable onPress={() => navigation.navigate('Timetable')} hitSlop={8} accessibilityLabel="Ders programını düzenle">
-                      <Text style={{ color: colors.accent, fontWeight: '800', fontSize: font.small }}>Düzenle ›</Text>
-                    </Pressable>
-                  </View>
-
-                  {/* Günler üstte */}
-                  {!saatVar ? (
-                    <Pressable onPress={() => navigation.navigate('Timetable')} hitSlop={6} style={{ marginBottom: spacing.xs }}>
-                      <Text style={{ color: colors.accent, fontSize: font.tiny, fontWeight: '800' }}>⏱️ Saatler henüz girilmemiş — saatleri ayarla ›</Text>
-                    </Pressable>
-                  ) : null}
-                  <View style={[st.ttGridRow, { borderBottomColor: colors.border }]}>
-                    <Text style={[st.ttSaat, { color: colors.textFaint }]}>SAAT</Text>
-                    {GUN.map((g, i) => {
-                      const isToday = i + 1 === bugun;
-                      return (
-                        <View key={g} style={[st.ttGun, isToday && { backgroundColor: colors.accent, borderRadius: radius.sm }]}>
-                          <Text style={[st.ttGunT, { color: isToday ? colors.onAccent : colors.textMuted }]}>{g}</Text>
-                        </View>
-                      );
-                    })}
-                  </View>
-
-                  {/* Saatler solda, günler sütun */}
-                  {Array.from({ length: sonDers }, (_, i) => {
-                    const period = i + 1;
-                    const s = saatler[i] || {};
-                    return (
-                      <View key={period} style={[st.ttGridRow, { borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth }]}>
-                        <View style={st.ttSaatCol}>
-                          {ayniSaat && s.start ? (
-                            <>
-                              <Text style={[st.ttSaatT, { color: colors.text }]}>{s.start}</Text>
-                              {s.end ? <Text style={[st.ttSaatT, { color: colors.textFaint }]}>{s.end}</Text> : null}
-                            </>
-                          ) : (
-                            <Text style={[st.ttSaatT, { color: colors.textMuted }]}>{period}.</Text>
-                          )}
-                        </View>
-                        {[1, 2, 3, 4, 5].map((d) => {
-                          const l = en(d, period);
-                          const col = l && l.label ? classColor(l.label) : null;
-                          const isToday = d === bugun;
-                          return (
-                            <View key={d} style={[st.ttCell, isToday && { backgroundColor: colors.accent + '0D' }]}>
-                              {l ? (
-                                <View style={[st.ttBox, { backgroundColor: col + '1F', borderColor: col + '66' }]}>
-                                  {/* Günlerin saatleri farklıysa (iki okul) saati hücrenin içinde göster */}
-                                  {!ayniSaat && l.start ? <Text style={[st.ttBoxSaat, { color: colors.textMuted }]}>{l.start}</Text> : null}
-                                  <Text style={[st.ttBoxT, { color: colors.text }]} numberOfLines={1}>{l.label || '—'}</Text>
-                                  {l.ders ? <Text style={[st.ttBoxTag, { color: col }]}>{branchOf(l.ders).short}</Text> : null}
-                                </View>
-                              ) : null}
-                            </View>
-                          );
-                        })}
-                      </View>
-                    );
-                  })}
-                </View>
-              );
-            })()
-          : null}
+        {/* ---- Haftalık ders programı (salt okunur): çift dokun → tam ekran + yatay ---- */}
+        {desk.hasTimetable ? (
+          <View style={[st.ttCard, shadow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={st.ttHead}>
+              <Text style={[st.ttTitle, { color: colors.textMuted }]}>🗓️ HAFTALIK DERS PROGRAMI</Text>
+              <View style={{ flex: 1 }} />
+              <Pressable onPress={() => navigation.navigate('Timetable')} hitSlop={8} accessibilityLabel="Ders programını düzenle">
+                <Text style={{ color: colors.accent, fontWeight: '800', fontSize: font.small }}>Düzenle ›</Text>
+              </Pressable>
+            </View>
+            <Pressable onPress={programaDokun} accessibilityLabel="Ders programı — tam ekran için çift dokun">
+              <HomeTimetable />
+            </Pressable>
+            <Text style={{ color: colors.textFaint, fontSize: font.tiny, marginTop: spacing.xs }}>Tam ekran için çift dokun</Text>
+          </View>
+        ) : null}
 
         {/* ---- Kısayollar ---- */}
         {/* defaultOpen: ana sayfa açıldığında kısayollar görünür başlar; kullanıcı isterse kapatır. */}
@@ -498,6 +458,24 @@ export default function TeacherHomeScreen({ navigation }) {
       </View>
     </ScrollView>
     <StatusBarCover color={heroBg} />
+
+      {/* Tam ekran ders programı: çift dokununca açılır, yatay kilide geçer; ✕ veya çift dokun ile kapanır. */}
+      <Modal visible={tamEkran} animationType="fade" supportedOrientations={['portrait', 'landscape']} onRequestClose={tamEkraniKapat}>
+        <View style={{ flex: 1, backgroundColor: colors.bg, paddingTop: insets.top, paddingBottom: insets.bottom, paddingHorizontal: spacing.md }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.sm }}>
+            <Text style={{ color: colors.text, fontWeight: '900', fontSize: font.h3, flex: 1 }}>🗓️ Haftalık Ders Programı</Text>
+            <Pressable onPress={tamEkraniKapat} hitSlop={10} accessibilityLabel="Tam ekranı kapat" style={{ paddingHorizontal: spacing.sm }}>
+              <Text style={{ color: colors.accent, fontWeight: '900', fontSize: font.h3 }}>✕</Text>
+            </Pressable>
+          </View>
+          <ScrollView contentContainerStyle={{ paddingBottom: spacing.lg }}>
+            <Pressable onPress={tamEkraniKapat} accessibilityLabel="Kapatmak için çift dokun">
+              <HomeTimetable buyuk />
+            </Pressable>
+            <Text style={{ color: colors.textFaint, fontSize: font.small, marginTop: spacing.md, textAlign: 'center' }}>Kapatmak için çift dokun ya da ✕</Text>
+          </ScrollView>
+        </View>
+      </Modal>
     </View>
   );
 }
