@@ -18,12 +18,20 @@ function useFocusSafe() {
   }
 }
 
-export default function Collapsible({ title, right, defaultOpen = false, children, style, titleStyle, header }) {
+export default function Collapsible({ title, right, defaultOpen = false, acilSin = 0, children, style, titleStyle, header }) {
   const { colors } = useTheme();
   const odak = useFocusSafe();
   const [open, setOpen] = useState(!!defaultOpen);
   const [contentH, setContentH] = useState(0);
   const anim = useRef(new Animated.Value(defaultOpen ? 1 : 0)).current;
+
+  // Dışarıdan "aç" sinyali (ör. başlıktaki ＋ Sınıf düğmesi): sinyal her arttığında bölüm açılır.
+  useEffect(() => {
+    if (!acilSin) return;
+    setOpen(true);
+    anim.setValue(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [acilSin]);
   const ilkOdak = useRef(true);
 
   // Ekrandan çıkınca varsayılana dön: tekrar girildiğinde derli toplu (kapalı) başlar.

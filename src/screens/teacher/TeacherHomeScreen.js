@@ -55,6 +55,7 @@ export default function TeacherHomeScreen({ navigation }) {
   const { profile } = useTeacherProfile();
   const [newName, setNewName] = useState('');
   const [adding, setAdding] = useState(false);
+  const [sinifAcilSin, setSinifAcilSin] = useState(0); // SINIFLARIM bölümünü dışarıdan açma sinyali
   const [weekPlanId, setWeekPlanId] = useState(null); // program yokken üst kartta gösterilen düzey
   const [tamEkran, setTamEkran] = useState(false); // ders programı tam ekran (yatay) modu
   const sonDokunus = useRef(0);
@@ -393,7 +394,20 @@ export default function TeacherHomeScreen({ navigation }) {
         <Collapsible
           title="SINIFLARIM"
           style={{ marginTop: spacing.lg }}
-          right={<SmallButton title={adding ? 'Vazgeç' : '＋ Sınıf'} onPress={() => setAdding(!adding)} />}
+          acilSin={sinifAcilSin}
+          right={
+            <SmallButton
+              title={adding ? 'Vazgeç' : '＋ Sınıf'}
+              onPress={() => {
+                if (adding) {
+                  setAdding(false);
+                  return;
+                }
+                setAdding(true);
+                setSinifAcilSin((n) => n + 1); // bölüm kapalıysa açılsın: form görünür olsun
+              }}
+            />
+          }
         >
         {adding ? (
           <Card>
