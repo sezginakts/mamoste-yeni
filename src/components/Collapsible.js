@@ -18,7 +18,7 @@ function useFocusSafe() {
   }
 }
 
-export default function Collapsible({ title, right, defaultOpen = false, acilSin = 0, children, style, titleStyle, header }) {
+export default function Collapsible({ title, right, defaultOpen = false, acilSin = 0, okSolda = false, children, style, titleStyle, header }) {
   const { colors } = useTheme();
   const odak = useFocusSafe();
   const [open, setOpen] = useState(!!defaultOpen);
@@ -71,9 +71,10 @@ export default function Collapsible({ title, right, defaultOpen = false, acilSin
       style={({ pressed }) => [styles.head, pressed && { opacity: 0.7 }]}
     >
       <Text style={[styles.title, { color: colors.textMuted }, titleStyle]}>{title}</Text>
+      {okSolda ? <Text style={[styles.caret, { color: colors.textFaint }]}>{open ? '⌃' : '⌄'}</Text> : null}
       <View style={{ flex: 1 }} />
       {right}
-      <Text style={[styles.caret, { color: colors.textFaint }]}>{open ? '⌃' : '⌄'}</Text>
+      {okSolda ? null : <Text style={[styles.caret, { color: colors.textFaint }]}>{open ? '⌃' : '⌄'}</Text>}
     </Pressable>
   );
 

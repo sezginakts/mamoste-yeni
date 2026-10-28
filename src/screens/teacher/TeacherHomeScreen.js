@@ -393,6 +393,7 @@ export default function TeacherHomeScreen({ navigation }) {
         {/* ---- Sınıflarım ---- */}
         <Collapsible
           title="SINIFLARIM"
+          okSolda
           style={{ marginTop: spacing.lg }}
           acilSin={sinifAcilSin}
           right={
