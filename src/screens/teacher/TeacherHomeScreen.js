@@ -312,20 +312,16 @@ export default function TeacherHomeScreen({ navigation }) {
               const bugun = weekdayOf();
               // Satır sayısı: en geç dersin sırası (en az 1)
               const sonDers = week.reduce((m, l) => Math.max(m, l.period), 1);
-              // Saat sütunu: bugünün düzeni doluysa o; boşsa saatleri girilmiş ilk günün düzeni.
+              // İki okul: günlerin saat düzeni farklı olabilir (Pzt 07:30, Sal 08:10…).
+              // Günler aynı saatleri kullanıyorsa solda TEK saat sütunu; farklıysa her hücrede o günün saati.
               const doluSaat = (liste) => Array.isArray(liste) && liste.some((p) => p && p.start);
-              let saatler = desk.periodsFor(bugun <= 5 ? bugun : 1);
-              if (!doluSaat(saatler)) {
-                for (let g = 1; g <= 5; g++) {
-                  const s = desk.periodsFor(g);
-                  if (doluSaat(s)) {
-                    saatler = s;
-                    break;
-                  }
-                }
-              }
-              const saatVar = doluSaat(saatler);
-              const en = (day, period) => desk.lessons[`${day}-${period}`];
+              const gunSaatleri = [1, 2, 3, 4, 5].map((g) => desk.periodsFor(g));
+              const imza = (liste) => (liste || []).map((p) => `${(p && p.start) || ''}-${(p && p.end) || ''}`).join('|');
+              const ayniSaat = gunSaatleri.every((s) => imza(s) === imza(gunSaatleri[0]));
+              let saatler = gunSaatleri.find((s) => doluSaat(s)) || gunSaatleri[0] || [];
+              const saatVar = gunSaatleri.some((s) => doluSaat(s));
+              // Hücre: günün saatleri (start/end) weekLessons'tan gelir (gün bazlı ders saati).
+              const en = (day, period) => week.find((w) => w.day === day && w.period === period) || null;
               return (
                 <View style={[st.ttCard, shadow, { backgroundColor: colors.card, borderColor: colors.border }]}>
                   <View style={st.ttHead}>
@@ -361,13 +357,11 @@ export default function TeacherHomeScreen({ navigation }) {
                     return (
                       <View key={period} style={[st.ttGridRow, { borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth }]}>
                         <View style={st.ttSaatCol}>
-                          {s.start ? (
+                          {ayniSaat && s.start ? (
                             <>
                               <Text style={[st.ttSaatT, { color: colors.text }]}>{s.start}</Text>
                               {s.end ? <Text style={[st.ttSaatT, { color: colors.textFaint }]}>{s.end}</Text> : null}
                             </>
-                          ) : saatVar ? (
-                            <Text style={[st.ttSaatT, { color: colors.textFaint }]}>—</Text>
                           ) : (
                             <Text style={[st.ttSaatT, { color: colors.textMuted }]}>{period}.</Text>
                           )}
@@ -380,6 +374,8 @@ export default function TeacherHomeScreen({ navigation }) {
                             <View key={d} style={[st.ttCell, isToday && { backgroundColor: colors.accent + '0D' }]}>
                               {l ? (
                                 <View style={[st.ttBox, { backgroundColor: col + '1F', borderColor: col + '66' }]}>
+                                  {/* Günlerin saatleri farklıysa (iki okul) saati hücrenin içinde göster */}
+                                  {!ayniSaat && l.start ? <Text style={[st.ttBoxSaat, { color: colors.textMuted }]}>{l.start}</Text> : null}
                                   <Text style={[st.ttBoxT, { color: colors.text }]} numberOfLines={1}>{l.label || '—'}</Text>
                                   {l.ders ? <Text style={[st.ttBoxTag, { color: col }]}>{branchOf(l.ders).short}</Text> : null}
                                 </View>
@@ -558,6 +554,7 @@ const st = StyleSheet.create({
   ttCell: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 1, paddingVertical: 3, minHeight: 34 },
   ttBox: { width: '100%', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderRadius: 7, paddingVertical: 4, paddingHorizontal: 2 },
   ttBoxT: { fontSize: 10, fontWeight: '900' },
+  ttBoxSaat: { fontSize: 8, fontWeight: '700', marginBottom: 1 },
   ttBoxTag: { fontSize: 8, fontWeight: '900', letterSpacing: 0.3 },
   hero: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xl + spacing.lg, overflow: 'hidden', borderBottomLeftRadius: 28, borderBottomRightRadius: 28 },
   blob: { position: 'absolute', borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.10)' },
