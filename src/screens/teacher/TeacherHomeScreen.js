@@ -95,6 +95,13 @@ export default function TeacherHomeScreen({ navigation }) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigation]);
+  // Kart SAATİN İLERLEMESİNE göre kendini yenilesin: ders bittiğinde sıradaki derse geçsin
+  // (ekran açık kaldığında "sabit sınıf" görünmesin).
+  const [, setSaatTik] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setSaatTik((n) => n + 1), 30000);
+    return () => clearInterval(id);
+  }, []);
   const attention = useMemo(() => attentionItems(t.classes), [t.classes]);
   const { plans, planForGrade } = usePlans();
   const desk = useDesk();
@@ -291,11 +298,11 @@ export default function TeacherHomeScreen({ navigation }) {
                       <Text style={[st.outText, { color: colors.textMuted }]}>Planda bu haftanın öğrenme çıktısı yazmıyor.</Text>
                     )}
                     <View style={[st.focusFoot, { borderTopColor: colors.border }]}>
-                      <Text style={{ color: colors.textMuted, fontSize: font.tiny, fontWeight: '700', flex: 1 }}>
+                      <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '700', flex: 1 }}>
                         📅 {w.week ? `${w.week}. hafta` : ''}
                         {slot.count > 1 ? ` · ${slot.idx + 1}. ders / ${slot.count}` : ''}
                       </Text>
-                      <Text style={[st.more, { color: colors.accent, marginTop: 0 }]}>Dersin planı ›</Text>
+                      <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '800' }}>Dersin planı ›</Text>
                     </View>
                   </>
                 )}
@@ -577,7 +584,7 @@ const st = StyleSheet.create({
   outRow: { paddingVertical: 10 },
   outCode: { fontSize: font.tiny, fontWeight: '900', letterSpacing: 0.4, marginBottom: 4 },
   outText: { fontSize: 18, lineHeight: 26, fontWeight: '600' },
-  focusFoot: { flexDirection: 'row', alignItems: 'center', borderTopWidth: StyleSheet.hairlineWidth, marginTop: spacing.sm, paddingTop: spacing.md },
+  focusFoot: { flexDirection: 'row', alignItems: 'center', borderTopWidth: StyleSheet.hairlineWidth, marginTop: spacing.xs, paddingTop: spacing.sm },
   more: { fontSize: font.tiny, fontWeight: '900', marginTop: spacing.sm },
   gradeChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: spacing.sm },
   gradeChip: { borderWidth: 1.5, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 5 },
