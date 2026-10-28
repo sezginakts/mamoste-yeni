@@ -9,6 +9,8 @@ import { useTeacher } from '../../teacher/TeacherContext';
 import { useDesk, weekdayOf, buildPeriods, periodAt } from '../../teacher/DeskContext';
 import { usePruneStaleLessons } from '../../teacher/pruneLessons';
 import { Header, Chip } from '../../teacher/ui';
+import { useRole } from '../../context/RoleContext';
+import { branchOf } from '../../data/branches';
 
 const DAYS = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
 const SHORT = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum'];
@@ -23,6 +25,8 @@ export default function TimetableScreen({ navigation }) {
   const { colors, shadow } = useTheme();
   const t = useTeacher();
   const desk = useDesk();
+  const { branchId, myBranches } = useRole();
+  const dersler = (myBranches && myBranches.length ? myBranches : branchId ? [branchId] : []).map(branchOf);
   usePruneStaleLessons();
   const today = weekdayOf();
   const now = today <= 5 ? periodAt(desk.todayPeriods) : null;
@@ -155,7 +159,12 @@ export default function TimetableScreen({ navigation }) {
                         ]}
                       >
                         {l ? (
-                          <Text style={[st.cellT, { color: colors.text }]} numberOfLines={2}>{l.label}</Text>
+                          <>
+                            <Text style={[st.cellT, { color: colors.text }]} numberOfLines={2}>{l.label}</Text>
+                            {l.ders ? (
+                              <Text style={[st.dersTag, { color: branchOf(l.ders).color, borderColor: branchOf(l.ders).color + '66' }]}>{branchOf(l.ders).short}</Text>
+                            ) : null}
+                          </>
                         ) : (
                           <Text style={{ color: colors.textFaint, fontSize: 16 }}>+</Text>
                         )}
@@ -175,6 +184,8 @@ export default function TimetableScreen({ navigation }) {
           lesson={desk.lessons[`${cell.day}-${cell.period}`]}
           period={desk.periodsFor(cell.day)[cell.period - 1]}
           classes={t.classes}
+          dersler={dersler}
+          varsayilanDers={branchId}
           onPick={(pick) => {
             if (!pick) desk.setLesson(cell.day, cell.period, null);
             else {
@@ -185,7 +196,12 @@ export default function TimetableScreen({ navigation }) {
                 return p.grade === pick.grade && p.branch === pick.branch;
               });
               const classId = existing ? existing.id : t.addClass(label);
-              desk.setLesson(cell.day, cell.period, { classId, grade: pick.grade, label: existing ? existing.name : label });
+              desk.setLesson(cell.day, cell.period, {
+                classId,
+                grade: pick.grade,
+                label: existing ? existing.name : label,
+                ders: pick.ders || branchId,
+              });
             }
             setCell(null);
           }}
@@ -272,26 +288,38 @@ export function parseClassName(name) {
   return { grade: +m[1], branch: m[2] ? m[2].toLocaleUpperCase('tr') : null };
 }
 
-// Sınıf + şube seç ("7" + "B" -> 7-B). Daha önce girilen sınıflar üstte hızlı seçim.
-// onPick({ grade, branch }) ya da onPick(null) = boşalt.
-function ClassPicker({ cell, lesson, period, classes, onPick, onClose }) {
+// Sınıf + şube seç ("7" + "B" -> 7-B) ve ders (branş) seç.
+// onPick({ grade, branch, ders }) ya da onPick(null) = boşalt.
+function ClassPicker({ cell, lesson, period, classes, dersler = [], varsayilanDers, onPick, onClose }) {
   const { colors } = useTheme();
   const time = period && period.start ? ` · ${period.start}–${period.end}` : '';
   const cur = lesson ? parseClassName(lesson.label) : { grade: null, branch: null };
+  const [ders, setDers] = useState((lesson && lesson.ders) || varsayilanDers || (dersler[0] && dersler[0].id) || null);
   const [grade, setGrade] = useState(cur.grade);
   const [branch, setBranch] = useState(cur.branch);
   const name = grade && branch ? `${grade}-${branch}` : null;
-  const known = classes.filter((c) => parseClassName(c.name).branch);
+  const known = classes.filter((c) => parseClassName(c.name).branch && (!ders || !c.branch || c.branch === ders));
 
   return (
-    <Sheet title={`${DAYS[cell.day - 1]} · ${cell.period}. ders`} subtitle={`Bu saatte hangi sınıfa giriyorsun?${time}`} onClose={onClose}>
+    <Sheet title={`${DAYS[cell.day - 1]} · ${cell.period}. ders`} subtitle={`Bu saatte hangi derse, hangi sınıfa giriyorsun?${time}`} onClose={onClose}>
+      {dersler.length > 1 ? (
+        <>
+          <Text style={[st.pickLbl, { color: colors.textMuted }]}>DERS</Text>
+          <View style={st.chips}>
+            {dersler.map((d) => (
+              <Chip key={d.id} label={`${d.short} · ${d.name}`} color={d.color} active={ders === d.id} onPress={() => setDers(d.id)} />
+            ))}
+          </View>
+        </>
+      ) : null}
+
       {known.length ? (
         <>
-          <Text style={[st.pickLbl, { color: colors.textMuted }]}>SINIFLARIM</Text>
+          <Text style={[st.pickLbl, { color: colors.textMuted, marginTop: dersler.length > 1 ? spacing.md : 0 }]}>SINIFLARIM</Text>
           <View style={st.chips}>
             {known.map((c) => {
               const p = parseClassName(c.name);
-              return <Chip key={c.id} label={c.name} color={classColor(`${p.grade}-${p.branch}`)} active={grade === p.grade && branch === p.branch} onPress={() => onPick(p)} />;
+              return <Chip key={c.id} label={c.name} color={classColor(`${p.grade}-${p.branch}`)} active={grade === p.grade && branch === p.branch} onPress={() => onPick({ ...p, ders })} />;
             })}
           </View>
           <Text style={[st.pickLbl, { color: colors.textMuted, marginTop: spacing.md }]}>YA DA YENİ SINIF</Text>
@@ -312,7 +340,7 @@ function ClassPicker({ cell, lesson, period, classes, onPick, onClose }) {
       </View>
 
       <Pressable
-        onPress={() => name && onPick({ grade, branch })}
+        onPress={() => name && onPick({ grade, branch, ders })}
         disabled={!name}
         style={[st.primary, { backgroundColor: name ? classColor(name) : colors.accent, marginTop: spacing.md }, !name && { opacity: 0.4 }]}
       >
@@ -492,6 +520,7 @@ function QuickTimes({ count, onApply, onClose }) {
 const st = StyleSheet.create({
   schedBar: { borderWidth: 1, borderRadius: radius.lg, padding: spacing.md, marginBottom: spacing.md },
   schedBadge: { fontSize: 10, fontWeight: '900', borderWidth: 1, borderRadius: 6, paddingHorizontal: 5, marginTop: 3, overflow: 'hidden' },
+  dersTag: { fontSize: 9, fontWeight: '900', borderWidth: 1, borderRadius: 5, paddingHorizontal: 4, marginTop: 2, overflow: 'hidden' },
   tools: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.md },
   toolBtn: { flex: 1, borderRadius: radius.md, paddingVertical: 11, alignItems: 'center' },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderRadius: radius.md, paddingHorizontal: 4 },

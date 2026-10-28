@@ -5,7 +5,7 @@ import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { radius, spacing, font } from '../theme';
 import { useTheme } from '../context/ThemeContext';
-import { useRole } from '../context/RoleContext';
+import { useRole, MAX_BRANCHES } from '../context/RoleContext';
 import { useAuth } from '../context/AuthContext';
 import { BRANCHES } from '../data/branches';
 import Button from '../components/Button';
@@ -19,10 +19,20 @@ const SECTIONS = [
 export default function BranchSelectScreen() {
   const insets = useSafeAreaInsets();
   const { colors, shadow } = useTheme();
-  const { setBranch, resetRole, prevBranch, cancelBranchChange } = useRole();
+  const { setBranch, resetRole, prevBranch, cancelBranchChange, myBranches, setMyBranches } = useRole();
   const { isAdmin } = useAuth();
-  const [picked, setPicked] = useState(prevBranch);
-  const sel = BRANCHES.find((b) => b.id === picked);
+  const [picked, setPicked] = useState(() => (prevBranch ? [prevBranch] : myBranches || []));
+  // En çok 3 ders: seçiliyse çıkar, değilse ekle (3'ü geçemez).
+  const toggle = (id) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : p.length >= MAX_BRANCHES ? p : [...p, id]));
+  const kaydet = () => {
+    if (!picked.length) return;
+    if (prevBranch) {
+      // Profilden gelindi: aktif ders değişmesin — eski ders listede kaldıysa başta tutulur.
+      setMyBranches(picked.includes(prevBranch) ? [prevBranch, ...picked.filter((x) => x !== prevBranch)] : picked);
+    } else {
+      setBranch(picked[0], picked); // ilk giriş
+    }
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -32,8 +42,11 @@ export default function BranchSelectScreen() {
             <Text style={{ color: colors.accent, fontWeight: '800', fontSize: font.body }}>‹ Geri</Text>
           </Pressable>
         ) : null}
-        <Text style={[st.title, { color: colors.text }]}>Branşın hangisi?</Text>
-        <Text style={[st.sub, { color: colors.textMuted }]}>Uygulama seçtiğin branşa göre açılır. Her branşın sınıfları ve planları ayrı tutulur.</Text>
+        <Text style={[st.title, { color: colors.text }]}>Hangi dersleri veriyorsun?</Text>
+        <Text style={[st.sub, { color: colors.textMuted }]}>
+          En çok {MAX_BRANCHES} ders seçebilirsin ({picked.length}/{MAX_BRANCHES}). Her dersin sınıfları ve planları ayrı tutulur; ders programı ortaktır
+          ve dersler kısaltmalarıyla görünür (TVT, SB…). Sonradan Profil → Derslerim'den değiştirebilirsin.
+        </Text>
 
         {SECTIONS.map((sec) => {
           const items = BRANCHES.filter((b) => b.level === sec.key);
@@ -42,7 +55,7 @@ export default function BranchSelectScreen() {
             <Collapsible key={sec.key} title={sec.label} style={{ marginTop: spacing.lg }}>
               <View style={st.grid}>
                 {items.map((b) => (
-                  <BranchCard key={b.id} b={b} selected={picked === b.id} onPress={() => setPicked(b.id)} colors={colors} shadow={shadow} />
+                  <BranchCard key={b.id} b={b} selected={picked.includes(b.id)} onPress={() => toggle(b.id)} colors={colors} shadow={shadow} />
                 ))}
               </View>
             </Collapsible>
@@ -50,7 +63,11 @@ export default function BranchSelectScreen() {
         })}
       </ScrollView>
       <View style={[st.footer, { backgroundColor: colors.bg, paddingBottom: insets.bottom + spacing.md }]}>
-        <Button title={sel ? `${sel.name} ile devam et` : 'Branşını seç'} disabled={!sel} onPress={() => setBranch(picked)} />
+        <Button
+          title={picked.length ? `${picked.length} dersle devam et` : 'Ders seç'}
+          disabled={!picked.length}
+          onPress={kaydet}
+        />
       </View>
     </View>
   );

@@ -7,14 +7,14 @@ import { useTheme } from '../../context/ThemeContext';
 import { useTeacher } from '../../teacher/TeacherContext';
 import { useRole } from '../../context/RoleContext';
 import { useTeacherProfile, PROFILE_LIMITS } from '../../teacher/profile';
-import { Header, Card, SectionTitle, Field, SmallButton, Stat, formatJoinCode, confirmAction } from '../../teacher/ui';
+import { Header, Card, SectionTitle, Field, SmallButton, Stat, formatJoinCode, confirmAction, Chip } from '../../teacher/ui';
 import { TEACHER_AVATARS } from '../../data/avatars';
 import { activitiesFor, ACTIVITY_TYPES } from '../../data/activities';
 
 export default function TeacherProfileScreen({ navigation }) {
   const { colors } = useTheme();
   const t = useTeacher();
-  const { branch } = useRole();
+  const { branch, branchId, myBranchObjects = [], switchBranch, resetBranch } = useRole();
   const { profile, save, signedIn } = useTeacherProfile();
   const [form, setForm] = useState(profile);
   const [touched, setTouched] = useState(false);
@@ -121,6 +121,19 @@ export default function TeacherProfileScreen({ navigation }) {
           {msg ? <Text style={{ color: msg.ok ? colors.success : colors.danger, fontSize: font.small, marginTop: 6 }}>{msg.text}</Text> : null}
         </Card>
 
+        <SectionTitle>DERSLERİM</SectionTitle>
+        <Card>
+          <Text style={{ color: colors.textMuted, fontSize: font.small }}>
+            Derslerini ilk açılışta seçtin. Ders programında kısaltmalarıyla görünür (TVT, SB…). Aktif dersin sınıfları ve planları kullanılır.
+          </Text>
+          <View style={[s.chipWrap, { marginTop: spacing.sm }]}>
+            {myBranchObjects.map((d) => (
+              <Chip key={d.id} label={`${d.short} · ${d.name}`} color={d.color} active={d.id === branchId} onPress={() => switchBranch(d.id)} />
+            ))}
+          </View>
+          <SmallButton title="Derslerimi değiştir" onPress={resetBranch} style={{ alignSelf: 'flex-start', marginTop: spacing.md }} />
+        </Card>
+
         <SectionTitle>İSTATİSTİK</SectionTitle>
         <View style={s.statRow}>
           <Stat value={t.classes.length} label="sınıf" />
@@ -176,4 +189,5 @@ const s = StyleSheet.create({
   avGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
   avCell: { width: 48, height: 48, borderRadius: 24, borderWidth: 2.5, alignItems: 'center', justifyContent: 'center' },
   statRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm },
+  chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
 });

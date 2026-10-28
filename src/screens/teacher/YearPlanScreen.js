@@ -10,6 +10,7 @@ import { WeekCard, WeekDaysCard, LessonCard, PlanCalendar, unitColor } from '../
 import { useDesk, weekdayOf, periodAt } from '../../teacher/DeskContext';
 import { Header, Card, SectionTitle, Field, SmallButton, Chip, formatDate, formatDateLong, confirmAction } from '../../teacher/ui';
 import { dayKey } from '../../utils/helpers';
+import { useRole } from '../../context/RoleContext';
 
 const GRADES = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 const DAY_NAMES = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
@@ -20,11 +21,12 @@ export default function YearPlanScreen({ route, navigation }) {
   const { colors, shadow } = useTheme();
   const { plans, addPlan, removePlan, planForGrade } = usePlans();
   const desk = useDesk();
+  const { branchId } = useRole();
   const params = route.params || {};
   // Haftanın dersleri (ders programından). Plan her zaman TEK bir dersi gösterir:
   // bugünkü / şimdiki ders, bugün yoksa o sınıfla bir sonraki ders.
   const todayDay = weekdayOf();
-  const allWeek = desk.weekLessons().filter((l) => planForGrade(l.grade));
+  const allWeek = desk.weekLessons(branchId).filter((l) => planForGrade(l.grade));
   const at = periodAt(desk.todayPeriods);
   const hasTimes = desk.todayPeriods.some((p) => p.start);
   const isUpcoming = (l) => l.day > todayDay || (l.day === todayDay && (!hasTimes || (at && l.period >= at.period)));

@@ -8,18 +8,25 @@
 // Not:    { id, text, color, remind: 'YYYY-MM-DD'|null, time: 'HH:MM'|null, done, at, nid }
 // Zil:    bell = { mode: 'off' | 'mine' | 'all', end: ders bitişinde de çalsın } → utils/bell (haftalık bildirimler)
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { shortId } from '../utils/codec';
 import { useRole } from '../context/RoleContext';
-import { getBranchItem, setBranchItem } from '../utils/branchStore';
+import { getBranchItem } from '../utils/branchStore';
 import { bellTimes, scheduleBells } from '../utils/bell';
 import { scheduleReminder, cancelReminder } from '../utils/notify';
 
-const TT_KEY = '@ingapp/teacher/v1/timetable';
+const TT_KEY = '@ingapp/teacher/v1/timetable'; // ESKİ (branşa özel): yalnız migration için okunur
 const PERIODS_KEY = '@ingapp/teacher/v1/periods'; // ESKİ: yalnız migration için okunur
-const SCHEDULES_KEY = '@ingapp/teacher/v1/schedules';
-const DAYSCHED_KEY = '@ingapp/teacher/v1/day-schedule';
-const NOTES_KEY = '@ingapp/teacher/v1/notes';
-const BELL_KEY = '@ingapp/teacher/v1/bell';
+const SCHEDULES_KEY = '@ingapp/teacher/v1/schedules'; // ESKİ: yalnız migration
+const DAYSCHED_KEY = '@ingapp/teacher/v1/day-schedule'; // ESKİ: yalnız migration
+const NOTES_KEY = '@ingapp/teacher/v1/notes'; // ESKİ: yalnız migration
+const BELL_KEY = '@ingapp/teacher/v1/bell'; // ESKİ: yalnız migration
+// YENİ: ders programı TEK (öğretmenin bütün dersleri aynı programda); branşa göre değişmez.
+const S_TT = '@ingapp/teacher/shared/timetable';
+const S_SCHED = '@ingapp/teacher/shared/schedules';
+const S_DAY = '@ingapp/teacher/shared/day-schedule';
+const S_NOTES = '@ingapp/teacher/shared/notes';
+const S_BELL = '@ingapp/teacher/shared/bell';
 const DEFAULT_BELL = { mode: 'off', end: true };
 const Ctx = createContext(null);
 
@@ -98,36 +105,55 @@ export function DeskProvider({ children }) {
   const [notes, setNotes] = useState([]);
   const [bell, setBellState] = useState(DEFAULT_BELL);
   const { branchId } = useRole();
-  const [loadedFor, setLoadedFor] = useState(null); // hangi branşın verisi yüklü
+  const [sharedLoaded, setSharedLoaded] = useState(false);
   // Branş seçilmemişken (seçim ekranı) beklenecek bir şey yok.
-  const loaded = !branchId || loadedFor === branchId;
+  const loaded = !branchId || sharedLoaded;
 
   useEffect(() => {
-    if (!branchId) return undefined;
+    if (!branchId || sharedLoaded) return undefined;
     let live = true;
     (async () => {
       let d = { lessons: {}, schedules: DEFAULT_SCHEDULES, daySchedule: DEFAULT_DAY, notes: [], bell: DEFAULT_BELL };
       try {
-        const [tt, ps, ns, bl, sc, ds] = await Promise.all([
-          getBranchItem(TT_KEY, branchId),
-          getBranchItem(PERIODS_KEY, branchId),
-          getBranchItem(NOTES_KEY, branchId),
-          getBranchItem(BELL_KEY, branchId),
-          getBranchItem(SCHEDULES_KEY, branchId),
-          getBranchItem(DAYSCHED_KEY, branchId),
-        ]);
-        let sched = sc ? JSON.parse(sc) : null;
-        let daym = ds ? JSON.parse(ds) : null;
-        if (!sched) {
-          // ESKİ kurulum: tek periods listesi -> "1. Okul" düzeni, bütün günler o düzen.
-          const eski = ps ? JSON.parse(ps) : null;
-          const periods = Array.isArray(eski) && eski.length ? eski : bosSaatlar(7);
-          sched = { a: { name: '1. Okul', periods }, b: { name: '2. Okul', periods: bosSaatlar(periods.length) } };
-          daym = DEFAULT_DAY;
-          // Yeni anahtarlara bir kez yaz (migration).
-          setBranchItem(SCHEDULES_KEY, branchId, JSON.stringify(duzenle(sched))).catch(() => {});
-          setBranchItem(DAYSCHED_KEY, branchId, JSON.stringify(gunDuzeni(daym))).catch(() => {});
+        const [stt, ssc, sds, sns, sbl] = await Promise.all([S_TT, S_SCHED, S_DAY, S_NOTES, S_BELL].map((k) => AsyncStorage.getItem(k)));
+        let tt = stt;
+        let sc = ssc;
+        let ds = sds;
+        let ns = sns;
+        let bl = sbl;
+        if (tt == null && sc == null) {
+          // İLK AÇILIŞ: eski branşa özel veriyi ortak anahtarlara taşı (veri kaybı olmasın).
+          const [eskiTt, eskiPs, eskiSc, eskiDs, eskiNs, eskiBl] = await Promise.all([
+            getBranchItem(TT_KEY, branchId),
+            getBranchItem(PERIODS_KEY, branchId),
+            getBranchItem(SCHEDULES_KEY, branchId),
+            getBranchItem(DAYSCHED_KEY, branchId),
+            getBranchItem(NOTES_KEY, branchId),
+            getBranchItem(BELL_KEY, branchId),
+          ]);
+          tt = eskiTt;
+          ns = eskiNs;
+          bl = eskiBl;
+          if (eskiSc) {
+            sc = eskiSc;
+            ds = eskiDs;
+          } else {
+            // Daha eski kurulum: tek periods listesi -> "1. Okul" düzeni.
+            const eski = eskiPs ? JSON.parse(eskiPs) : null;
+            const periods = Array.isArray(eski) && eski.length ? eski : bosSaatlar(7);
+            const sched = { a: { name: '1. Okul', periods }, b: { name: '2. Okul', periods: bosSaatlar(periods.length) } };
+            sc = JSON.stringify(duzenle(sched));
+            ds = JSON.stringify(DEFAULT_DAY);
+          }
+          // Taşınan veriyi ortak anahtarlara yaz.
+          if (tt != null) AsyncStorage.setItem(S_TT, tt).catch(() => {});
+          if (ns != null) AsyncStorage.setItem(S_NOTES, ns).catch(() => {});
+          if (bl != null) AsyncStorage.setItem(S_BELL, bl).catch(() => {});
+          AsyncStorage.setItem(S_SCHED, sc).catch(() => {});
+          AsyncStorage.setItem(S_DAY, ds).catch(() => {});
         }
+        const sched = sc ? JSON.parse(sc) : null;
+        const daym = ds ? JSON.parse(ds) : null;
         d = {
           lessons: tt ? JSON.parse(tt) : {},
           schedules: duzenle(sched),
@@ -144,24 +170,26 @@ export function DeskProvider({ children }) {
       setDayScheduleState(d.daySchedule);
       setNotes(d.notes);
       setBellState(d.bell);
-      setLoadedFor(branchId);
+      setSharedLoaded(true);
     })();
     return () => {
       live = false;
     };
-  }, [branchId]);
+    // Program artık branşa bağlı değil: branş belli olunca bir kez yüklenir.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [branchId, sharedLoaded]);
 
   const saveLessons = (next) => {
     setLessons(next);
-    setBranchItem(TT_KEY, branchId, JSON.stringify(next)).catch(() => {});
+    AsyncStorage.setItem(S_TT, JSON.stringify(next)).catch(() => {});
   };
   const saveSchedules = (next) => {
     setSchedulesState(next);
-    setBranchItem(SCHEDULES_KEY, branchId, JSON.stringify(next)).catch(() => {});
+    AsyncStorage.setItem(S_SCHED, JSON.stringify(next)).catch(() => {});
   };
   const saveDaySchedule = (next) => {
     setDayScheduleState(next);
-    setBranchItem(DAYSCHED_KEY, branchId, JSON.stringify(next)).catch(() => {});
+    AsyncStorage.setItem(S_DAY, JSON.stringify(next)).catch(() => {});
   };
 
   // Bir günün saatleri: o güne atanmış düzenin listesi.
@@ -192,7 +220,7 @@ export function DeskProvider({ children }) {
   const setBell = (patch) => {
     const next = { ...bell, ...patch };
     setBellState(next);
-    setBranchItem(BELL_KEY, branchId, JSON.stringify(next)).catch(() => {});
+    AsyncStorage.setItem(S_BELL, JSON.stringify(next)).catch(() => {});
   };
 
   // Zil: her gün kendi saat düzeniyle kurulur.
@@ -204,16 +232,16 @@ export function DeskProvider({ children }) {
     [bell, schedules, daySchedule, lessons]
   );
   useEffect(() => {
-    if (!branchId || loadedFor !== branchId) return undefined;
+    if (!branchId || !sharedLoaded) return undefined;
     clearTimeout(bellTimer.current);
     bellTimer.current = setTimeout(() => scheduleBells(bells), 800);
     return () => clearTimeout(bellTimer.current);
-  }, [bells, branchId, loadedFor]);
+  }, [bells, branchId, sharedLoaded]);
 
   const saveNotes = (fn) =>
     setNotes((prev) => {
       const next = fn(prev);
-      setBranchItem(NOTES_KEY, branchId, JSON.stringify(next)).catch(() => {});
+      AsyncStorage.setItem(S_NOTES, JSON.stringify(next)).catch(() => {});
       return next;
     });
 
@@ -262,10 +290,11 @@ export function DeskProvider({ children }) {
       setPeriod: (i, patch) => saveActivePeriods(activePeriods.map((p, k) => (k === i ? { ...p, ...patch } : p))),
       setPeriods: saveActivePeriods,
       setPeriodCount: (n) => setScheduleCount(activeSchedule, n),
-      // Bir günün dersleri: [{ day, period, classId, grade, label, start, end, idx, count }]
-      lessonsOnDay: (day) =>
+      // Bir günün dersleri: [{ day, period, classId, grade, label, ders, start, end, idx, count }]
+      // dersId verilirse yalnız o dersin (branşın) hücreleri; etiketsiz eski hücreler her derse sayılır.
+      lessonsOnDay: (day, dersId) =>
         Object.entries(lessons)
-          .filter(([k]) => +k.split('-')[0] === day)
+          .filter(([k, l]) => +k.split('-')[0] === day && (!dersId || !l.ders || l.ders === dersId))
           .map(([k, l]) => {
             const lesson = { ...l, day, period: +k.split('-')[1] };
             const week = lessonsOf(lesson);
@@ -274,11 +303,11 @@ export function DeskProvider({ children }) {
           })
           .sort((a, b) => a.period - b.period),
       // Haftanın bütün dersleri (Pzt→Cum, ders sırasıyla) — lessonsOnDay ile aynı alanlar.
-      weekLessons: () => {
+      weekLessons: (dersId) => {
         const out = [];
         for (let day = 1; day <= 5; day++) {
           Object.entries(lessons)
-            .filter(([k]) => +k.split('-')[0] === day)
+            .filter(([k, l]) => +k.split('-')[0] === day && (!dersId || !l.ders || l.ders === dersId))
             .map(([k, l]) => {
               const lesson = { ...l, day, period: +k.split('-')[1] };
               const week = lessonsOf(lesson);

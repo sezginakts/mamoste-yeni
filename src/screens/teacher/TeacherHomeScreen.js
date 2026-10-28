@@ -43,7 +43,7 @@ export default function TeacherHomeScreen({ navigation }) {
   const { colors, shadow, mode } = useTheme();
   const insets = useSafeAreaInsets();
   const t = useTeacher();
-  const { branch } = useRole();
+  const { branch, branchId } = useRole();
   const { profile } = useTeacherProfile();
   const [newName, setNewName] = useState('');
   const [adding, setAdding] = useState(false);
@@ -56,7 +56,7 @@ export default function TeacherHomeScreen({ navigation }) {
   const now = new Date();
   const nowMin = now.getHours() * 60 + now.getMinutes();
   const today = dayKey();
-  const todayLessons = desk.lessonsOnDay(weekdayOf());
+  const todayLessons = desk.lessonsOnDay(weekdayOf(), branchId);
   const pendingNotes = sortNotes(desk.notes);
   const todayNotes = pendingNotes.filter((n) => n.remind && n.remind <= today); // bugün ya da gecikmiş
   const totalStudents = t.classes.reduce((n, c) => n + Object.keys(c.students).length, 0);
@@ -106,7 +106,7 @@ export default function TeacherHomeScreen({ navigation }) {
   if (!focus && desk.hasTimetable) {
     for (let i = 1; i <= 7 && !focus; i++) {
       const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
-      const ls = desk.lessonsOnDay(weekdayOf(d));
+      const ls = desk.lessonsOnDay(weekdayOf(d), branchId);
       if (ls.length) {
         focus = ls[0];
         focusDay = dayKey(d);
