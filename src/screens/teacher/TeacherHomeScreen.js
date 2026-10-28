@@ -239,17 +239,16 @@ export default function TeacherHomeScreen({ navigation }) {
             const c = classColor(focus.label);
             return (
               <Pressable onPress={() => openLesson(focus)} style={({ pressed }) => [st.focus, shadow, { backgroundColor: colors.card, borderColor: colors.border }, pressed && { opacity: 0.94 }]}>
-                {/* Üst satır: yalnız sınıf rozeti (durum yazısı kaldırıldı) */}
-                <View style={st.focusHead}>
-                  <View style={{ flex: 1 }} />
-                  <View style={[st.classBadge, { backgroundColor: c }]}>
+                {/* Tarih satırı ile sınıf rozeti aynı hizada (üstte fazladan satır yok) */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+                  <Text style={[st.when, { color: colors.text, fontSize: font.small, flex: 1 }]}>
+                    {noktaliTarih(focusDay)} · {focus.period}. ders
+                    {focus.start ? <Text style={{ color: colors.textMuted }}>{`  ${focus.start}–${focus.end}`}</Text> : null}
+                  </Text>
+                  <View style={[st.classBadge, { backgroundColor: c, marginTop: 0 }]}>
                     <Text style={[st.classBadgeT, { color: inkOn(c) }]}>{focus.label}</Text>
                   </View>
                 </View>
-                <Text style={[st.when, { color: colors.text, fontSize: font.small }]}>
-                  {noktaliTarih(focusDay)} · {focus.period}. ders
-                  {focus.start ? <Text style={{ color: colors.textMuted }}>{`  ${focus.start}–${focus.end}`}</Text> : null}
-                </Text>
 
                 {!p ? (
                   <View style={{ marginTop: spacing.md }}>
@@ -571,7 +570,7 @@ const st = StyleSheet.create({
   statV: { color: '#fff', fontSize: font.body, fontWeight: '900' },
   statL: { color: 'rgba(255,255,255,0.8)', fontSize: font.tiny, fontWeight: '700', marginTop: 1 },
 
-  focus: { borderRadius: radius.lg, borderTopWidth: 4, padding: spacing.lg },
+  focus: { borderRadius: radius.lg, borderTopWidth: 4, paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.sm },
   focusHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   pill: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 4 },
   pillT: { fontSize: 11, fontWeight: '900', letterSpacing: 0.8 },
