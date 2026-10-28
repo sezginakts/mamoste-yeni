@@ -279,8 +279,24 @@ export function TeacherProvider({ children }) {
   };
 
   // ---- Artı / eksi ----
-  const addPoint = (classId, sid, d, tag) =>
-    mutateStudent(classId, sid, (s) => s.points.push({ id: shortId(), d, tag: tag || null, at: Date.now() }));
+  // Aynı gün + aynı etiket için TEK kayıt tutulur, puan orada birikir: +1 +1 → +2.
+  // at: puanın yazılacağı gün (varsayılan şimdi) — "yarın / 1 hafta sonra" için tarih verilebilir.
+  const addPoint = (classId, sid, d, tag, at) => {
+    const zaman = at || Date.now();
+    const gun = new Date(zaman).toDateString();
+    const etiket = tag || null;
+    mutateStudent(classId, sid, (s) => {
+      s.points = s.points || [];
+      const ayni = s.points.find((p) => (p.tag || null) === etiket && new Date(p.at).toDateString() === gun);
+      if (ayni) {
+        ayni.d += d;
+        ayni.at = zaman; // son işlem zamanı
+        if (ayni.d === 0) s.points = s.points.filter((p) => p.id !== ayni.id);
+        return;
+      }
+      s.points.push({ id: shortId(), d, tag: etiket, at: zaman });
+    });
+  };
   const removePoint = (classId, sid, pid) =>
     mutateStudent(classId, sid, (s) => (s.points = s.points.filter((p) => p.id !== pid)));
 

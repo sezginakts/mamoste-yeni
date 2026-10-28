@@ -7,6 +7,7 @@ import { useTeacher } from '../../teacher/TeacherContext';
 import { PATTERNS, SENTENCE_BY_ID } from '../../data/patterns';
 import { studentPatternStats, studentTotals, accColor, addDays, POINT_TAGS } from '../../teacher/analytics';
 import { Header, Card, SectionTitle, Field, SmallButton, Chip, Stat, Empty, formatDate, formatTime, confirmAction, notify } from '../../teacher/ui';
+import PointsPanel from '../../teacher/PointsPanel';
 import { dayKey } from '../../utils/helpers';
 import { useRole } from '../../context/RoleContext';
 
@@ -129,31 +130,9 @@ export default function TeacherStudentScreen({ route, navigation }) {
           </Card>
         ) : null}
 
-        {/* --- Artı / eksi --- */}
-        <SectionTitle>ARTI / EKSİ</SectionTitle>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-          {POINT_TAGS.map((tg) => (
-            <Chip key={tg} small label={tg} active={tag === tg} onPress={() => setTag(tag === tg ? null : tg)} />
-          ))}
-        </View>
-        <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm }}>
-          <Pressable style={[st.big, { backgroundColor: colors.success }]} onPress={() => { t.addPoint(classId, studentId, 1, tag); setTag(null); }}>
-            <Text style={st.bigT}>＋1</Text>
-          </Pressable>
-          <Pressable style={[st.big, { backgroundColor: colors.danger }]} onPress={() => { t.addPoint(classId, studentId, -1, tag); setTag(null); }}>
-            <Text style={st.bigT}>−1</Text>
-          </Pressable>
-        </View>
-        {s.points.slice(-8).reverse().map((p) => (
-          <View key={p.id} style={[st.line, { borderColor: colors.border }]}>
-            <Text style={{ color: p.d > 0 ? colors.success : colors.danger, fontWeight: '900', width: 34 }}>{p.d > 0 ? '+1' : '−1'}</Text>
-            <Text style={{ color: colors.text, flex: 1 }}>{p.tag || '—'}</Text>
-            <Text style={{ color: colors.textFaint, fontSize: font.tiny }}>{formatTime(p.at)}</Text>
-            <Pressable onPress={() => t.removePoint(classId, studentId, p.id)} hitSlop={8} style={{ marginLeft: 10 }}>
-              <Text style={{ color: colors.textFaint }}>✕</Text>
-            </Pressable>
-          </View>
-        ))}
+        {/* --- Puan: gün seç + etiket satırlarında biriken puan --- */}
+        <SectionTitle>PUAN</SectionTitle>
+        <PointsPanel student={s} colors={colors} onAdd={(d, tg, at) => t.addPoint(classId, studentId, d, tg, at)} onRemove={(pid) => t.removePoint(classId, studentId, pid)} />
 
         {/* --- Notlar --- */}
         <SectionTitle>NOTLAR & HATIRLATICI</SectionTitle>

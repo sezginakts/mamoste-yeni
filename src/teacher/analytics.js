@@ -156,4 +156,19 @@ export function attentionItems(classes, today = dayKey()) {
 
 export const POINT_TAGS = ['Katılım', 'Ödev', 'Doğru cevap', 'Yardımlaşma', 'Hazırlıksız', 'Ödev yok', 'Dikkat'];
 
+// Bir günün puan dökümü: { toplam, etiketler: { 'Katılım': 3, ... } }
+// Aynı gün + aynı etiket tek kayıtta biriktiği için burada da tek satır olur.
+export function pointsOnDay(student, zaman) {
+  const gun = new Date(zaman || Date.now()).toDateString();
+  const etiketler = {};
+  let toplam = 0;
+  (student.points || []).forEach((p) => {
+    if (!p || !p.at || new Date(p.at).toDateString() !== gun) return;
+    const k = p.tag || 'Puan';
+    etiketler[k] = (etiketler[k] || 0) + p.d;
+    toplam += p.d;
+  });
+  return { toplam, etiketler };
+}
+
 export { ALL_SENTENCES };
