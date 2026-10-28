@@ -367,7 +367,7 @@ export default function TeacherHomeScreen({ navigation }) {
           >
             <HomeTimetable />
           </Pressable>
-          {desk.hasTimetable ? <Text style={{ color: colors.textFaint, fontSize: font.tiny, marginTop: spacing.xs }}>Tam ekran için çift dokun</Text> : null}
+          {desk.hasTimetable ? <Text style={{ color: colors.textFaint, fontSize: font.tiny, marginTop: spacing.xs }}>çift tıkla</Text> : null}
         </View>
 
         {/* ---- Kısayollar ---- */}
