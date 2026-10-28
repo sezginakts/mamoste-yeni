@@ -337,6 +337,11 @@ export default function TeacherHomeScreen({ navigation }) {
                   </View>
 
                   {/* Günler üstte */}
+                  {!saatVar ? (
+                    <Pressable onPress={() => navigation.navigate('Timetable')} hitSlop={6} style={{ marginBottom: spacing.xs }}>
+                      <Text style={{ color: colors.accent, fontSize: font.tiny, fontWeight: '800' }}>⏱️ Saatler henüz girilmemiş — saatleri ayarla ›</Text>
+                    </Pressable>
+                  ) : null}
                   <View style={[st.ttGridRow, { borderBottomColor: colors.border }]}>
                     <Text style={[st.ttSaat, { color: colors.textFaint }]}>SAAT</Text>
                     {GUN.map((g, i) => {
@@ -363,7 +368,9 @@ export default function TeacherHomeScreen({ navigation }) {
                             </>
                           ) : saatVar ? (
                             <Text style={[st.ttSaatT, { color: colors.textFaint }]}>—</Text>
-                          ) : null}
+                          ) : (
+                            <Text style={[st.ttSaatT, { color: colors.textMuted }]}>{period}.</Text>
+                          )}
                         </View>
                         {[1, 2, 3, 4, 5].map((d) => {
                           const l = en(d, period);
