@@ -1,6 +1,10 @@
 import 'react-native-gesture-handler';
+// Yazı tipi yaması EN ÖNCE: StyleSheet.create çağrılarından önce çalışmalı.
+import './src/utils/fontYamasi';
 import React, { useEffect, useRef } from 'react';
 import { View, ActivityIndicator, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { useFonts } from 'expo-font';
+import { FONT_YUKLEME, YENI_FONT_AKTIF } from './src/theme/fontAilesi';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -223,15 +227,30 @@ function RootNavigator() {
 }
 
 export default function App() {
+  // Uygulama yazı tipi (Manrope). Yüklenene kadar bekle: sistem fontuyla bir an görünüp değişmesin.
+  // Eski yazı tipine dönmek için src/theme/fontAilesi.js → YENI_FONT_AKTIF = false.
+  const [fontlarHazir] = useFonts(YENI_FONT_AKTIF ? FONT_YUKLEME : {});
+
   // En kaliteli TTS sesini açılışta önceden seç (ilk okumada gecikme olmasın).
   useEffect(() => {
     warmUpVoices();
+  }, []);
+
+  // Web: gövde yazı tipini de Manrope yap (stilsiz metinler serif'e düşmesin).
+  useEffect(() => {
+    if (YENI_FONT_AKTIF && Platform.OS === 'web' && typeof document !== 'undefined') {
+      document.body.style.fontFamily = 'Manrope_400Regular, system-ui, -apple-system, sans-serif';
+    }
   }, []);
 
   // Uygulama normalde DİKEY: yalnız tam ekran ders programı yatay kilidi açar (src/utils/orientation.js).
   useEffect(() => {
     dikeyKilitle();
   }, []);
+
+  if (!fontlarHazir) {
+    return <View style={{ flex: 1, backgroundColor: '#F1F5F9' }} />;
+  }
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

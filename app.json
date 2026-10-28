@@ -64,7 +64,8 @@
           "microphonePermission": "Ödeve video çekerken ses kaydı için mikrofon kullanılır."
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-font"
     ],
     "extra": {
       "eas": {
