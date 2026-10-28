@@ -154,28 +154,26 @@ export default function TeacherHomeScreen({ navigation }) {
             <Text style={[st.logoText, { color: colors.onAccent }]} accessibilityLabel="Okul">OKUL</Text>
           )}
           <View style={{ flex: 1 }} />
-          {/* Profil + ayarlar: koyu yarı saydam tek hap içinde beyaz çizgi simgeler. */}
-          <View style={st.tools}>
-            <Pressable onPress={() => navigation.navigate('Profile')} style={({ pressed }) => [st.tool, pressed && st.toolOn]} accessibilityLabel="Profilim" hitSlop={4}>
-              <LineIcon name="user" />
-            </Pressable>
-            <View style={st.toolLine} />
-            <Pressable onPress={() => navigation.navigate('Settings')} style={({ pressed }) => [st.tool, pressed && st.toolOn]} accessibilityLabel="Ayarlar" hitSlop={4}>
-              <LineIcon name="settings" />
-            </Pressable>
+          {/* Profil + ayarlar: koyu yarı saydam tek hap içinde beyaz çizgi simgeler.
+              Ders adı bu ikonların hemen ALTINDA sabit durur. */}
+          <View style={{ alignItems: 'flex-end' }}>
+            <View style={st.tools}>
+              <Pressable onPress={() => navigation.navigate('Profile')} style={({ pressed }) => [st.tool, pressed && st.toolOn]} accessibilityLabel="Profilim" hitSlop={4}>
+                <LineIcon name="user" />
+              </Pressable>
+              <View style={st.toolLine} />
+              <Pressable onPress={() => navigation.navigate('Settings')} style={({ pressed }) => [st.tool, pressed && st.toolOn]} accessibilityLabel="Ayarlar" hitSlop={4}>
+                <LineIcon name="settings" />
+              </Pressable>
+            </View>
+            {branch ? (
+              <Text style={[st.branchUnderIcons, { color: colors.onAccent }]} numberOfLines={1}>
+                {branch.name}
+              </Text>
+            ) : null}
           </View>
         </View>
         <Text style={[st.heroDate, { color: colors.onAccent }]}>{DAY_NAMES[now.getDay()]}, {now.getDate()} {MONTH_NAMES[now.getMonth()]}</Text>
-        {branch ? (
-          <View style={st.branchPill}>
-            <Text style={[st.branchTxt, { color: colors.onAccent }]}>{branch.name}</Text>
-          </View>
-        ) : null}
-        <View style={st.stats}>
-          <Stat icon="🏫" value={t.classes.length} label="sınıf" color={colors.onAccent} />
-          <Stat icon="👥" value={totalStudents} label="öğrenci" color={colors.onAccent} />
-          <Stat icon="📚" value={desk.hasTimetable ? todayLessons.length : '–'} label="bugün ders" color={colors.onAccent} />
-        </View>
       </View>
 
       <View style={{ paddingHorizontal: spacing.md, marginTop: -spacing.xl }}>
@@ -561,11 +559,9 @@ const st = StyleSheet.create({
   heroTop: { flexDirection: 'row', alignItems: 'center' },
   logo: { height: 34, width: Math.round((34 * 669) / 200) }, // assets/logo.png (beyaz harfler) oranı 669×200
   logoText: { fontSize: 30, fontWeight: '900', letterSpacing: 3 },
-  heroDate: { color: '#fff', fontSize: font.h2, fontWeight: '900', marginTop: spacing.md },
-  // Branş: bant zaten tema rengi; ikinci bir marka rengi çakışıyordu. Banttaki diğer cam
-  // yüzeylerle (istatistikler, profil hapı) aynı dil: yarı saydam beyaz zemin + beyaz yazı.
-  branchPill: { alignSelf: 'flex-start', backgroundColor: 'rgba(255,255,255,0.16)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.26)', borderRadius: radius.pill, paddingVertical: 4, paddingHorizontal: 12, marginTop: spacing.sm },
-  branchTxt: { color: '#FFFFFF', fontSize: font.small, fontWeight: '800', letterSpacing: 0.3 },
+  heroDate: { color: '#fff', fontSize: font.h3, fontWeight: '900', marginTop: spacing.md },
+  // Branş: profil/ayarlar ikonlarının hemen altında, sağa yaslı sabit yazı.
+  branchUnderIcons: { color: '#FFFFFF', fontSize: font.small, fontWeight: '800', letterSpacing: 0.3, marginTop: 5, maxWidth: 168, textAlign: 'right', opacity: 0.95 },
   tools: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(15,23,42,0.22)', borderRadius: radius.pill, padding: 3 },
   tool: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   toolOn: { backgroundColor: 'rgba(255,255,255,0.18)' },
