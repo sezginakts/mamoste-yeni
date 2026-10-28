@@ -345,22 +345,23 @@ export default function TeacherHomeScreen({ navigation }) {
           </Pressable>
         ) : null}
 
-        {/* ---- Haftalık ders programı (salt okunur): çift dokun → tam ekran + yatay ---- */}
-        {desk.hasTimetable ? (
-          <View style={[st.ttCard, shadow, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={st.ttHead}>
-              <Text style={[st.ttTitle, { color: colors.textMuted }]}>🗓️ HAFTALIK DERS PROGRAMI</Text>
-              <View style={{ flex: 1 }} />
-              <Pressable onPress={() => navigation.navigate('Timetable')} hitSlop={8} accessibilityLabel="Ders programını düzenle">
-                <Text style={{ color: colors.accent, fontWeight: '800', fontSize: font.small }}>Düzenle ›</Text>
-              </Pressable>
-            </View>
-            <Pressable onPress={programaDokun} accessibilityLabel="Ders programı — tam ekran için çift dokun">
-              <HomeTimetable />
+        {/* ---- Haftalık ders programı: girilmemişse de 4 satırlık boş ızgara durur; çift dokun → tam ekran ---- */}
+        <View style={[st.ttCard, shadow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={st.ttHead}>
+            <Text style={[st.ttTitle, { color: colors.textMuted }]}>🗓️ HAFTALIK DERS PROGRAMI</Text>
+            <View style={{ flex: 1 }} />
+            <Pressable onPress={() => navigation.navigate('Timetable')} hitSlop={8} accessibilityLabel="Ders programını düzenle">
+              <Text style={{ color: colors.accent, fontWeight: '800', fontSize: font.small }}>Düzenle ›</Text>
             </Pressable>
-            <Text style={{ color: colors.textFaint, fontSize: font.tiny, marginTop: spacing.xs }}>Tam ekran için çift dokun</Text>
           </View>
-        ) : null}
+          <Pressable
+            onPress={desk.hasTimetable ? programaDokun : () => navigation.navigate('Timetable')}
+            accessibilityLabel={desk.hasTimetable ? 'Ders programı — tam ekran için çift dokun' : 'Ders programını gir'}
+          >
+            <HomeTimetable />
+          </Pressable>
+          {desk.hasTimetable ? <Text style={{ color: colors.textFaint, fontSize: font.tiny, marginTop: spacing.xs }}>Tam ekran için çift dokun</Text> : null}
+        </View>
 
         {/* ---- Kısayollar ---- */}
         {/* defaultOpen: ana sayfa açıldığında kısayollar görünür başlar; kullanıcı isterse kapatır. */}

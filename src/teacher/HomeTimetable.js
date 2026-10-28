@@ -2,7 +2,7 @@
 // Günler üstte, saatler solda; günlerin saat düzeni farklıysa (iki okul) saat hücrenin içinde gösterilir.
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { font, radius } from '../theme';
+import { font, radius, timetableColorFor } from '../theme';
 import { useTheme } from '../context/ThemeContext';
 import { useDesk, weekdayOf } from './DeskContext';
 import { classColor } from '../screens/teacher/TimetableScreen';
@@ -15,7 +15,9 @@ export default function HomeTimetable({ buyuk = false }) {
   const desk = useDesk();
   const week = desk.weekLessons();
   const bugun = weekdayOf();
-  const sonDers = week.reduce((m, l) => Math.max(m, l.period), 1);
+  // Program girilmemişse bile 4 satırlık boş ızgara görünür.
+  const enSonDers = week.reduce((m, l) => Math.max(m, l.period), 0);
+  const sonDers = week.length ? Math.max(enSonDers, 1) : 4;
 
   const doluSaat = (liste) => Array.isArray(liste) && liste.some((p) => p && p.start);
   const gunSaatleri = [1, 2, 3, 4, 5].map((g) => desk.periodsFor(g));
@@ -69,17 +71,19 @@ export default function HomeTimetable({ buyuk = false }) {
             </View>
             {[1, 2, 3, 4, 5].map((d) => {
               const l = en(d, period);
-              const col = l && l.label ? classColor(l.label) : null;
+              const col = l && l.label ? timetableColorFor(l.label) : null;
+              // 5. sınıf: yalnız ders programında sarı zemin (diğer ekranlarda sınıf rengi değişmez).
+              const besMi = !!(l && l.label && /^\s*5\s*[-/.\s]/.test(l.label));
               const isToday = d === bugun;
               return (
                 <View key={d} style={[st.hucre, { minHeight: olcu.hucreY }, isToday && { backgroundColor: colors.accent + '0D' }]}>
                   {l ? (
-                    <View style={[st.kutu, { backgroundColor: col + '1F', borderColor: col + '66' }]}>
+                    <View style={[st.kutu, { backgroundColor: besMi ? '#FEF3C7' : col + '1F', borderColor: besMi ? '#F5B301' : col + '66' }]}>
                       {((!ayniSaat && l.start) || buyuk) && l.start ? (
                         <Text style={[st.kutuSaat, { color: colors.textMuted, fontSize: olcu.boxSaat }]}>{l.start}</Text>
                       ) : null}
                       <Text style={[st.kutuT, { color: colors.text, fontSize: olcu.boxT }]} numberOfLines={1}>{l.label || '—'}</Text>
-                      {l.ders ? <Text style={[st.kutuTag, { color: col, fontSize: olcu.boxTag }]}>{branchOf(l.ders).short}</Text> : null}
+                      {l.ders ? <Text style={[st.kutuTag, { color: besMi ? '#92610B' : col, fontSize: olcu.boxTag }]}>{branchOf(l.ders).short}</Text> : null}
                     </View>
                   ) : null}
                 </View>
@@ -90,6 +94,9 @@ export default function HomeTimetable({ buyuk = false }) {
       })}
       {!saatVar ? (
         <Text style={{ color: colors.textFaint, fontSize: buyuk ? 12 : 10, marginTop: 6 }}>Saatler henüz girilmemiş.</Text>
+      ) : null}
+      {!week.length ? (
+        <Text style={{ color: colors.textMuted, fontSize: buyuk ? 13 : 11, marginTop: 6 }}>Ders programı henüz girilmemiş — Düzenle › ile ekle.</Text>
       ) : null}
     </View>
   );

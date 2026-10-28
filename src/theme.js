@@ -77,7 +77,7 @@ export const classColorFor = (label) => CLASS_COLORS[classKey(label)] || gradeCo
 // Yalnız DERS PROGRAMI zemininde kullanılan renkler (ana sayfa sınıf kutusunu etkilemez):
 // şube bazlı (5C) ve düzey bazlı (2. sınıf) istisnalar.
 export const TIMETABLE_COLORS = { '5C': BRAND.fuchsia };
-export const TIMETABLE_GRADE_COLORS = { 2: BRAND.fuchsia };
+export const TIMETABLE_GRADE_COLORS = { 2: BRAND.fuchsia, 5: '#F5B301' };
 export const timetableColorFor = (label) => {
   const key = classKey(label);
   if (TIMETABLE_COLORS[key]) return TIMETABLE_COLORS[key];
