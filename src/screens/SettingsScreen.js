@@ -218,6 +218,7 @@ export default function SettingsScreen({ navigation }) {
       </View>
 
       <Text style={styles.version}>Okul · v1.0</Text>
+      <Text style={styles.author}>Sezgin AKTAŞ</Text>
     </ScrollView>
     <StatusBarCover color={colors.bg} />
     </View>
@@ -258,4 +259,5 @@ const makeStyles = (colors, shadow) => StyleSheet.create({
   adminRow: { gap: spacing.sm, marginTop: spacing.sm },
   adminBtn: { borderWidth: 1.5, borderRadius: radius.md, paddingVertical: spacing.md, paddingHorizontal: spacing.md },
   version: { color: colors.textFaint, textAlign: 'center', marginTop: spacing.lg, fontSize: font.tiny },
+  author: { color: colors.textFaint, textAlign: 'center', marginTop: 2, fontSize: font.tiny, opacity: 0.7 },
 });
