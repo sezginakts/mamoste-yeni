@@ -384,7 +384,7 @@ export default function TeacherHomeScreen({ navigation }) {
         {/* defaultOpen: ana sayfa açıldığında kısayollar görünür başlar; kullanıcı isterse kapatır. */}
         <Collapsible title="KISAYOLLAR" defaultOpen style={{ marginTop: spacing.lg }}>
         <View style={st.grid}>
-          <Tile icon="📅" tint={colors.accent} title="Yıllık plan" onPress={() => navigation.navigate('YearPlan')} />
+          <Tile icon="📁" tint={colors.second} title="Evraklar" onPress={() => navigation.navigate('Docs')} />
           <Tile icon="🏫" tint={colors.second} title="Sınıf" onPress={sinifaGit} />
           <Tile
             icon="📝"
@@ -395,7 +395,7 @@ export default function TeacherHomeScreen({ navigation }) {
           />
           <Tile icon="🖥️" tint={colors.second} title="Akıllı tahta" onPress={() => navigation.navigate('Board')} />
           <Tile icon="🎯" tint={colors.accent} title="Etkinlikler" onPress={() => navigation.navigate('Activities')} />
-          <Tile icon="📁" tint={colors.second} title="Evraklar" onPress={() => navigation.navigate('Docs')} />
+          <Tile icon="📅" tint={colors.accent} title="Yıllık plan" onPress={() => navigation.navigate('YearPlan')} />
         </View>
         </Collapsible>
 
