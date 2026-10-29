@@ -6,7 +6,7 @@ import { classColor } from './TimetableScreen';
 import { useTheme } from '../../context/ThemeContext';
 import { useTeacher } from '../../teacher/TeacherContext';
 import { PATTERNS, PATTERN_BY_ID } from '../../data/patterns';
-import { studentPatternStats, studentStanding, weakSuggestion, homeworkStatus, accColor, classPatternStats } from '../../teacher/analytics';
+import { studentPatternStats, studentEvaluation, EVAL_LEVELS, weakSuggestion, homeworkStatus, accColor, classPatternStats } from '../../teacher/analytics';
 import { Header, Card, SectionTitle, Field, SmallButton, Chip, Empty, formatDate, formatJoinCode, shareText, confirmAction, HW_DELETE_MSG } from '../../teacher/ui';
 import { hwSummary } from '../../utils/homework';
 import { dayKey } from '../../utils/helpers';
@@ -26,24 +26,31 @@ export default function TeacherClassScreen({ route, navigation }) {
   // Ekranın vurgu rengi sınıfın kendi rengi: 5 sarı, 6 mavi, 7 mercan, 8 turkuaz; 5-C fuşya.
   const col = cls ? classColor(cls.name) : colors.accent;
   const [tab, setTab] = useState(route.params.tab || 'students');
-  const [sort, setSort] = useState('no');
+  const [sort, setSort] = useState('no'); // 'no' | 'durum'
+  const [filtre, setFiltre] = useState(null); // null | 'destek' | 'takip' | 'iyi' | 'yok'
   const [rename, setRename] = useState(null);
 
+  // Değerlendirme: her öğrenci için ödev / başarı / katılım ölçütleri ve tek durum (analytics.studentEvaluation).
+  const all = useMemo(
+    () => (cls ? Object.values(cls.students).map((s) => ({ s, tot: studentEvaluation(s, cls, drills), ps: studentPatternStats(s) })) : []),
+    [cls, drills]
+  );
+  const sayilar = useMemo(() => {
+    const n = { destek: 0, takip: 0, iyi: 0, yok: 0 };
+    all.forEach((r) => (n[r.tot.durum] += 1));
+    return n;
+  }, [all]);
   const rows = useMemo(() => {
-    if (!cls) return [];
-    const r = Object.values(cls.students).map((s) => ({ s, tot: studentStanding(s, cls, drills), ps: studentPatternStats(s) }));
     const byNo = (a, b) => (parseInt(a.s.no, 10) || 0) - (parseInt(b.s.no, 10) || 0) || String(a.s.no).localeCompare(String(b.s.no));
-    // Verisi olmayan (null) en sona; eşitlikte puan, sonra numara.
-    const perfKey = (x) => (x.tot.perf == null ? 2 : x.tot.perf);
-    if (sort === 'no') r.sort(byNo);
-    // En zorlanan: başarısı en düşük önce; eşitse geciken ödevi çok olan, sonra puanı düşük olan.
-    if (sort === 'weak') r.sort((a, b) => perfKey(a) - perfKey(b) || b.tot.missing - a.tot.missing || a.tot.points - b.tot.points || byNo(a, b));
-    // Puan: artı/eksi toplamı en yüksek önce.
-    if (sort === 'points') r.sort((a, b) => b.tot.points - a.tot.points || byNo(a, b));
-    // Çalışmayan: hiç çalışmamış ya da en uzun süredir çalışmayan önce; eşitse geciken ödevi çok, puanı düşük olan.
-    if (sort === 'idle') r.sort((a, b) => (a.tot.last || 0) - (b.tot.last || 0) || b.tot.missing - a.tot.missing || a.tot.points - b.tot.points || byNo(a, b));
+    const r = all.filter((x) => !filtre || x.tot.durum === filtre);
+    if (sort === 'durum') r.sort((a, b) => EVAL_LEVELS[a.tot.durum].sira - EVAL_LEVELS[b.tot.durum].sira || a.tot.skor - b.tot.skor || byNo(a, b));
+    else r.sort(byNo);
     return r;
-  }, [cls, sort, drills]);
+  }, [all, sort, filtre]);
+  // Takip amber: temanın 'warning' rengi mercanla aynı olduğundan Destek'ten ayrılmıyordu.
+  const TAKIP = '#D97706';
+  const durumRenk = { destek: colors.danger, takip: TAKIP, iyi: colors.success, yok: colors.textFaint };
+  const seviyeRenk = (lv) => (lv === 'iyi' ? colors.success : lv === 'orta' ? TAKIP : lv === 'zayif' ? colors.danger : colors.textFaint);
 
   // Sadece içinde veri olan kalıp sütunlarını göster (20 sütun telefonda boğar).
   const cols = useMemo(() => {
@@ -78,7 +85,7 @@ export default function TeacherClassScreen({ route, navigation }) {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Header
         title={cls.name}
-        subtitle={`${rows.length} öğrenci`}
+        subtitle={`${all.length} öğrenci`}
         onBack={() => navigation.goBack()}
         right={<SmallButton title="🖥️ Tahta" onPress={() => navigation.navigate('Board')} />}
       />
@@ -117,10 +124,10 @@ export default function TeacherClassScreen({ route, navigation }) {
             ) : null}
 
             {/* Öğrencilerin evde uygulamaya yazacağı sınıf kodu */}
-            <JoinCodeCard cls={cls} total={rows.length} />
+            <JoinCodeCard cls={cls} total={all.length} />
 
             <SectionTitle right={<SmallButton title="＋ Öğrenci" onPress={openImport} />}>ÖĞRENCİLER</SectionTitle>
-            {rows.length === 0 ? (
+            {all.length === 0 ? (
               <Card onPress={openImport} style={{ alignItems: 'center', paddingVertical: spacing.lg }}>
                 <Text style={{ fontSize: 32 }}>📄</Text>
                 <Text style={{ color: colors.text, fontWeight: '800', marginTop: 6 }}>Öğrenci listesini ekle</Text>
@@ -133,24 +140,35 @@ export default function TeacherClassScreen({ route, navigation }) {
               </Card>
             ) : null}
 
-            {rows.length ? (
+            {all.length ? (
               <>
-                <View style={st.sortRow}>
-                  {[['no', 'Numara'], ['weak', 'En zorlanan'], ['points', 'Puan'], ['idle', 'Çalışmayan']].map(([k, l]) => (
-                    <Chip key={k} small label={l} active={sort === k} onPress={() => setSort(k)} />
+                {/* Sınıfın özeti: dokununca o durumdakiler süzülür */}
+                <View style={st.ozet}>
+                  {['destek', 'takip', 'iyi', 'yok'].map((k) => (
+                    <Pressable
+                      key={k}
+                      onPress={() => setFiltre(filtre === k ? null : k)}
+                      style={[st.ozetKutu, { borderColor: filtre === k ? durumRenk[k] : colors.border, backgroundColor: filtre === k ? durumRenk[k] + '1A' : colors.card }]}
+                      accessibilityLabel={`${EVAL_LEVELS[k].ad}: ${sayilar[k]} öğrenci`}
+                    >
+                      <Text style={{ color: durumRenk[k], fontSize: 20, fontWeight: '900' }}>{sayilar[k]}</Text>
+                      <Text style={{ color: colors.textMuted, fontSize: font.tiny, fontWeight: '800' }}>{EVAL_LEVELS[k].ad}</Text>
+                    </Pressable>
                   ))}
                 </View>
-                <Text style={{ color: colors.textFaint, fontSize: font.tiny, marginBottom: spacing.sm }}>{SORT_HINT[sort](drills)}</Text>
+                <View style={st.sortRow}>
+                  <Chip small label="Numara sırası" active={sort === 'no'} onPress={() => setSort('no')} />
+                  <Chip small label="Önce desteğe ihtiyacı olan" active={sort === 'durum'} onPress={() => setSort('durum')} />
+                  {filtre ? <Chip small label={`✕ ${EVAL_LEVELS[filtre].ad} süzgeci`} active onPress={() => setFiltre(null)} /> : null}
+                </View>
                 <ScrollView horizontal showsHorizontalScrollIndicator>
                   <View>
                     <View style={st.gridRow}>
                       <Text style={[st.nameCol, st.headCell, { color: colors.textMuted }]}>Öğrenci</Text>
-                      {drills ? <Text style={[st.numCol, st.headCell, { color: colors.textMuted }]}>Doğru</Text> : null}
-                      <Text style={[st.numCol, st.headCell, { color: colors.textMuted }]}>Puan</Text>
-                      {!drills ? <Text style={[st.numCol, st.headCell, { color: colors.textMuted }]}>Teslim</Text> : null}
-                      {!drills ? <Text style={[st.numCol, st.headCell, { color: colors.textMuted }]}>Ort. not</Text> : null}
-                      <Text style={[st.numCol, st.headCell, { color: colors.textMuted }]}>Geciken</Text>
-                      <Text style={[st.numCol, st.headCell, { color: colors.textMuted }]}>Son</Text>
+                      <Text style={[st.durumCol, st.headCell, { color: colors.textMuted }]}>Durum</Text>
+                      <Text style={[st.numCol, st.headCell, { color: colors.textMuted }]}>Ödev</Text>
+                      <Text style={[st.numCol, st.headCell, { color: colors.textMuted }]}>Başarı</Text>
+                      <Text style={[st.numCol, st.headCell, { color: colors.textMuted }]}>Katılım</Text>
                       {(drills ? cols : []).map((p) => (
                         <Text key={p.id} style={[st.cell, st.headCell, { color: p.color }]} numberOfLines={2}>
                           {p.name.replace(/\s+/g, '')}
@@ -163,19 +181,30 @@ export default function TeacherClassScreen({ route, navigation }) {
                           <Text style={{ color: colors.text, fontWeight: '800' }} numberOfLines={1}>
                             {t.cloudOn ? (s.joined ? '📱 ' : '◌ ') : ''}{s.no} {s.nk || s.nick || ''}
                           </Text>
+                          {tot.neden.length ? (
+                            <Text style={{ color: durumRenk[tot.durum], fontSize: 11, fontWeight: '700', marginTop: 1 }} numberOfLines={1}>
+                              {tot.neden.join(' · ')}
+                            </Text>
+                          ) : null}
                           <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
                             <MiniPM label="+" color={colors.success} onPress={() => t.addPoint(classId, s.id, 1)} />
                             <MiniPM label="−" color={colors.danger} onPress={() => t.addPoint(classId, s.id, -1)} />
                           </View>
                         </View>
-                        {drills ? <Text style={[st.numCol, { color: colors.text }]}>{tot.t ? `%${Math.round(tot.acc * 100)}` : '—'}</Text> : null}
-                        <Text style={[st.numCol, { color: tot.points > 0 ? colors.success : tot.points < 0 ? colors.danger : colors.textMuted, fontWeight: '800' }]}>
-                          {tot.points > 0 ? '+' : ''}{tot.points}
+                        <View style={st.durumCol}>
+                          <View style={[st.durumRozet, { backgroundColor: durumRenk[tot.durum] + '22', borderColor: durumRenk[tot.durum] }]}>
+                            <Text style={{ color: durumRenk[tot.durum], fontSize: 11, fontWeight: '900' }}>{EVAL_LEVELS[tot.durum].ad}</Text>
+                          </View>
+                        </View>
+                        <Text style={[st.numCol, { color: seviyeRenk(tot.olcut.odev.seviye), fontWeight: '800' }]}>
+                          {tot.olcut.odev.beklenen ? `${tot.olcut.odev.yapilan}/${tot.olcut.odev.beklenen}` : '—'}
                         </Text>
-                        {!drills ? <Text style={[st.numCol, { color: colors.textMuted }]}>{(s.submissions || []).length}</Text> : null}
-                        {!drills ? <Text style={[st.numCol, { color: colors.text }]}>{tot.perf != null ? Math.round(tot.perf * 100) : '—'}</Text> : null}
-                        <Text style={[st.numCol, { color: tot.missing ? colors.danger : colors.textMuted, fontWeight: tot.missing ? '800' : '400' }]}>{tot.missing || '—'}</Text>
-                        <Text style={[st.numCol, { color: colors.textMuted }]}>{agoLabel(tot.last)}</Text>
+                        <Text style={[st.numCol, { color: seviyeRenk(tot.olcut.basari.seviye), fontWeight: '800' }]}>
+                          {tot.olcut.basari.oran != null ? `%${Math.round(tot.olcut.basari.oran * 100)}` : '—'}
+                        </Text>
+                        <Text style={[st.numCol, { color: seviyeRenk(tot.olcut.katilim.seviye), fontWeight: '800' }]}>
+                          {tot.olcut.katilim.seviye ? `${tot.points > 0 ? '+' : ''}${tot.points}` : '—'}
+                        </Text>
                         {(drills ? cols : []).map((p) => (
                           <View key={p.id} style={[st.cell, { alignItems: 'center', justifyContent: 'center' }]}>
                             <View style={[st.dot, { backgroundColor: accColor(ps[p.id].acc, colors) }]}>
@@ -185,13 +214,14 @@ export default function TeacherClassScreen({ route, navigation }) {
                         ))}
                       </Pressable>
                     ))}
+                    {!rows.length ? <Text style={{ color: colors.textMuted, padding: spacing.md }}>Bu durumda öğrenci yok.</Text> : null}
                   </View>
                 </ScrollView>
-                {drills ? (
-                  <Text style={{ color: colors.textFaint, fontSize: font.tiny, marginTop: spacing.sm }}>
-                    Renk: 🔴 %50 altı · 🟠 %50–79 · 🟢 %80+ · gri = henüz yeterli veri yok (en az 3 cevap).
-                  </Text>
-                ) : null}
+                <Text style={{ color: colors.textFaint, fontSize: font.tiny, marginTop: spacing.sm, lineHeight: 17 }}>
+                  Durum üç ölçüte bakar ve en zayıf olanı gösterir.{'\n'}
+                  Ödev: teslim oranı (son günü geçen ödevler) · Başarı: {drills ? 'cümle doğru oranı' : 'verdiğin notların ortalaması'} — ikisinde %80+ iyi, %50–79 takip, %50 altı destek.{'\n'}
+                  Katılım: artı/eksi toplamı — +2 ve üstü iyi, −1…+1 takip, −2 ve altı destek. “—” = henüz veri yok.
+                </Text>
               </>
             ) : null}
 
@@ -339,22 +369,6 @@ function JoinCodeCard({ cls, total }) {
   );
 }
 
-// Sıralama açıklaması (öğretmen neye göre dizildiğini görsün).
-const SORT_HINT = {
-  no: () => 'Okul numarasına göre.',
-  weak: (drills) =>
-    `En düşük başarı önce (${drills ? 'cümlelerde doğru oranı' : 'görevlerde verdiğin notların ortalaması'}); eşitse geciken ödevi çok, sonra puanı düşük olan. Verisi olmayan sonda.`,
-  points: () => 'Artı/eksi puan toplamı en yüksek önce.',
-  idle: (drills) => `En uzun süredir ${drills ? 'çalışmayan ya da ödev teslim etmeyen' : 'ödev teslim etmeyen'} önce; hiç etkinliği olmayan en üstte.`,
-};
-
-// Son çalışma: bugün / dün / 5 g / hiç
-function agoLabel(ts) {
-  if (!ts) return 'hiç';
-  const d = Math.floor((Date.now() - ts) / 86400000);
-  return d <= 0 ? 'bugün' : d === 1 ? 'dün' : `${d} g`;
-}
-
 function MiniPM({ label, color, onPress }) {
   return (
     <Pressable onPress={onPress} hitSlop={6} style={[st.pm, { borderColor: color }]}>
@@ -367,6 +381,10 @@ const st = StyleSheet.create({
   tabs: { flexDirection: 'row', borderBottomWidth: StyleSheet.hairlineWidth },
   tab: { flex: 1, alignItems: 'center', paddingVertical: 12, borderBottomWidth: 3, borderBottomColor: 'transparent' },
   sortRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: spacing.sm },
+  ozet: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm },
+  ozetKutu: { flex: 1, alignItems: 'center', borderWidth: 1.5, borderRadius: radius.md, paddingVertical: 8 },
+  durumCol: { width: 70, alignItems: 'center', justifyContent: 'center' },
+  durumRozet: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
   gridRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6, borderBottomWidth: StyleSheet.hairlineWidth },
   headCell: { fontSize: 10, fontWeight: '800', textAlign: 'center' },
   nameCol: { width: 130, paddingRight: 6, textAlign: 'left' },

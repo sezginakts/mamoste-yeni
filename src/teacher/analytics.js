@@ -75,6 +75,63 @@ export function studentStanding(student, cls, drills, today = dayKey()) {
   return { ...tot, perf, missing };
 }
 
+// Öğrenci değerlendirme ölçeği: üç ölçüt, her biri iyi / orta / zayıf; durum en kötü ölçütten gelir.
+//   Ödev   : son günü geçmiş (ya da teslim edilmiş) ödevlerden teslim oranı — %80+ iyi, %50–79 orta, %50 altı zayıf
+//   Başarı : İngilizce'de cümle doğru oranı (en az MIN_ATTEMPTS cevap), diğer derslerde öğretmen notu ortalaması
+//            — %80+ iyi, %50–79 orta, %50 altı zayıf
+//   Katılım: artı/eksi puan toplamı — +2 ve üstü iyi, −1…+1 orta, −2 ve altı zayıf
+// Durum: herhangi biri zayıfsa 'destek', değilse herhangi biri ortaysa 'takip', verisi olan her ölçüt iyiyse 'iyi';
+// hiç veri yoksa 'yok'. Katılımda yalnızca 0 (hiç puan verilmemiş) veri sayılmaz.
+export const EVAL_LEVELS = {
+  destek: { ad: 'Destek', sira: 0 },
+  takip: { ad: 'Takip', sira: 1 },
+  iyi: { ad: 'İyi', sira: 2 },
+  yok: { ad: 'Veri yok', sira: 3 },
+};
+const seviye = (oran) => (oran == null ? null : oran >= 0.8 ? 'iyi' : oran >= 0.5 ? 'orta' : 'zayif');
+
+export function studentEvaluation(student, cls, drills, today = dayKey()) {
+  const tot = studentTotals(student);
+  const subs = student.submissions || [];
+  const teslim = new Set(subs.map((x) => x.h));
+  const benim = (cls.homeworks || []).filter((h) => !h.to || h.to === student.id);
+  const beklenen = benim.filter((h) => teslim.has(h.id) || (h.due && h.due < today));
+  const yapilan = beklenen.filter((h) => teslim.has(h.id)).length;
+  const odevOran = beklenen.length ? yapilan / beklenen.length : null;
+
+  let basari = null;
+  if (drills) basari = tot.t >= MIN_ATTEMPTS ? tot.acc : null;
+  else {
+    const notlar = subs.filter((x) => x.fb && x.fb.score != null).map((x) => x.fb.score);
+    basari = notlar.length ? notlar.reduce((a, b) => a + b, 0) / notlar.length / 100 : null;
+  }
+
+  const puanVar = (student.points || []).length > 0;
+  const katilim = !puanVar ? null : tot.points >= 2 ? 'iyi' : tot.points <= -2 ? 'zayif' : 'orta';
+
+  const olcut = {
+    odev: { seviye: seviye(odevOran), yapilan, beklenen: beklenen.length, eksik: beklenen.length - yapilan },
+    basari: { seviye: seviye(basari), oran: basari },
+    katilim: { seviye: katilim, puan: tot.points },
+  };
+  const hepsi = Object.values(olcut).map((o) => o.seviye).filter(Boolean);
+  const durum = !hepsi.length ? 'yok' : hepsi.includes('zayif') ? 'destek' : hepsi.includes('orta') ? 'takip' : 'iyi';
+
+  // Öğretmene neden bu durumda olduğu: en kötü ölçüt(ler) kısa cümleyle.
+  const neden = [];
+  const kotu = durum === 'destek' ? 'zayif' : durum === 'takip' ? 'orta' : null;
+  if (kotu) {
+    if (olcut.odev.seviye === kotu) neden.push(`${olcut.odev.eksik} ödev eksik`);
+    if (olcut.basari.seviye === kotu) neden.push(`başarı %${Math.round(basari * 100)}`);
+    if (olcut.katilim.seviye === kotu) neden.push(`katılım ${tot.points > 0 ? '+' : ''}${tot.points}`);
+  }
+  // Durum içinde sıralama için tek puan (düşük = daha çok ilgi gerekir).
+  const skor = [odevOran, basari, katilim == null ? null : katilim === 'iyi' ? 1 : katilim === 'orta' ? 0.65 : 0.2]
+    .filter((x) => x != null)
+    .reduce((a, b, _, arr) => a + b / arr.length, 0);
+  return { durum, olcut, neden, skor, ...tot };
+}
+
 export function classPatternStats(cls) {
   const out = {};
   PATTERNS.forEach((p) => (out[p.id] = { p: 0, f: 0, acc: null, t: 0 }));
