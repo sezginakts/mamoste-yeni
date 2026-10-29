@@ -1,14 +1,21 @@
-// Evraklar: öğretmen evrak şablonları (zümre, ŞÖK, yıllık plan, kulüp, veli toplantısı, sınıf rehberlik).
-// Liste ve .docx dosyaları tahta sitesinde: <tahtaUrl>/evrak/liste.json (yayın deposu github.com/sezginakts/mamoste-tahta).
-// Yeni / güncel şablon için uygulama derlemesi gerekmez: dosya + liste.json satırı yüklenir, öğretmen ekranı yenileyince görür.
-// İndirirken şablon cihazda öğretmenin bilgileriyle doldurulur (docFill.js).
+// Evraklar: öğretmen evrak şablonları (zümre, ŞÖK, yıllık plan, sınav, ölçme, kulüp, veli, rehberlik, sınıf).
+// Liste + .docx dosyaları tahta sitesinde: <tahtaUrl>/evrak/liste3.json → v3/<id>.docx (yayın deposu github.com/sezginakts/mamoste-tahta).
+// Şablonlar ana depoda evrak-kaynak/ + tools/evrak/sablon.mjs; `node tools/evrak/yayinla.mjs` denetleyip yayın klasörüne yazar.
+// Yeni / güncel şablon için uygulama derlemesi gerekmez.
 //
-// liste.json: { guncelleme, evraklar: [{ id, kategori, ad, donem, dosya, brans (null = herkes; branş kimliği = yalnız o branş), tarih, bos? }] }
+// liste3.json satırı: { id, kategori, ad, kisa?, grup?, donem, dosya, brans (null = herkes), tarih (şablonun güncellenme günü),
+//   gun (varsayılan evrak tarihi — evrak/takvim.js), etiketler (şablonun kullandığı), ister (['sinif'|'kulup'|'duzey']), surum: 3 }
+// İndirirken şablon cihazda doldurulur: evrak/baglam.js (veri) + evrak/motor.js (docxtemplater).
+// liste.json (eski derlemeler için donmuş, eski {OGRETMEN} biçimi → docFill.js) yalnız liste3 alınamazsa kullanılır.
 import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TAHTA_URL } from './BoardLink';
 import { fillDocx, schoolYear, trDate, OGRENCI_SAYI } from './docFill';
+import { doldur } from './evrak/motor';
+import { evrakVerisi, eksikler } from './evrak/baglam';
+import { ETIKETLER } from './evrak/sozluk';
+import { varsayilanTarih, egitimYili } from './evrak/takvim';
 
 export const CATEGORIES = [
   { id: 'zumre', icon: '👥', name: 'Zümre tutanakları' },
@@ -25,6 +32,7 @@ export const CATEGORIES = [
 const BASE = TAHTA_URL ? `${TAHTA_URL.replace(/\/?$/, '/')}evrak/` : '';
 const LIST_KEY = '@ingapp/evrak/liste';
 const SEEN_KEY = '@ingapp/evrak/gorulen';
+const DATES_KEY = '@ingapp/evrak/tarihler';
 const INFO_KEY = '@ingapp/teacher/v1/evrak-bilgi';
 
 // Liste: önce cihazdaki son kopya, sonra sunucudan güncel hali. Döner { list, seen, loading, error, refresh, markSeen }.
@@ -42,7 +50,8 @@ export function useDocList() {
     setLoading(true);
     setError(null);
     try {
-      const r = await fetch(`${BASE}liste.json?t=${Date.now()}`);
+      let r = await fetch(`${BASE}liste3.json?t=${Date.now()}`);
+      if (!r.ok) r = await fetch(`${BASE}liste.json?t=${Date.now()}`);
       if (!r.ok) throw new Error(String(r.status));
       const d = await r.json();
       setList(d.evraklar || []);
@@ -75,16 +84,73 @@ export function useDocList() {
   return { list, seen, loading, error, refresh, markSeen };
 }
 
-// Evrak bilgilerim (yalnız bu cihazda): şablonlara kendiliğinden yazılır.
-export const EMPTY_INFO = { ad: '', okul: '', il: '', ilce: '', mudur: '', mudurYrd: '', danisman: '', sinif: '', ogrenci: '' };
+// Okul bilgileri (yalnız bu cihazda): bir kez girilir, bütün evraklara yazılır.
+//   zumreler / zumreBaskanlari: branşa göre ({ [branchId]: 'Ad Soyad, Ad Soyad' })
+//   danismanlar: sınıf rehber öğretmenleri ({ '6-A': 'Ad Soyad' }; indirirken sınıf seçilince sorulur)
+//   kulup: { ad, baskan, danisman, uyeler: [{ no, ad, sinif }] } — üyeler sınıf listelerinden seçilir
+//   sinif / ogrenci / danisman: ESKİ tek alanlar (yalnız liste.json şablonları için)
+const EMPTY_KULUP = { ad: '', baskan: '', danisman: '', uyeler: [] };
+export const EMPTY_INFO = {
+  ad: '', okul: '', il: '', ilce: '', mudur: '', mudurYrd: '', rehber: '',
+  zumreler: {}, zumreBaskanlari: {}, danismanlar: {}, kulup: EMPTY_KULUP, sonSinif: '',
+  danisman: '', sinif: '', ogrenci: '',
+};
 export async function loadDocInfo() {
   try {
-    return { ...EMPTY_INFO, ...JSON.parse((await AsyncStorage.getItem(INFO_KEY)) || '{}') };
+    const d = JSON.parse((await AsyncStorage.getItem(INFO_KEY)) || '{}');
+    // Eski kayıt: kulüp adı / başkanı düz metin, üyeler "ogrenci" alanındaydı.
+    if (typeof d.kulup === 'string' || d.kulupBaskani) {
+      d.kulup = { ...EMPTY_KULUP, ad: typeof d.kulup === 'string' ? d.kulup : '', baskan: d.kulupBaskani || '' };
+      delete d.kulupBaskani;
+    }
+    return { ...EMPTY_INFO, ...d, kulup: { ...EMPTY_KULUP, ...(d.kulup || {}) } };
   } catch (e) {
     return EMPTY_INFO;
   }
 }
 export const saveDocInfo = (info) => AsyncStorage.setItem(INFO_KEY, JSON.stringify(info)).catch(() => {});
+
+// Varsayılan evrak tarihi (evrakın normalde hazırlandığı gün; kurallar evrak/takvim.js).
+export const docDefaultDate = (doc, now = new Date()) => varsayilanTarih(doc ? doc.gun : null, now);
+
+// Öğretmenin elle değiştirdiği tarihler { [doc.id]: ms } — cihazda; başka eğitim yılından kalanlar yok sayılır.
+export function useDocDates() {
+  const [dates, setDates] = useState({});
+  useEffect(() => {
+    AsyncStorage.getItem(DATES_KEY)
+      .then((s) => s && setDates(JSON.parse(s)))
+      .catch(() => {});
+  }, []);
+  const isCustom = (doc) => !!dates[doc.id] && egitimYili(new Date(dates[doc.id])) === egitimYili();
+  const dateOf = (doc) => (isCustom(doc) ? new Date(dates[doc.id]) : docDefaultDate(doc));
+  const setDate = (doc, ms) => {
+    const next = { ...dates };
+    if (ms == null) delete next[doc.id];
+    else next[doc.id] = ms;
+    setDates(next);
+    AsyncStorage.setItem(DATES_KEY, JSON.stringify(next)).catch(() => {});
+  };
+  return { dateOf, setDate, isCustom };
+}
+
+// Evrak verisinin girdisi (evrak/baglam.js → evrakVerisi). sinif / duzey indirirken seçilir (DocsScreen).
+export function evrakGirdisi(doc, info, { brans, branchId, tarih, sinif = null, duzey = null }) {
+  const ister = doc.ister || [];
+  return {
+    tarih,
+    brans,
+    profil: {
+      ad: info.ad, okul: info.okul, il: info.il, ilce: info.ilce, mudur: info.mudur, mudurYrd: info.mudurYrd, rehber: info.rehber,
+      zumre: (info.zumreler || {})[branchId] || '',
+      zumreBaskani: (info.zumreBaskanlari || {})[branchId] || '',
+    },
+    sinif: ister.includes('sinif') ? sinif : null,
+    duzey: ister.includes('duzey') ? duzey : null,
+    kulup: ister.includes('kulup') ? info.kulup : null,
+  };
+}
+// Bu evrakta boş ("……") kalacak bilgiler: [{ etiket, bilgi, yer }].
+export const evrakEksikleri = (doc, girdi) => eksikler(evrakVerisi(girdi), doc.etiketler || [], ETIKETLER);
 
 const fileName = (doc) => `${doc.ad}.docx`.replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, ' ');
 
@@ -160,17 +226,32 @@ async function saveBytes(bytes, name) {
   await paylas(hedef, name, Sharing);
 }
 
-// Şablonu indir, bilgilerle doldur, kaydet / paylaş. branchName: ör. "İngilizce".
-// extra: { sinif } — evrakta gösterilecek şube (Bilgilerim → "Sınıf / şube").
-// Öğrenci adları Bilgilerim'deki tek alandan gelir; formlardaki ad hücrelerine SIRAYLA yazılır.
-export async function downloadDoc(doc, info, branchName, extra = {}) {
-  const url = `${BASE}${String(doc.dosya).split('/').map(encodeURIComponent).join('/')}`; // alt klasör: yillik-plan/<branş>-<sınıf>.docx
-  const r = await fetch(`${url}?t=${encodeURIComponent(doc.tarih || '')}`);
+async function sablonIndir(doc) {
+  const url = `${BASE}${String(doc.dosya).split('/').map(encodeURIComponent).join('/')}`;
+  const r = await fetch(`${url}?t=${encodeURIComponent(doc.iz || doc.tarih || '')}`);
   if (!r.ok) throw new Error('Dosya indirilemedi.');
+  return r.arrayBuffer();
+}
+
+// Yeni şablon (liste3, surum 3): girdi = evrakGirdisi(...). Web'de { url, name } döner (indirme engellenirse yedek bağlantı).
+export async function downloadDocV3(doc, girdi) {
+  const bytes = doldur(await sablonIndir(doc), evrakVerisi(girdi));
+  // Dosya adında sınıf / düzey: "Gözlem formu — 6-A.docx", "İngilizce 7. sınıf yıllık planı.docx"
+  const ad = girdi.duzey
+    ? `${girdi.brans} ${girdi.duzey.duzey}. sınıf yıllık planı`
+    : girdi.sinif && girdi.sinif.ad
+      ? `${doc.ad} — ${girdi.sinif.ad}`
+      : doc.ad;
+  return saveBytes(bytes, fileName({ ad }));
+}
+
+// ESKİ şablon (liste.json, {OGRETMEN} biçimi). extra: { sinif, tarih }.
+export async function downloadDoc(doc, info, branchName, extra = {}) {
   const adlar = String((info && info.ogrenci) || '')
     .split(/[,;\n]+/)
     .map((s) => s.trim())
     .filter(Boolean);
+  const tarih = extra.tarih || new Date();
   const degerler = {
     OGRETMEN: info.ad,
     OKUL: info.okul,
@@ -180,16 +261,13 @@ export async function downloadDoc(doc, info, branchName, extra = {}) {
     MUDUR_YRD: info.mudurYrd,
     DANISMAN: info.danisman,
     BRANS: branchName,
-    TARIH: trDate(),
-    EGITIM_YILI: schoolYear(),
+    TARIH: trDate(tarih),
+    EGITIM_YILI: schoolYear(tarih),
     SINIF: extra.sinif || '',
     OGRENCILER: adlar.join(', '),
     OGRENCI: adlar[0] || '',
   };
-  // Form tablolarındaki ad hücreleri: 1..40 arası TÜM anahtarlar verilir; öğrenci yoksa boş kalır (……).
-  for (let i = 1; i <= OGRENCI_SAYI; i++) {
-    degerler[`OGRENCI${i}`] = adlar[i - 1] || '';
-  }
-  const bytes = await fillDocx(await r.arrayBuffer(), degerler);
-  return await saveBytes(bytes, fileName(doc)); // web'de { url, name } döner (indirme engellenirse yedek bağlantı)
+  for (let i = 1; i <= OGRENCI_SAYI; i++) degerler[`OGRENCI${i}`] = adlar[i - 1] || '';
+  const bytes = await fillDocx(await sablonIndir(doc), degerler);
+  return saveBytes(bytes, fileName(doc));
 }

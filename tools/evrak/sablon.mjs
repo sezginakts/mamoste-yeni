@@ -1,16 +1,17 @@
-// Evrak şablonlarını (Word .docx) TAM İÇERİKLE üretir → tahta-site/evrak/ (yayın: github.com/sezginakts/mamoste-tahta).
-// Toplantı tutanakları: gündem, gündem maddelerinin görüşülmesi, alınan kararlar, imzalar hazır; öğretmen yalnız
-// ad / okul / tarih gibi bilgileri değiştirir (uygulama indirirken yer tutucuları kendisi doldurur, teacher/docFill.js).
-// Yıllık planlar: uygulamadaki MEB 2026-2027 çerçeve planlarından (src/data/yearPlans) branş ve sınıf başına.
-// Yer tutucular: {OGRETMEN} {OKUL} {IL} {ILCE} {MUDUR} {BRANS} {TARIH} {EGITIM_YILI}
+// ÜRETİLEN evrak şablonları (Word .docx, tam içerikli): zümre, ŞÖK, veli, sınıf rehberlik, kulüp, yıllık plan.
+// Kendi başına çalışmaz: tools/evrak/yayinla.mjs çağırır (uret()), denetler ve tahta-site/evrak/v3/'e yazar.
+// Toplantı tutanakları: gündem, görüşmeler, kararlar, imzalar hazır; uygulama indirirken bilgileri doldurur
+// (src/teacher/evrak: motor.js + baglam.js; etiketler sozluk.js). Yıllık plan TEK şablon: haftalar uygulamadan gelir
+// (öğretmenin yüklediği plan, yoksa MEB çerçeve planı).
+// Etiket yazımı: {okul}, büyük harfli satırda kendiliğinden {okul|buyuk}; döngü dongu('ogrenciler', [...]); tarih {gun:AA-GG}.
+// `gun` = evrakın varsayılan tarihi (kurallar src/teacher/evrak/takvim.js başında).
 //
 // Mevzuat dayanakları (Ekim 2026 itibarıyla): MEB Okul Öncesi Eğitim ve İlköğretim Kurumları Yönetmeliği (son değişiklik
 // RG 28.07.2026/33323: en az bir proje, teslim etmeyene sıfır; 5. sınıftan kademeli Gelişim Raporu; ölçmede öğrenme
 // çıktıları esas; devamsızlığın 5-10-15. günde veliye bildirimi; bilişim araçlarının kurala aykırı kullanımı disiplin fiili),
 // MEB Ölçme ve Değerlendirme Yönetmeliği (RG 9.9.2023/32304: dönemde iki yazılı; haftalık 6+ saatlik derste il zümresi
 // kararıyla üçüncü), Türkiye Yüzyılı Maarif Modeli (2026-2027: ortaokul 5, 6, 7. sınıflar; 8. sınıf mevcut program).
-// Mevzuat değişince bu metinleri güncelle ve yeniden üret: node tools/evrak/sablon.mjs
-import fs from 'fs';
+// Mevzuat değişince bu metinleri güncelle ve yeniden üret: node tools/evrak/yayinla.mjs
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'node:module';
@@ -18,28 +19,21 @@ import { createRequire } from 'node:module';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const require = createRequire(import.meta.url);
 const JSZip = require(path.join(ROOT, 'node_modules/jszip'));
-const OUT = path.join(ROOT, 'tahta-site/evrak');
-const BRANCH_NAMES = {
-  ingilizce: 'İngilizce',
-  'teknoloji-tasarim': 'Teknoloji ve Tasarım',
-  turkce: 'Türkçe',
-  matematik: 'Matematik',
-  fen: 'Fen Bilimleri',
-  sosyal: 'Sosyal Bilgiler',
-  inkilap: 'T.C. İnkılap Tarihi ve Atatürkçülük',
-  din: 'Din Kültürü ve Ahlak Bilgisi',
-  gorsel: 'Görsel Sanatlar',
-  muzik: 'Müzik',
-  beden: 'Beden Eğitimi ve Spor',
-  bilisim: 'Bilişim Teknolojileri ve Yazılım',
-};
 
 // ---------- docx yardımcıları ----------
 const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const run = (t, { b, size, i } = {}) =>
   `<w:r><w:rPr>${b ? '<w:b/>' : ''}${i ? '<w:i/>' : ''}${size ? `<w:sz w:val="${size * 2}"/>` : ''}</w:rPr><w:t xml:space="preserve">${esc(t)}</w:t></w:r>`;
+// Tamamen büyük harfli satırdaki etikete |buyuk eklenir ("{ilce} KAYMAKAMLIĞI" → "ÇANKAYA KAYMAKAMLIĞI").
+const ETIKET_RE = /\{([a-z_]+)\}/g;
+const buyukEtiket = (t) => {
+  const geri = String(t).replace(/\{[^{}]*\}/g, '');
+  return /\p{L}/u.test(geri) && geri === geri.toLocaleUpperCase('tr') ? String(t).replace(ETIKET_RE, '{$1|buyuk}') : t;
+};
 const p = (t, o = {}) =>
-  `<w:p><w:pPr>${o.center ? '<w:jc w:val="center"/>' : o.justify ? '<w:jc w:val="both"/>' : ''}<w:spacing w:after="${o.after ?? 100}"/>${o.indent ? `<w:ind w:left="${o.indent}" w:hanging="${o.hanging || 0}"/>` : ''}</w:pPr>${t ? run(t, o) : ''}</w:p>`;
+  `<w:p><w:pPr>${o.center ? '<w:jc w:val="center"/>' : o.justify ? '<w:jc w:val="both"/>' : ''}<w:spacing w:after="${o.after ?? 100}"/>${o.indent ? `<w:ind w:left="${o.indent}" w:hanging="${o.hanging || 0}"/>` : ''}</w:pPr>${t ? run(buyukEtiket(t), o) : ''}</w:p>`;
+// Döngü satırı: tablo satırı listedeki her kayıt için çoğalır ({#ad}…{/ad} ilk ve son hücrede).
+const dongu = (ad, hucreler) => hucreler.map((h, i) => `${i === 0 ? `{#${ad}}` : ''}${h}${i === hucreler.length - 1 ? `{/${ad}}` : ''}`);
 // "1. Başlık: metin" gibi başı kalın paragraf
 const pLead = (lead, text, o = {}) =>
   `<w:p><w:pPr><w:jc w:val="both"/><w:spacing w:after="${o.after ?? 120}"/></w:pPr>${run(lead, { b: true, size: o.size })}${run(text, { size: o.size })}</w:p>`;
@@ -66,8 +60,8 @@ const section = (t) => p(t, { b: true, after: 120 });
 
 const head = (title) =>
   p('T.C.', { center: true, b: true, after: 0 }) +
-  p('{ILCE} KAYMAKAMLIĞI', { center: true, b: true, after: 0 }) +
-  p('{OKUL} MÜDÜRLÜĞÜ', { center: true, b: true, after: 240 }) +
+  p('{ilce} KAYMAKAMLIĞI', { center: true, b: true, after: 0 }) +
+  p('{okul} MÜDÜRLÜĞÜ', { center: true, b: true, after: 240 }) +
   p(title, { center: true, b: true, size: 12, after: 240 });
 
 const infoTable = (rows) => table(rows, [3000, 6600], { head: false });
@@ -80,10 +74,7 @@ const sign = {
     table(
       [
         ['Adı Soyadı', 'Branşı', 'İmza'],
-        ['{OGRETMEN}', '{BRANS} Öğretmeni', ''],
-        ['', '{BRANS} Öğretmeni', ''],
-        ['', '{BRANS} Öğretmeni', ''],
-        ['', '{BRANS} Öğretmeni', ''],
+        dongu('zumre', ['{ad}', '{brans} Öğretmeni', '']), // öğretmen + Okul bilgileri'ndeki zümre öğretmenleri
       ],
       [3800, 3800, 2000]
     ) +
@@ -91,7 +82,7 @@ const sign = {
     table(
       [
         ['Zümre Başkanı', 'UYGUNDUR'],
-        ['……\n{BRANS} Öğretmeni', '{TARIH}\n{MUDUR}\nOkul Müdürü'],
+        ['{zumre_baskani}\n{brans} Öğretmeni', '{tarih}\n{mudur}\nOkul Müdürü'],
       ],
       [4800, 4800]
     ),
@@ -109,7 +100,7 @@ const sign = {
     table(
       [
         ['Sınıf Rehber Öğretmeni', 'UYGUNDUR'],
-        ['……', '{TARIH}\n{MUDUR}\nOkul Müdürü'],
+        ['{danisman}', '{tarih}\n{mudur}\nOkul Müdürü'],
       ],
       [4800, 4800]
     ),
@@ -118,7 +109,7 @@ const sign = {
     table(
       [
         [who, 'UYGUNDUR'],
-        ['{OGRETMEN}', '{TARIH}\n{MUDUR}\nOkul Müdürü'],
+        ['{danisman}', '{tarih}\n{mudur}\nOkul Müdürü'],
       ],
       [4800, 4800]
     ),
@@ -126,11 +117,13 @@ const sign = {
     p('') +
     table(
       [
-        ['Kulüp Başkanı', 'Danışman Öğretmen', 'UYGUNDUR'],
-        ['……', '{OGRETMEN}', '{TARIH}\n{MUDUR}\nOkul Müdürü'],
+        ['Kulüp Başkanı', 'Danışman Öğretmen', 'Müdür Yardımcısı', 'UYGUNDUR'],
+        ['{kulup_baskani}', '{kulup_danisman}', '{mudur_yrd}', '{tarih}\n{mudur}\nOkul Müdürü'],
       ],
-      [3200, 3200, 3200]
+      [2400, 2400, 2400, 2400]
     ),
+  // Kulüp toplantıları: katılan üyeler (Kulübüm'deki üye listesi) + imzalar
+  kulupToplanti: () => p('') + section('TOPLANTIYA KATILAN ÜYELER') + uyeTablosu() + sign.kulup(),
 };
 
 // Toplantı tutanağı: gündem maddeleri, her maddenin görüşülmesi, kararlar.
@@ -151,19 +144,20 @@ function meeting({ title, info, items, kararlar, imza, katilanlar = true }) {
   );
 }
 
-const MEETING_INFO = (extra = []) => [['Toplantı tarihi', '{TARIH}'], ['Toplantı saati', '……'], ['Toplantı yeri', '……'], ...extra];
+const MEETING_INFO = (extra = []) => [['Toplantı tarihi', '{tarih}'], ['Toplantı saati', '……'], ['Toplantı yeri', '……'], ...extra];
 const PROGRAM =
   'Türkiye Yüzyılı Maarif Modeli öğretim programları 2026-2027 eğitim-öğretim yılında ortaokul 5, 6 ve 7. sınıflarda uygulanmakta, 8. sınıflarda ise mevcut öğretim programı sürdürülmektedir.';
 
 // ---------- Zümre ----------
 const ZUMRE_BASI = {
   id: 'zumre-yil-basi',
+  gun: '09-08', // eylül mesleki çalışma
   kategori: 'zumre',
   ad: 'Zümre öğretmenler kurulu tutanağı — yıl başı',
   donem: 'Eylül · eğitim-öğretim yılı başı',
   body: () =>
     meeting({
-      title: '{EGITIM_YILI} EĞİTİM-ÖĞRETİM YILI {BRANS} ZÜMRE ÖĞRETMENLER KURULU YIL BAŞI TOPLANTI TUTANAĞI',
+      title: '{egitim_yili} EĞİTİM-ÖĞRETİM YILI {brans} ZÜMRE ÖĞRETMENLER KURULU YIL BAŞI TOPLANTI TUTANAĞI',
       info: MEETING_INFO(),
       imza: 'zumre',
       items: [
@@ -198,12 +192,13 @@ const ZUMRE_BASI = {
 
 const ZUMRE_ORTA = {
   id: 'zumre-2-donem-basi',
+  gun: '02-03', // yarıyıl mesleki çalışma
   kategori: 'zumre',
   ad: 'Zümre öğretmenler kurulu tutanağı — 2. dönem başı',
   donem: 'Şubat · ikinci dönem başı',
   body: () =>
     meeting({
-      title: '{EGITIM_YILI} EĞİTİM-ÖĞRETİM YILI {BRANS} ZÜMRE ÖĞRETMENLER KURULU İKİNCİ DÖNEM BAŞI TOPLANTI TUTANAĞI',
+      title: '{egitim_yili} EĞİTİM-ÖĞRETİM YILI {brans} ZÜMRE ÖĞRETMENLER KURULU İKİNCİ DÖNEM BAŞI TOPLANTI TUTANAĞI',
       info: MEETING_INFO(),
       imza: 'zumre',
       items: [
@@ -230,12 +225,13 @@ const ZUMRE_ORTA = {
 
 const ZUMRE_SONU = {
   id: 'zumre-yil-sonu',
+  gun: '06-28', // haziran mesleki çalışma
   kategori: 'zumre',
   ad: 'Zümre öğretmenler kurulu tutanağı — yıl sonu',
   donem: 'Haziran · eğitim-öğretim yılı sonu',
   body: () =>
     meeting({
-      title: '{EGITIM_YILI} EĞİTİM-ÖĞRETİM YILI {BRANS} ZÜMRE ÖĞRETMENLER KURULU YIL SONU TOPLANTI TUTANAĞI',
+      title: '{egitim_yili} EĞİTİM-ÖĞRETİM YILI {brans} ZÜMRE ÖĞRETMENLER KURULU YIL SONU TOPLANTI TUTANAĞI',
       info: MEETING_INFO(),
       imza: 'zumre',
       items: [
@@ -260,15 +256,16 @@ const ZUMRE_SONU = {
 };
 
 // ---------- ŞÖK ----------
-const SOK_INFO = MEETING_INFO([['Sınıf / Şube', '……'], ['Sınıf rehber öğretmeni', '……']]);
+const SOK_INFO = MEETING_INFO([['Sınıf / Şube', '{sinif}'], ['Sınıf rehber öğretmeni', '{danisman}'], ['Öğrenci sayısı', '{ogrenci_sayisi}']]);
 const SOK_BASI = {
   id: 'sok-donem-basi',
+  gun: ['09-25', '02-12'], // iki dönemin ilk haftaları
   kategori: 'sok',
   ad: 'Şube öğretmenler kurulu (ŞÖK) tutanağı — dönem başı',
   donem: 'Dönem başı',
   body: () =>
     meeting({
-      title: '{EGITIM_YILI} EĞİTİM-ÖĞRETİM YILI ŞUBE ÖĞRETMENLER KURULU TOPLANTI TUTANAĞI',
+      title: '{egitim_yili} EĞİTİM-ÖĞRETİM YILI ŞUBE ÖĞRETMENLER KURULU TOPLANTI TUTANAĞI',
       info: SOK_INFO,
       imza: 'sok',
       items: [
@@ -295,12 +292,13 @@ const SOK_BASI = {
 
 const SOK_SONU = {
   id: 'sok-donem-sonu',
+  gun: ['@donem1_sonu-5', '@ders_sonu-5'], // karneden önceki hafta
   kategori: 'sok',
   ad: 'Şube öğretmenler kurulu (ŞÖK) tutanağı — dönem sonu',
   donem: 'Dönem sonu (teşekkür-takdir)',
   body: () =>
     meeting({
-      title: '{EGITIM_YILI} EĞİTİM-ÖĞRETİM YILI ŞUBE ÖĞRETMENLER KURULU DÖNEM SONU TOPLANTI TUTANAĞI',
+      title: '{egitim_yili} EĞİTİM-ÖĞRETİM YILI ŞUBE ÖĞRETMENLER KURULU DÖNEM SONU TOPLANTI TUTANAĞI',
       info: SOK_INFO,
       imza: 'sok',
       items: [
@@ -324,20 +322,21 @@ const SOK_SONU = {
 };
 
 // ---------- Veli toplantısı ----------
-const VELI_INFO = MEETING_INFO([['Sınıf / Şube', '……'], ['Sınıf rehber öğretmeni', '{OGRETMEN}'], ['Katılan veli sayısı', '……']]);
+const VELI_INFO = MEETING_INFO([['Sınıf / Şube', '{sinif}'], ['Sınıf rehber öğretmeni', '{danisman}'], ['Öğrenci sayısı', '{ogrenci_sayisi}'], ['Katılan veli sayısı', '……']]);
 const veliSign = () =>
   p('') +
   section('KATILAN VELİLER') +
-  table([['Öğrencinin adı soyadı', 'Velinin adı soyadı', 'İmza'], ...Array.from({ length: 15 }, () => ['', '', ''])], [3700, 3700, 2200]) +
+  table([['No', 'Öğrencinin adı soyadı', 'Velinin adı soyadı', 'İmza'], dongu('ogrenciler', ['{no}', '{ad}', '', ''])], [900, 3400, 3300, 2000]) +
   sign.rehber();
 const VELI_1 = {
   id: 'veli-1-donem',
+  gun: '10-09',
   kategori: 'veli',
   ad: 'Veli toplantısı tutanağı — 1. dönem',
   donem: 'Birinci dönem',
   body: () =>
     meeting({
-      title: '{EGITIM_YILI} EĞİTİM-ÖĞRETİM YILI BİRİNCİ DÖNEM VELİ TOPLANTISI TUTANAĞI',
+      title: '{egitim_yili} EĞİTİM-ÖĞRETİM YILI BİRİNCİ DÖNEM VELİ TOPLANTISI TUTANAĞI',
       info: VELI_INFO,
       imza: 'rehber',
       katilanlar: false,
@@ -364,12 +363,13 @@ const VELI_1 = {
 };
 const VELI_2 = {
   id: 'veli-2-donem',
+  gun: '02-19',
   kategori: 'veli',
   ad: 'Veli toplantısı tutanağı — 2. dönem',
   donem: 'İkinci dönem',
   body: () =>
     meeting({
-      title: '{EGITIM_YILI} EĞİTİM-ÖĞRETİM YILI İKİNCİ DÖNEM VELİ TOPLANTISI TUTANAĞI',
+      title: '{egitim_yili} EĞİTİM-ÖĞRETİM YILI İKİNCİ DÖNEM VELİ TOPLANTISI TUTANAĞI',
       info: VELI_INFO,
       imza: 'rehber',
       katilanlar: false,
@@ -391,61 +391,90 @@ const VELI_2 = {
 };
 
 // ---------- Kulüp ----------
-const MONTHS = ['EYLÜL', 'EKİM', 'KASIM', 'ARALIK', 'OCAK', 'ŞUBAT', 'MART', 'NİSAN', 'MAYIS', 'HAZİRAN'];
+// Kulüp bilgileri ve üyeler Evraklar → Kulübüm'den (üyeler sınıf listelerinden seçilir); danışman boşsa öğretmenin adı.
+const uyeTablosu = (son = 'İmza') => table([['S.No', 'Adı Soyadı', 'Sınıfı / No', son], dongu('uyeler', ['{sira}', '{ad}', '{sinif} {no}', ''])], [800, 4800, 1900, 2100]);
+const KULUP_INFO = (extra = []) =>
+  infoTable([['Kulüp adı', '{kulup} Kulübü'], ['Danışman öğretmen', '{kulup_danisman}'], ['Kulüp başkanı', '{kulup_baskani}'], ['Üye sayısı', '{uye_sayisi}'], ...extra]);
+const KULUP_DAYANAK = 'Millî Eğitim Bakanlığı Eğitim Kurumları Sosyal Etkinlikler Yönetmeliği';
+
+// Yıllık plan, aylık raporlar ve dönem / yıl sonu raporları aynı aylık çalışmalardan beslenir.
+const KULUP_AYLAR = [
+  { ay: 'Eylül', no: '09', is: 'Kulübün tanıtılması, üyelerin belirlenmesi. Sene başı genel kurul toplantısı; kulüp başkanı ve yönetim kurulunun seçilmesi, kulüp tüzüğünün kabulü.', not: 'Üye listesi e-Okul’a işlenir.' },
+  { ay: 'Ekim', no: '10', is: 'Yıllık çalışma planının üyelerle birlikte hazırlanması. 29 Ekim Cumhuriyet Bayramı etkinliklerine katılım.', not: 'Görev dağılımı yapılır.' },
+  { ay: 'Kasım', no: '11', is: '10 Kasım Atatürk’ü Anma Haftası etkinliklerine katkı. 24 Kasım Öğretmenler Günü için çalışma.', not: 'Pano / sunum hazırlanır.' },
+  { ay: 'Aralık', no: '12', is: 'Kulüp alanına yönelik araştırma ve sunum çalışmaları. Okul içi duyuru ve pano düzenlenmesi.', not: '' },
+  { ay: 'Ocak', no: '01', is: 'Birinci dönem çalışmalarının değerlendirilmesi; birinci dönem sonu raporunun hazırlanması.', not: 'Dönem değerlendirme toplantısı.' },
+  { ay: 'Şubat', no: '02', is: 'İkinci dönem başı toplantısı; ikinci dönem çalışma takviminin belirlenmesi. Kulüp alanına yönelik proje veya etkinlik hazırlığı.', not: '' },
+  { ay: 'Mart', no: '03', is: '12 Mart İstiklal Marşı’nın Kabulü ve 18 Mart Çanakkale Zaferi etkinliklerine katkı.', not: '' },
+  { ay: 'Nisan', no: '04', is: '23 Nisan Ulusal Egemenlik ve Çocuk Bayramı etkinliklerine katılım. Okul dışı gezi / gözlem etkinliği (veli izinleri alınarak).', not: 'Veli izin belgesi.' },
+  { ay: 'Mayıs', no: '05', is: '19 Mayıs Atatürk’ü Anma, Gençlik ve Spor Bayramı etkinliklerine katılım. Yıl sonu sergi / gösteri hazırlığı.', not: '' },
+  { ay: 'Haziran', no: '06', is: 'Sene sonu genel kurul toplantısı; yıllık çalışmaların değerlendirilmesi ve yıl sonu faaliyet raporunun hazırlanması.', not: 'Rapor okul yönetimine verilir.' },
+];
+// Yapılan etkinlikler (raporların TARİH | ETKİNLİK | KATILAN tablosu): {gun:…} uygulamada evrakın eğitim yılına göre tarihe
+// döner; gün tatile / hafta sonuna denk gelirse takvim.js önceki ders gününe çeker (29 Ekim → 28 Ekim, 12 Mart ara tatil → önceki
+// cuma, 19 Mayıs bayram → önceki ders günü). Öğretmen Word'de düzeltir.
+const KULUP_ETK = {
+  '09': [['09-25', 'Sene başı genel kurul toplantısı yapıldı; kulüp başkanı, yönetim ve denetleme kurulu seçildi, kulüp tüzüğü kabul edildi.']],
+  '10': [['10-02', 'Yıllık çalışma planı üyelerle birlikte hazırlandı, görev dağılımı yapıldı.'], ['10-29', '29 Ekim Cumhuriyet Bayramı etkinliklerine katılındı, kulüp panosu hazırlandı.']],
+  '11': [['11-10', '10 Kasım Atatürk’ü Anma Haftası programına katkı sağlandı.'], ['11-24', '24 Kasım Öğretmenler Günü için etkinlik hazırlandı.']],
+  '12': [['12-11', 'Kulüp alanına yönelik araştırma yapıldı, sonuçlar üyelere sunuldu.'], ['12-25', 'Okul içi duyurular hazırlandı, kulüp panosu güncellendi.']],
+  '01': [['@donem1_sonu-5', 'Birinci dönem çalışmaları değerlendirme toplantısında gözden geçirildi.'], ['@donem1_sonu-2', 'Birinci dönem sonu raporu hazırlandı.']],
+  '02': [['@donem2_basi+4', 'İkinci dönem başı toplantısı yapıldı, ikinci dönem çalışma takvimi belirlendi.'], ['02-26', 'Kulüp alanına yönelik proje / etkinlik hazırlığına başlandı.']],
+  '03': [['03-12', '12 Mart İstiklal Marşı’nın Kabulü etkinliklerine katkı sağlandı.'], ['03-18', '18 Mart Çanakkale Zaferi anma programına katılındı.']],
+  '04': [['04-16', 'Veli izinleri alınarak okul dışı gezi / gözlem etkinliği yapıldı.'], ['04-23', '23 Nisan Ulusal Egemenlik ve Çocuk Bayramı etkinliklerine katılındı.']],
+  '05': [['05-19', '19 Mayıs Atatürk’ü Anma, Gençlik ve Spor Bayramı etkinliklerine katılındı.'], ['05-28', 'Yıl sonu sergi / gösterisi düzenlendi.']],
+  '06': [['@ders_sonu-10', 'Sene sonu genel kurul toplantısı yapıldı, yıllık çalışmalar değerlendirildi.'], ['@ders_sonu-5', 'Yıl sonu faaliyet raporu hazırlandı.']],
+};
+const etkSatirlari = (aylar) => aylar.flatMap((m) => KULUP_ETK[m.no].map(([g, t]) => [`{gun:${g}}`, t, '{uye_sayisi} üye']));
+const GUCLUK = 'Ders saatleri dışında bütün üyelerin katılabileceği ortak toplantı saati bulmakta zaman zaman güçlük yaşanmış; okul programının yoğun olduğu haftalarda bazı çalışmalar ertelenerek sonraki haftalarda tamamlanmıştır.';
+const buyuk = (t) => t.toLocaleUpperCase('tr');
+
 const KULUP_PLAN = {
   id: 'kulup-yillik-plan',
   kategori: 'kulup',
   ad: 'Kulüp yıllık çalışma planı',
-  donem: 'Eğitim-öğretim yılı',
+  kisa: 'Yıllık Plan',
+  donem: 'Eylül sonu · sene başı toplantısından sonra',
+  gun: '10-02',
   body: () =>
-    head('{EGITIM_YILI} EĞİTİM-ÖĞRETİM YILI …… KULÜBÜ YILLIK ÇALIŞMA PLANI') +
-    infoTable([
-      ['Kulüp adı', '……'],
-      ['Danışman öğretmen', '{OGRETMEN}'],
-      ['Kulüp başkanı', '……'],
-      ['Üye sayısı', '……'],
-    ]) +
+    head('{egitim_yili} EĞİTİM-ÖĞRETİM YILI {kulup} KULÜBÜ YILLIK ÇALIŞMA PLANI') +
+    KULUP_INFO() +
     p('') +
-    p('Plan, Millî Eğitim Bakanlığı Eğitim Kurumları Sosyal Etkinlikler Yönetmeliği esas alınarak hazırlanmıştır. Kulüp çalışmaları öğrencilerin ilgi ve yeteneklerini geliştirmeyi, iş birliği, sorumluluk ve gönüllülük bilinci kazandırmayı amaçlar.', { justify: true, i: true }) +
+    p(`Plan, ${KULUP_DAYANAK} esas alınarak hazırlanmıştır. Kulüp çalışmaları öğrencilerin ilgi ve yeteneklerini geliştirmeyi, iş birliği, sorumluluk ve gönüllülük bilinci kazandırmayı amaçlar.`, { justify: true, i: true }) +
     table(
-      [
-        ['AY', 'YAPILACAK ÇALIŞMALAR', 'AÇIKLAMA'],
-        ['EYLÜL', 'Kulübün tanıtılması, üyelerin belirlenmesi. İlk genel kurul toplantısı; kulüp başkanı ve yönetim kurulunun seçilmesi.', 'Üye listesi e-Okul’a işlenir.'],
-        ['EKİM', 'Yıllık çalışma planının üyelerle birlikte hazırlanması. 29 Ekim Cumhuriyet Bayramı etkinliklerine katılım.', 'Görev dağılımı yapılır.'],
-        ['KASIM', '10 Kasım Atatürk’ü Anma Haftası etkinliklerine katkı. 24 Kasım Öğretmenler Günü için çalışma.', 'Pano / sunum hazırlanır.'],
-        ['ARALIK', 'Kulüp alanına yönelik araştırma ve sunum çalışmaları. Okul içi duyuru ve pano düzenlenmesi.', ''],
-        ['OCAK', 'Birinci dönem çalışmalarının değerlendirilmesi; dönem sonu raporunun hazırlanması.', 'Dönem değerlendirme toplantısı.'],
-        ['ŞUBAT', 'İkinci dönem çalışma takviminin belirlenmesi. Kulüp alanına yönelik proje veya etkinlik hazırlığı.', ''],
-        ['MART', '12 Mart İstiklal Marşı’nın Kabulü ve 18 Mart Çanakkale Zaferi etkinliklerine katkı.', ''],
-        ['NİSAN', '23 Nisan Ulusal Egemenlik ve Çocuk Bayramı etkinliklerine katılım. Okul dışı gezi / gözlem etkinliği (izinler alınarak).', ''],
-        ['MAYIS', '19 Mayıs Atatürk’ü Anma, Gençlik ve Spor Bayramı etkinliklerine katılım. Yıl sonu sergi / gösteri hazırlığı.', ''],
-        ['HAZİRAN', 'Yıl sonu genel kurul toplantısı; yıllık çalışmaların değerlendirilmesi ve faaliyet raporunun hazırlanması.', 'Rapor okul yönetimine verilir.'],
-      ],
-      [1300, 5600, 2700]
+      [['AY', 'TARİH', 'YAPILACAK ÇALIŞMALAR', 'AÇIKLAMA'], ...KULUP_AYLAR.map((m) => [buyuk(m.ay), KULUP_ETK[m.no].map(([g]) => `{gun:${g}}`).join('\n'), m.is, m.not])],
+      [1200, 1300, 4800, 2300]
     ) +
+    p('') +
+    section('KULÜP ÜYELERİ') +
+    uyeTablosu('Görevi') +
     sign.kulup(),
 };
 
 const KULUP_ILK = {
   id: 'kulup-ilk-toplanti',
   kategori: 'kulup',
-  ad: 'Kulüp ilk genel kurul toplantı tutanağı',
-  donem: 'Eylül · yıl başı',
+  ad: 'Kulüp sene başı toplantı tutanağı',
+  kisa: 'Sene Başı Toplantısı',
+  donem: 'Eylül · ilk genel kurul',
+  gun: '09-25',
   body: () =>
     meeting({
-      title: '{EGITIM_YILI} EĞİTİM-ÖĞRETİM YILI …… KULÜBÜ İLK GENEL KURUL TOPLANTI TUTANAĞI',
-      info: MEETING_INFO([['Danışman öğretmen', '{OGRETMEN}']]),
-      imza: 'kulup',
+      title: '{egitim_yili} EĞİTİM-ÖĞRETİM YILI {kulup} KULÜBÜ SENE BAŞI GENEL KURUL TOPLANTI TUTANAĞI',
+      info: MEETING_INFO([['Kulüp adı', '{kulup} Kulübü'], ['Danışman öğretmen', '{kulup_danisman}']]),
+      imza: 'kulupToplanti',
       items: [
         ['Açılış ve yoklama', 'Toplantı danışman öğretmenin açılış konuşmasıyla başladı, kulüp üyelerinin yoklaması yapıldı.'],
-        ['Kulübün amacı ve çalışma alanının tanıtılması', 'Danışman öğretmen kulübün amacını, çalışma alanını ve üyelerden beklenen sorumlulukları anlattı. Sosyal etkinliklerin öğrencilerin ilgi ve yeteneklerini geliştirmeye, iş birliği ve gönüllülük bilinci kazandırmaya yönelik olduğu belirtildi.'],
-        ['Kulüp başkanı ve yönetim kurulunun seçimi', 'Üyeler arasından yapılan seçimle kulüp başkanı …… , başkan yardımcısı …… , sekreter …… olarak belirlendi.'],
+        ['Kulübün amacı ve çalışma alanının tanıtılması', `Danışman öğretmen kulübün amacını, çalışma alanını ve üyelerden beklenen sorumlulukları anlattı. ${KULUP_DAYANAK} çerçevesinde sosyal etkinliklerin öğrencilerin ilgi ve yeteneklerini geliştirmeye, iş birliği ve gönüllülük bilinci kazandırmaya yönelik olduğu belirtildi.`],
+        ['Kulüp başkanı ve yönetim kurulunun seçimi', 'Üyeler arasından yapılan seçimle kulüp başkanlığına {kulup_baskani} seçildi; başkan yardımcısı …… , sekreter …… olarak belirlendi. Denetleme kurulu üyeleri …… , …… ve …… oldu.'],
+        ['Kulüp tüzüğünün kabulü', 'Kulüp tüzüğü okundu, maddeler üzerinde görüşüldü ve oy birliğiyle kabul edildi.'],
         ['Yıllık çalışma planının hazırlanması', 'Üyelerin önerileri alınarak aylara göre yapılacak etkinlikler belirlendi; belirli gün ve haftalara katkı sağlanmasına karar verildi.'],
         ['Görev dağılımı', 'Etkinliklerde görev alacak öğrenciler belirlendi ve görevler paylaştırıldı.'],
         ['Dilek ve temenniler', 'Yeni dönemin verimli geçmesi dileğiyle toplantı sona erdi.'],
       ],
       kararlar: [
-        'Kulüp başkanı ve yönetim kurulu seçilmiştir.',
+        'Kulüp başkanı, yönetim kurulu ve denetleme kurulu seçilmiştir.',
+        'Kulüp tüzüğü kabul edilmiştir.',
         'Yıllık çalışma planı üyelerin önerileri doğrultusunda hazırlanacak ve okul yönetimine sunulacaktır.',
         'Kulüp ayda en az bir kez toplanarak çalışmaları değerlendirecektir.',
         'Etkinliklerde görev dağılımına uygun hareket edilecektir.',
@@ -453,44 +482,223 @@ const KULUP_ILK = {
     }),
 };
 
+const KULUP_ORTA = {
+  id: 'kulup-2-donem-basi',
+  kategori: 'kulup',
+  ad: 'Kulüp ikinci dönem başı toplantı tutanağı',
+  kisa: 'İkinci Dönem Başı Toplantısı',
+  donem: 'Şubat · ikinci dönemin ilk haftası',
+  gun: '@donem2_basi+4',
+  body: () =>
+    meeting({
+      title: '{egitim_yili} EĞİTİM-ÖĞRETİM YILI {kulup} KULÜBÜ İKİNCİ DÖNEM BAŞI TOPLANTI TUTANAĞI',
+      info: MEETING_INFO([['Kulüp adı', '{kulup} Kulübü'], ['Danışman öğretmen', '{kulup_danisman}']]),
+      imza: 'kulupToplanti',
+      items: [
+        ['Açılış ve yoklama', 'Toplantı danışman öğretmenin açılış konuşmasıyla başladı, kulüp üyelerinin yoklaması yapıldı.'],
+        ['Birinci dönem çalışmalarının değerlendirilmesi', 'Yıllık çalışma planında birinci dönem için belirlenen etkinlikler gözden geçirildi. Belirli gün ve haftalara katkı sağlandığı, planlanan çalışmaların büyük bölümünün yapıldığı; yapılamayanların ikinci dönemde tamamlanacağı belirtildi.'],
+        ['Yönetim kurulunda değişiklik', 'Yönetim kurulunun görevine devam etmesine / ayrılan üyelerin yerine yeni üye seçilmesine karar verildi.'],
+        ['İkinci dönem çalışma takvimi', 'İkinci dönemde 12 Mart İstiklal Marşı’nın Kabulü, 18 Mart Çanakkale Zaferi, 23 Nisan Ulusal Egemenlik ve Çocuk Bayramı ile 19 Mayıs Atatürk’ü Anma, Gençlik ve Spor Bayramı etkinliklerine katkı sağlanması; kulüp alanına yönelik proje ve yıl sonu sergi / gösteri hazırlığı yapılması görüşüldü.'],
+        ['Okul dışı etkinlikler', 'Planlanan gezi ve gözlem etkinlikleri için okul yönetiminden onay ve velilerden yazılı izin alınacağı hatırlatıldı.'],
+        ['Görev dağılımı', 'İkinci dönem etkinliklerinde görev alacak öğrenciler belirlendi.'],
+        ['Dilek ve temenniler', 'İkinci dönemin verimli geçmesi dileğiyle toplantı sona erdi.'],
+      ],
+      kararlar: [
+        'Birinci dönemde yapılamayan çalışmalar ikinci dönemde tamamlanacaktır.',
+        'İkinci dönem belirli gün ve haftalarına kulüp olarak katkı sağlanacaktır.',
+        'Okul dışı etkinlikler için okul yönetiminin onayı ve veli izinleri alınacaktır.',
+        'Yıl sonu sergi / gösteri hazırlıklarına Nisan ayında başlanacaktır.',
+      ],
+    }),
+};
+
+const KULUP_SONU = {
+  id: 'kulup-sene-sonu-toplanti',
+  kategori: 'kulup',
+  ad: 'Kulüp sene sonu toplantı tutanağı',
+  kisa: 'Sene Sonu Toplantısı',
+  donem: 'Haziran · sene sonu genel kurulu',
+  gun: '@ders_sonu-10',
+  body: () =>
+    meeting({
+      title: '{egitim_yili} EĞİTİM-ÖĞRETİM YILI {kulup} KULÜBÜ SENE SONU GENEL KURUL TOPLANTI TUTANAĞI',
+      info: MEETING_INFO([['Kulüp adı', '{kulup} Kulübü'], ['Danışman öğretmen', '{kulup_danisman}']]),
+      imza: 'kulupToplanti',
+      items: [
+        ['Açılış ve yoklama', 'Toplantı danışman öğretmenin açılış konuşmasıyla başladı, kulüp üyelerinin yoklaması yapıldı.'],
+        ['Yıllık çalışmaların değerlendirilmesi', 'Yıllık çalışma planında yer alan etkinliklerin uygulanma durumu gözden geçirildi. Belirli gün ve haftalarda okul etkinliklerine katkı sağlandığı, kulüp alanına yönelik araştırma, sunum ve pano çalışmalarının yapıldığı belirtildi.'],
+        ['Denetleme kurulunun raporu', 'Denetleme kurulu, kulüp çalışmalarının yıllık plana ve tüzüğe uygun yürütüldüğünü bildirdi.'],
+        ['Yıl sonu faaliyet raporunun hazırlanması', 'Yıl boyunca yapılan çalışmalar, ulaşılan sonuçlar ve karşılaşılan güçlükler üzerinde görüşülerek yıl sonu faaliyet raporunun hazırlanmasına karar verildi.'],
+        ['Gelecek yıl için öneriler', 'Kulüp çalışmalarının yıl başında daha erken planlanması, okul dışı öğrenme etkinliklerinin artırılması ve diğer kulüplerle ortak etkinlikler düzenlenmesi önerildi.'],
+        ['Dilek ve temenniler', 'Danışman öğretmen üyelere katkıları için teşekkür etti, iyi tatiller diledi. Toplantı sona erdi.'],
+      ],
+      kararlar: [
+        'Yıllık çalışmalar değerlendirilmiş, kulüp çalışmalarının plana uygun yürütüldüğü görülmüştür.',
+        'Yıl sonu faaliyet raporu hazırlanarak okul yönetimine sunulacaktır.',
+        'Gelecek yıl için öneriler yıl sonu raporunda yer alacaktır.',
+      ],
+    }),
+};
+
+// Dönem / yıl sonu raporu: yapılan etkinlikler tarihleriyle hazır yazılır, katılan üyeler Bilgilerim'deki öğrenci adlarından.
+const kulupRapor = ({ baslik, aylar, sonuc, oneri }) =>
+  head(baslik) +
+  KULUP_INFO() +
+  p('') +
+  section('1. YAPILAN ÇALIŞMALAR') +
+  p('Kulüp, sene başında hazırlanan yıllık çalışma planı doğrultusunda çalışmalarını sürdürmüştür. Yapılan çalışmalar tarihleriyle aşağıda gösterilmiştir.', { justify: true }) +
+  table([['TARİH', 'YAPILAN ETKİNLİK', 'KATILAN ÖĞRENCİ'], ...etkSatirlari(aylar)], [1500, 6000, 2100]) +
+  p('') +
+  section('ÇALIŞMALARA KATILAN ÜYELER') +
+  uyeTablosu('Görevi') +
+  p('') +
+  section('2. ULAŞILAN SONUÇLAR') +
+  p(sonuc, { justify: true }) +
+  section('3. KARŞILAŞILAN GÜÇLÜKLER') +
+  p(GUCLUK, { justify: true }) +
+  section('4. ÖNERİLER') +
+  p(oneri, { justify: true }) +
+  sign.kulup();
+
+const KULUP_DONEM = {
+  id: 'kulup-1-donem-rapor',
+  kategori: 'kulup',
+  ad: 'Kulüp birinci dönem sonu raporu',
+  kisa: 'Birinci Dönem Sonu Raporu',
+  donem: 'Ocak · birinci dönemin son haftası',
+  gun: '@donem1_sonu-2',
+  body: () =>
+    kulupRapor({
+      baslik: '{egitim_yili} EĞİTİM-ÖĞRETİM YILI {kulup} KULÜBÜ BİRİNCİ DÖNEM SONU RAPORU',
+      aylar: KULUP_AYLAR.slice(0, 5),
+      sonuc: 'Birinci dönemde kulüp üyelerinin belirli gün ve haftalara yönelik etkinliklere katılımı sağlanmış; öğrencilerin iş birliği, sorumluluk alma ve kendini ifade etme becerilerinin geliştiği gözlenmiştir.',
+      oneri: 'Birinci dönemde yapılamayan çalışmaların ikinci dönemin ilk haftalarında tamamlanması, ikinci dönem için proje ve okul dışı etkinliklerin erken planlanması önerilmektedir.',
+    }),
+};
+
 const KULUP_RAPOR = {
   id: 'kulup-yil-sonu-rapor',
   kategori: 'kulup',
   ad: 'Kulüp yıl sonu faaliyet raporu',
-  donem: 'Haziran · yıl sonu',
+  kisa: 'Yıl Sonu Raporu',
+  donem: 'Haziran · ders yılının son haftaları',
+  gun: '@ders_sonu-5',
   body: () =>
-    head('{EGITIM_YILI} EĞİTİM-ÖĞRETİM YILI …… KULÜBÜ YIL SONU FAALİYET RAPORU') +
-    infoTable([
-      ['Kulüp adı', '……'],
-      ['Danışman öğretmen', '{OGRETMEN}'],
-      ['Kulüp başkanı', '……'],
-      ['Üye sayısı', '……'],
-    ]) +
+    kulupRapor({
+      baslik: '{egitim_yili} EĞİTİM-ÖĞRETİM YILI {kulup} KULÜBÜ YIL SONU FAALİYET RAPORU',
+      aylar: KULUP_AYLAR,
+      sonuc: 'Kulüp çalışmalarıyla öğrencilerin iş birliği, sorumluluk alma ve kendini ifade etme becerilerinin geliştiği; okul etkinliklerine katılımın arttığı gözlenmiştir.',
+      oneri: 'Kulüp çalışmalarının yıl başında daha erken planlanması, okul dışı öğrenme etkinliklerinin artırılması ve diğer kulüplerle ortak etkinlikler düzenlenmesi önerilmektedir.',
+    }),
+};
+
+const madde = (no, baslik, metin) => pLead(`Madde ${no} – ${baslik}: `, metin);
+const KULUP_TUZUK = {
+  id: 'kulup-tuzuk',
+  kategori: 'kulup',
+  ad: 'Kulüp tüzüğü',
+  kisa: 'Kulüp Tüzüğü',
+  donem: 'Eylül · sene başı toplantısında kabul edilir',
+  gun: '09-25',
+  body: () =>
+    head('{egitim_yili} EĞİTİM-ÖĞRETİM YILI {kulup} KULÜBÜ TÜZÜĞÜ') +
+    madde(1, 'Kulübün adı', 'Kulübün adı {okul} {kulup} Kulübü’dür.') +
+    madde(2, 'Dayanak', `Bu tüzük, ${KULUP_DAYANAK} hükümlerine dayanılarak hazırlanmıştır.`) +
+    madde(3, 'Amaç', 'Kulübün amacı; öğrencilerin ilgi ve yetenekleri doğrultusunda kulüp alanında bilgi ve beceri kazanmalarını, iş birliği, sorumluluk, gönüllülük ve demokratik katılım bilinci geliştirmelerini, millî ve manevi değerlere bağlı, paylaşımcı bireyler olarak yetişmelerini sağlamaktır.') +
+    madde(4, 'Üyelik', 'Okulun öğrencileri, ilgi ve istekleri doğrultusunda kulübe üye olur. Üyelik bilgileri danışman öğretmen tarafından e-Okul’a işlenir. Kulüp değişikliği okul yönetiminin belirlediği esaslara göre yapılır.') +
+    madde(5, 'Kulübün organları', 'Kulüp; genel kurul, yönetim kurulu ve denetleme kurulundan oluşur.') +
+    madde(6, 'Genel kurul', 'Genel kurul kulübün bütün üyelerinden oluşur. Sene başında toplanarak yönetim ve denetleme kurullarını seçer, tüzüğü kabul eder ve yıllık çalışma planını görüşür; sene sonunda toplanarak yıllık çalışmaları değerlendirir.') +
+    madde(7, 'Yönetim kurulu', 'Yönetim kurulu başkan, başkan yardımcısı, sekreter ve üyelerden oluşur. Yıllık çalışma planını uygular, etkinlikleri düzenler, görev dağılımı yapar ve toplantı tutanaklarını tutar. Kulüp başkanı kulübü temsil eder, toplantıları danışman öğretmenle birlikte yönetir.') +
+    madde(8, 'Denetleme kurulu', 'Denetleme kurulu üç üyeden oluşur. Kulüp çalışmalarının tüzüğe ve yıllık plana uygun yürütülüp yürütülmediğini izler, görüşlerini dönem sonunda genel kurula bildirir.') +
+    madde(9, 'Danışman öğretmen', 'Danışman öğretmen kulüp çalışmalarına rehberlik eder, toplantılara katılır, çalışmaların plana uygun yürütülmesini izler, raporları hazırlayarak okul yönetimine sunar.') +
+    madde(10, 'Toplantılar', 'Yönetim kurulu ayda en az bir kez toplanır. Kararlar oy çokluğuyla alınır ve tutanağa geçirilir. Toplantılar ders saatleri dışında ya da okul yönetiminin belirlediği sosyal etkinlik saatlerinde yapılır.') +
+    madde(11, 'Okul dışı etkinlikler', 'Gezi, gözlem ve benzeri okul dışı etkinlikler okul müdürünün onayı ve velilerin yazılı izniyle yapılır.') +
+    madde(12, 'Yürürlük', 'Bu tüzük genel kurulca kabulü ve okul müdürünün onayıyla yürürlüğe girer.') +
     p('') +
-    section('1. YIL İÇİNDE YAPILAN ÇALIŞMALAR') +
-    p('Kulüp yıl başında hazırlanan yıllık çalışma planı doğrultusunda çalışmalarını sürdürmüştür. Belirli gün ve haftalarda okul etkinliklerine katkı sağlanmış, kulüp alanına yönelik araştırma, sunum ve pano çalışmaları yapılmıştır.', { justify: true }) +
-    table([['TARİH', 'YAPILAN ETKİNLİK', 'KATILAN ÖĞRENCİ'], ...Array.from({ length: 8 }, () => ['', '', ''])], [1800, 5600, 2200]) +
+    section('YÖNETİM KURULU') +
+    table([['Görevi', 'Adı Soyadı', 'İmza'], ['Başkan', '{kulup_baskani}', ''], ['Başkan yardımcısı', '', ''], ['Sekreter', '', ''], ['Üye', '', ''], ['Üye', '', '']], [3000, 4600, 2000]) +
     p('') +
-    section('2. ULAŞILAN SONUÇLAR') +
-    p('Kulüp çalışmalarıyla öğrencilerin iş birliği, sorumluluk alma ve kendini ifade etme becerilerinin geliştiği; okul etkinliklerine katılımın arttığı gözlenmiştir.', { justify: true }) +
-    section('3. KARŞILAŞILAN GÜÇLÜKLER') +
-    p('……', { justify: true }) +
-    section('4. GELECEK YIL İÇİN ÖNERİLER') +
-    p('Kulüp çalışmalarının yıl başında daha erken planlanması, okul dışı öğrenme etkinliklerinin artırılması ve diğer kulüplerle ortak etkinlikler düzenlenmesi önerilmektedir.', { justify: true }) +
+    section('DENETLEME KURULU') +
+    table([['Görevi', 'Adı Soyadı', 'İmza'], ['Üye', '', ''], ['Üye', '', ''], ['Üye', '', '']], [3000, 4600, 2000]) +
     sign.kulup(),
 };
+
+const KULUP_IZIN = {
+  id: 'kulup-veli-izin',
+  kategori: 'kulup',
+  ad: 'Kulüp veli izin belgesi',
+  kisa: 'Veli İzin Belgesi',
+  donem: 'Gezi / okul dışı etkinlikten önce',
+  gun: null, // etkinlik tarihi belli değil: indirildiği gün
+  body: () =>
+    head('{kulup} KULÜBÜ VELİ İZİN BELGESİ') +
+    infoTable([
+      ['Etkinliğin adı', '……'],
+      ['Etkinliğin yeri', '……'],
+      ['Tarih / saat', '……'],
+      ['Ulaşım', '……'],
+      ['Sorumlu öğretmen', '{kulup_danisman}'],
+    ]) +
+    p('') +
+    p('{okul} {kulup} Kulübü tarafından düzenlenecek, bilgileri yukarıda yazılı etkinliğe velisi bulunduğum öğrencinin katılmasına izin veriyorum. Etkinlik süresince öğretmenlerinin ve okul yönetiminin belirlediği kurallara uyması gerektiğini öğrencime bildirdim.', { justify: true }) +
+    table(
+      [['S.No', 'Öğrencinin adı soyadı', 'Velinin adı soyadı', 'İzin (Evet / Hayır)', 'Veli imzası'], dongu('uyeler', ['{sira}', '{ad}', '', '', ''])],
+      [700, 3200, 2800, 1500, 1400]
+    ) +
+    p('') +
+    p('- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - (keserek öğrenciyle gönderiniz)', { center: true, size: 8 }) +
+    section('VELİ İZİN DİLEKÇESİ') +
+    p('{okul} {kulup} Kulübü tarafından …… tarihinde …… yerinde düzenlenecek etkinliğe velisi bulunduğum …… sınıfı …… numaralı öğrenci …… ’nın katılmasına izin veriyorum / vermiyorum.', { justify: true }) +
+    table([['Velinin adı soyadı', 'Telefonu', 'İmza'], ['', '', '']], [3800, 3000, 2800]) +
+    p('') +
+    table([['Danışman Öğretmen', 'UYGUNDUR'], ['{kulup_danisman}', '{tarih}\n{mudur}\nOkul Müdürü']], [4800, 4800]),
+};
+
+// Aylık çalışma raporları (Eylül … Haziran): plandaki çalışmalar + o ayın tarihli etkinlikleri + üye listesi; tarih ayın son iş günü.
+const KULUP_AYLIK = KULUP_AYLAR.map((m, i) => ({
+  id: `kulup-aylik-${m.no}`,
+  kategori: 'kulup',
+  grup: 'aylik',
+  ad: `Kulüp aylık çalışma raporu — ${m.ay}`,
+  kisa: m.ay,
+  donem: `${m.ay} sonu`,
+  gun: `ay-sonu:${m.no}`,
+  body: () =>
+    head(`{egitim_yili} EĞİTİM-ÖĞRETİM YILI {kulup} KULÜBÜ ${buyuk(m.ay)} AYI ÇALIŞMA RAPORU`) +
+    KULUP_INFO([['Rapor dönemi', `${m.ay} ayı`]]) +
+    p('') +
+    section('1. PLANDA BU AY İÇİN BELİRLENEN ÇALIŞMALAR') +
+    p(m.is + (m.not ? ` (${m.not})` : ''), { justify: true }) +
+    section('2. YAPILAN ÇALIŞMALAR') +
+    table([['TARİH', 'YAPILAN ETKİNLİK', 'KATILAN ÖĞRENCİ'], ...etkSatirlari([m]), ['', '', '']], [1500, 6000, 2100]) +
+    p('') +
+    section('BU AY ÇALIŞMALARA KATILAN ÜYELER') +
+    uyeTablosu() +
+    p('') +
+    section('3. DEĞERLENDİRME') +
+    p(
+      `${m.ay} ayında kulüp çalışmaları yıllık çalışma planı doğrultusunda yürütülmüş, üyelerin etkinliklere katılımı sağlanmış ve görev dağılımına uygun hareket edilmiştir.` +
+        (i < KULUP_AYLAR.length - 1 ? ` ${KULUP_AYLAR[i + 1].ay} ayında yapılacak çalışmalar için hazırlık yapılmıştır.` : ' Yıllık çalışmalar sene sonu toplantısında değerlendirilmiştir.'),
+      { justify: true }
+    ) +
+    section('4. KARŞILAŞILAN GÜÇLÜKLER VE ÖNERİLER') +
+    p(GUCLUK, { justify: true }) +
+    sign.kulup(),
+}));
+const KULUP = [KULUP_PLAN, KULUP_ILK, KULUP_ORTA, KULUP_SONU, KULUP_DONEM, KULUP_RAPOR, KULUP_TUZUK, KULUP_IZIN, ...KULUP_AYLIK];
 
 // ---------- Sınıf rehberlik planı ----------
 const REHBERLIK = {
   id: 'rehberlik-yillik-plan',
+  gun: '10-02',
   kategori: 'rehberlik',
   ad: 'Sınıf rehberlik yıllık çalışma planı',
   donem: 'Eğitim-öğretim yılı',
   body: () =>
-    head('{EGITIM_YILI} EĞİTİM-ÖĞRETİM YILI SINIF REHBERLİK YILLIK ÇALIŞMA PLANI') +
+    head('{egitim_yili} EĞİTİM-ÖĞRETİM YILI SINIF REHBERLİK YILLIK ÇALIŞMA PLANI') +
     infoTable([
-      ['Sınıf / Şube', '……'],
-      ['Sınıf rehber öğretmeni', '{OGRETMEN}'],
+      ['Sınıf / Şube', '{sinif}'],
+      ['Sınıf rehber öğretmeni', '{danisman}'],
     ]) +
     p('') +
     p('Plan, okul rehberlik ve psikolojik danışma servisinin yıllık programı ile Bakanlığın sınıf rehberlik programı esas alınarak hazırlanmıştır; etkinlikler akademik, kariyer ve sosyal-duygusal gelişim alanlarını kapsar. Programdaki kazanım ve etkinliklere göre güncelleyiniz.', { justify: true, i: true }) +
@@ -517,32 +725,28 @@ const REHBERLIK = {
     sign.rehber(),
 };
 
-// ---------- Yıllık planlar (MEB çerçeve) ----------
-const MONTH_NAMES = ['OCAK', 'ŞUBAT', 'MART', 'NİSAN', 'MAYIS', 'HAZİRAN', 'TEMMUZ', 'AĞUSTOS', 'EYLÜL', 'EKİM', 'KASIM', 'ARALIK'];
-const dmy = (k) => (k ? `${k.slice(8, 10)}.${k.slice(5, 7)}` : '');
-function yearPlanDoc(branchId, grade, weeks) {
-  let lastMonth = null;
-  const rows = weeks.map((w) => {
-    const m = w.start ? MONTH_NAMES[+w.start.slice(5, 7) - 1] : '';
-    const showMonth = m !== lastMonth ? m : '';
-    lastMonth = m;
-    const outs = w.holiday ? '' : String(w.outcomes || '').trim();
-    return [showMonth, `${w.week ? `${w.week}. hafta\n` : ''}${dmy(w.start)}–${dmy(w.end)}`, w.hours ? String(w.hours) : '', w.holiday ? `${w.unit || 'Tatil'}` : String(w.unit || w.topic || ''), outs];
-  });
-  return (
-    head(`{EGITIM_YILI} EĞİTİM-ÖĞRETİM YILI ${BRANCH_NAMES[branchId].toLocaleUpperCase('tr')} DERSİ ${grade}. SINIF YILLIK PLANI`) +
-    p('Bu plan Millî Eğitim Bakanlığının 2026-2027 eğitim ve öğretim yılı çerçeve yıllık planı esas alınarak hazırlanmıştır. Okulun ders yılı takvimine göre gerekli düzenlemeleri yapınız.', { justify: true, i: true }) +
-    table([['AY', 'HAFTA', 'SAAT', 'ÜNİTE / TEMA', 'ÖĞRENME ÇIKTILARI'], ...rows], [900, 1200, 600, 2600, 9100], { size: 9 }) +
+// ---------- Yıllık plan (TEK şablon) ----------
+// Haftalar uygulamadan gelir: öğretmenin o düzeye yüklediği plan, yoksa MEB çerçeve planı (PlanContext → planForGrade).
+const YILLIK_PLAN = {
+  id: 'yillik-plan',
+  kategori: 'yillik-plan',
+  ad: 'Yıllık plan',
+  donem: 'Ders yılı başı · sınıf düzeyi seçilir',
+  gun: '@ders_basi',
+  yatay: true,
+  body: () =>
+    head('{egitim_yili} EĞİTİM-ÖĞRETİM YILI {brans} DERSİ {duzey}. SINIF YILLIK PLANI') +
+    p('Bu plan {plan_kaynagi} esas alınarak hazırlanmıştır. Okulun ders yılı takvimine göre gerekli düzenlemeleri yapınız.', { justify: true, i: true }) +
+    table([['AY', 'HAFTA', 'SAAT', 'ÜNİTE / TEMA', 'ÖĞRENME ÇIKTILARI'], dongu('haftalar', ['{ay}', '{hafta}\n{tarihler}', '{saat}', '{unite}', '{ciktilar}'])], [900, 1200, 600, 2600, 9100], { size: 9 }) +
     p('') +
     table(
       [
         ['Ders Öğretmeni', 'UYGUNDUR'],
-        ['{OGRETMEN}\n{BRANS} Öğretmeni', '{TARIH}\n{MUDUR}\nOkul Müdürü'],
+        ['{ogretmen}\n{brans} Öğretmeni', '{tarih}\n{mudur}\nOkul Müdürü'],
       ],
       [7200, 7200]
-    )
-  );
-}
+    ),
+};
 
 // ---------- docx paketleme ----------
 const CT = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -558,37 +762,18 @@ const doc = (body, landscape) => `<?xml version="1.0" encoding="UTF-8" standalon
   landscape ? '<w:pgSz w:w="16838" w:h="11906" w:orient="landscape"/>' : '<w:pgSz w:w="11906" w:h="16838"/>'
 }<w:pgMar w:top="1000" w:right="1000" w:bottom="1000" w:left="1000" w:header="567" w:footer="567" w:gutter="0"/></w:sectPr></w:body></w:document>`;
 
-async function writeDocx(file, body, landscape = false) {
-  const zip = new JSZip();
-  zip.file('[Content_Types].xml', CT);
-  zip.file('_rels/.rels', RELS);
-  zip.file('word/_rels/document.xml.rels', DOC_RELS);
-  zip.file('word/styles.xml', STYLES);
-  zip.file('word/document.xml', doc(body, landscape));
-  fs.writeFileSync(file, await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' }));
-}
-
-const today = new Date().toISOString().slice(0, 10);
-fs.mkdirSync(path.join(OUT, 'yillik-plan'), { recursive: true });
-const rows = [];
-for (const s of [ZUMRE_BASI, ZUMRE_ORTA, ZUMRE_SONU, SOK_BASI, SOK_SONU, VELI_1, VELI_2, KULUP_PLAN, KULUP_ILK, KULUP_RAPOR, REHBERLIK]) {
-  await writeDocx(path.join(OUT, `${s.id}.docx`), s.body());
-  rows.push({ id: s.id, kategori: s.kategori, ad: s.ad, donem: s.donem, dosya: `${s.id}.docx`, brans: null, tarih: today });
-}
-let plans = 0;
-for (const b of Object.keys(BRANCH_NAMES)) {
-  const all = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/data/yearPlans', `${b}.json`), 'utf8'));
-  for (const g of Object.keys(all).map(Number).filter((g) => g >= 5).sort((a, b2) => a - b2)) {
-    const id = `yillik-plan-${b}-${g}`;
-    const dosya = `yillik-plan/${b}-${g}.docx`;
-    await writeDocx(path.join(OUT, dosya), yearPlanDoc(b, g, all[g]), true);
-    rows.push({ id, kategori: 'yillik-plan', ad: `${BRANCH_NAMES[b]} ${g}. sınıf yıllık planı`, donem: '2026-2027 · MEB çerçeve planı', dosya, brans: b, tarih: today });
-    plans++;
+// Üretilen şablonlar: [{ meta: { id, kategori, ad, kisa?, grup?, donem, gun }, bytes: Buffer }]
+export async function uret() {
+  const out = [];
+  for (const s of [ZUMRE_BASI, ZUMRE_ORTA, ZUMRE_SONU, SOK_BASI, SOK_SONU, VELI_1, VELI_2, REHBERLIK, YILLIK_PLAN, ...KULUP]) {
+    const zip = new JSZip();
+    zip.file('[Content_Types].xml', CT);
+    zip.file('_rels/.rels', RELS);
+    zip.file('word/_rels/document.xml.rels', DOC_RELS);
+    zip.file('word/styles.xml', STYLES);
+    zip.file('word/document.xml', doc(s.body(), !!s.yatay));
+    const { body, yatay, ...meta } = s;
+    out.push({ meta: { ...meta, gun: s.gun ?? null }, bytes: await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' }) });
   }
+  return out;
 }
-// Eski boş iskeletler kaldırıldı (yerlerine tam içerikli olanlar geldi).
-for (const f of ['zumre-donem-basi', 'zumre-donem-sonu', 'sok', 'yillik-plan', 'kulup-tutanak', 'veli-toplanti', 'rehberlik-plan']) {
-  fs.rmSync(path.join(OUT, `${f}.docx`), { force: true });
-}
-fs.writeFileSync(path.join(OUT, 'liste.json'), JSON.stringify({ guncelleme: today, evraklar: rows }, null, 2) + '\n');
-console.log(`evrak/: ${rows.length - plans} tutanak/plan + ${plans} yıllık plan`);

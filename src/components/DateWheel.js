@@ -1,5 +1,5 @@
 // Tekerlekli tarih seçici: gün / ay / yıl kolonları, ortadaki değer seçili.
-// Puan panelinde "Tarih seç" ile açılır; gelecek bir tarihe puan yazmak için kullanılır.
+// Puan panelinde "Tarih seç" ile açılır; gelecek bir tarihe puan yazmak için kullanılır. Evraklarda evrak tarihini değiştirir.
 import React, { useEffect, useRef, useState } from 'react';
 import { Modal, View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -57,7 +57,8 @@ export default function DateWheel({ visible, value, onClose, onPick }) {
     setYil(d.getFullYear());
   }, [visible, value]);
 
-  const yillar = Array.from({ length: 4 }, (_, i) => new Date().getFullYear() + i);
+  // Geçen yıl da var: Ocak'ta açılan evrakın tarihi Eylül'e (önceki yıla) düşebilir.
+  const yillar = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 1 + i);
   const gunler = Array.from({ length: 31 }, (_, i) => String(i + 1));
 
   const sec = () => {

@@ -1,0 +1,1 @@
+Ham evrak dosyalarını buraya (kategori alt klasörlerine) koy. Bu klasör yayına çıkmaz. Ayrıntı: ../README.md

@@ -1,0 +1,176 @@
+{
+  "evraklar": [
+    {
+      "id": "sinav-analiz-formu",
+      "kategori": "sinav",
+      "ad": "Sınav analiz formu",
+      "donem": "Her sınavdan sonra",
+      "dosya": "sablonlar/sinav-analiz-formu.docx",
+      "gun": null
+    },
+    {
+      "id": "sinav-kagidi-teslim",
+      "kategori": "sinav",
+      "ad": "Sınav kâğıdı teslim tutanağı",
+      "donem": "Sınav sonrası",
+      "dosya": "sablonlar/sinav-kagidi-teslim.docx",
+      "gun": null
+    },
+    {
+      "id": "not-cizelgesi",
+      "kategori": "sinav",
+      "ad": "Yazılı ve uygulamalı not çizelgesi",
+      "donem": "Her dönem",
+      "dosya": "sablonlar/not-cizelgesi.docx",
+      "gun": [
+        "@donem1_sonu-5",
+        "@ders_sonu-5"
+      ]
+    },
+    {
+      "id": "gozlem-formu",
+      "kategori": "olcme",
+      "ad": "Gözlem formu",
+      "donem": "Süreç değerlendirme",
+      "dosya": "sablonlar/gozlem-formu.docx",
+      "gun": null
+    },
+    {
+      "id": "kontrol-listesi",
+      "kategori": "olcme",
+      "ad": "Kontrol listesi",
+      "donem": "Süreç değerlendirme",
+      "dosya": "sablonlar/kontrol-listesi.docx",
+      "gun": null
+    },
+    {
+      "id": "dereceli-puanlama",
+      "kategori": "olcme",
+      "ad": "Dereceli puanlama anahtarı (rubrik)",
+      "donem": "Performans değerlendirme",
+      "dosya": "sablonlar/dereceli-puanlama.docx",
+      "gun": null
+    },
+    {
+      "id": "oz-degerlendirme",
+      "kategori": "olcme",
+      "ad": "Öz değerlendirme formu",
+      "donem": "Süreç değerlendirme",
+      "dosya": "sablonlar/oz-degerlendirme.docx",
+      "gun": null
+    },
+    {
+      "id": "akran-degerlendirme",
+      "kategori": "olcme",
+      "ad": "Akran değerlendirme formu",
+      "donem": "Grup çalışmaları",
+      "dosya": "sablonlar/akran-degerlendirme.docx",
+      "gun": null
+    },
+    {
+      "id": "urun-dosyasi",
+      "kategori": "olcme",
+      "ad": "Ürün dosyası (portfolyo) takip formu",
+      "donem": "Dönem boyunca",
+      "dosya": "sablonlar/urun-dosyasi.docx",
+      "gun": null
+    },
+    {
+      "id": "performans-gorevi",
+      "kategori": "olcme",
+      "ad": "Performans görevi yönergesi",
+      "donem": "Performans görevi",
+      "dosya": "sablonlar/performans-gorevi.docx",
+      "gun": null
+    },
+    {
+      "id": "proje-odevi",
+      "kategori": "olcme",
+      "ad": "Proje ödevi yönergesi ve dağıtım listesi",
+      "donem": "Proje ödevi",
+      "dosya": "sablonlar/proje-odevi.docx",
+      "gun": null
+    },
+    {
+      "id": "sinif-ogrenci-listesi",
+      "kategori": "sinif",
+      "ad": "Sınıf öğrenci listesi",
+      "donem": "Dönem başı",
+      "dosya": "sablonlar/sinif-ogrenci-listesi.docx",
+      "gun": [
+        "09-18",
+        "02-12"
+      ]
+    },
+    {
+      "id": "oturma-plani",
+      "kategori": "sinif",
+      "ad": "Sınıf oturma planı",
+      "donem": "Dönem başı",
+      "dosya": "sablonlar/oturma-plani.docx",
+      "gun": [
+        "09-18",
+        "02-12"
+      ]
+    },
+    {
+      "id": "nobet-listesi",
+      "kategori": "sinif",
+      "ad": "Sınıf nöbet listesi",
+      "donem": "Her ay",
+      "dosya": "sablonlar/nobet-listesi.docx",
+      "gun": "ay-basi"
+    },
+    {
+      "id": "veli-gorusme",
+      "kategori": "sinif",
+      "ad": "Veli görüşme tutanağı",
+      "donem": "Görüşme sonrası",
+      "dosya": "sablonlar/veli-gorusme.docx",
+      "gun": null
+    },
+    {
+      "id": "ev-ziyareti",
+      "kategori": "sinif",
+      "ad": "Ev ziyareti formu",
+      "donem": "Ziyaret sonrası",
+      "dosya": "sablonlar/ev-ziyareti.docx",
+      "gun": null
+    },
+    {
+      "id": "ogrenci-tanima",
+      "kategori": "sinif",
+      "ad": "Öğrenci tanıma formu",
+      "donem": "Dönem başı",
+      "dosya": "sablonlar/ogrenci-tanima.docx",
+      "gun": "09-25"
+    },
+    {
+      "id": "ders-kesim",
+      "kategori": "sinif",
+      "ad": "Ders kesim raporu",
+      "donem": "Yıl sonu",
+      "dosya": "sablonlar/ders-kesim.docx",
+      "gun": "@ders_sonu-5"
+    },
+    {
+      "id": "veli-izin",
+      "kategori": "sinif",
+      "ad": "Veli izin formu",
+      "donem": "Etkinlik / gezi öncesi",
+      "dosya": "sablonlar/veli-izin.docx",
+      "gun": null
+    },
+    {
+      "id": "rehberlik-donem-raporu",
+      "kategori": "rehberlik",
+      "ad": "Sınıf rehberlik dönem raporu",
+      "donem": "Dönem sonu",
+      "dosya": "sablonlar/rehberlik-donem-raporu.docx",
+      "gun": [
+        "@donem1_sonu",
+        "@ders_sonu"
+      ]
+    }
+  ]
+}
