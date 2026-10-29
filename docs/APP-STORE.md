@@ -114,6 +114,7 @@ when the teacher attaches a photo or video to a homework.
 - iPhone 6,9" (1320 × 2868) — en az 3, en çok 10. (6,5" setini Apple 6,9"tan ölçekler.)
 - Önerilen sıra: ana sayfa (öğrenme çıktısı kartı) · ders programı · yıllık plan · evraklar · etkinlik · sınıf kodu · öğrenci ödevleri.
 - Görüntülerde gerçek öğrenci adı olmamalı; demo verisi kullan.
+- HAZIR: `magaza-ekran/` (7 görüntü, 1320×2868, git dışında). Web sürümünden demo verisiyle (Sosyal Bilgiler öğretmeni, uydurma sınıf ve öğrenciler) Edge ile çekildi.
 
 ## Yayın sırası
 
@@ -142,7 +143,6 @@ when the teacher attaches a photo or video to a homework.
 ## Açık kalanlar / riskler
 
 - **Demo hesap ve örnek veri**: senin açman gerekiyor (ben hesap açamam).
-- **Ekran görüntüleri**: hazırlanmadı.
 - **Apple ile giriş**: Google girişi sunucuda açılırsa iPhone'da da gösterilmek istenirse “Apple ile giriş” eklenmeli (kural 4.8).
 - **Ödev dosyaları herkese açık bağlantıyla** saklanıyor (homework-media kovası public). Gizlilik politikasında yazıyor;
   ileride imzalı (süreli) bağlantıya geçmek daha güvenli olur.
