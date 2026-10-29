@@ -56,6 +56,15 @@ export default function TeacherHomeScreen({ navigation }) {
   const [newName, setNewName] = useState('');
   const [adding, setAdding] = useState(false);
   const [sinifAcilSin, setSinifAcilSin] = useState(0); // SINIFLARIM bölümünü dışarıdan açma sinyali
+  const scRef = useRef(null); // ana sayfa kaydırma
+  const sinifY = useRef(0); // SINIFLARIM bölümünün dikey konumu
+  // Kısayoldaki "Sınıf": sınıflar bölümünü açar ve oraya kaydırır.
+  const sinifaGit = () => {
+    setSinifAcilSin((n) => n + 1);
+    setTimeout(() => {
+      if (scRef.current) scRef.current.scrollTo({ y: Math.max(0, sinifY.current - 16), animated: true });
+    }, 120);
+  };
   const [weekPlanId, setWeekPlanId] = useState(null); // program yokken üst kartta gösterilen düzey
   const [tamEkran, setTamEkran] = useState(false); // ders programı tam ekran (yatay) modu
   const sonDokunus = useRef(0);
@@ -191,7 +200,7 @@ export default function TeacherHomeScreen({ navigation }) {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: spacing.xxl }}>
+    <ScrollView ref={scRef} style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: spacing.xxl }}>
       {/* ---- Karşılama bandı ---- */}
       <View style={[st.hero, { backgroundColor: heroBg, paddingTop: insets.top + spacing.sm }]}>
         {/* Dekor ayrı katmanda: taşan daireler bant içinde odaklanınca bandı yana kaydırmasın (web). */}
@@ -376,7 +385,7 @@ export default function TeacherHomeScreen({ navigation }) {
         <Collapsible title="KISAYOLLAR" defaultOpen style={{ marginTop: spacing.lg }}>
         <View style={st.grid}>
           <Tile icon="📅" tint={colors.accent} title="Yıllık plan" onPress={() => navigation.navigate('YearPlan')} />
-          <Tile icon="🗓️" tint={colors.second} title="Ders programı" onPress={() => navigation.navigate('Timetable')} />
+          <Tile icon="🏫" tint={colors.second} title="Sınıf" onPress={sinifaGit} />
           <Tile
             icon="📝"
             tint={colors.accent}
@@ -391,6 +400,7 @@ export default function TeacherHomeScreen({ navigation }) {
         </Collapsible>
 
         {/* ---- Sınıflarım ---- */}
+        <View onLayout={(e) => (sinifY.current = e.nativeEvent.layout.y)}>
         <Collapsible
           title="SINIFLARIM"
           okSolda
@@ -453,6 +463,7 @@ export default function TeacherHomeScreen({ navigation }) {
           </Pressable>
         ) : null}
         </Collapsible>
+        </View>
 
         {/* ---- Dikkat ---- */}
         {attention.length ? (
