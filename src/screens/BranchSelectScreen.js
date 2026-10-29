@@ -19,7 +19,7 @@ const SECTIONS = [
 export default function BranchSelectScreen() {
   const insets = useSafeAreaInsets();
   const { colors, shadow } = useTheme();
-  const { setBranch, resetRole, prevBranch, cancelBranchChange, myBranches, setMyBranches, branchNames, renameBranch } = useRole();
+  const { setBranch, resetRole, fixedRole, prevBranch, cancelBranchChange, myBranches, setMyBranches, branchNames, renameBranch } = useRole();
   const { isAdmin } = useAuth();
   // Profilden gelindiğinde mevcut derslerin HEPSİ seçili gelsin (kaydederken ders kaybolmasın).
   const [picked, setPicked] = useState(() => (myBranches && myBranches.length ? myBranches : prevBranch ? [prevBranch] : []));
@@ -70,7 +70,7 @@ export default function BranchSelectScreen() {
         automaticallyAdjustKeyboardInsets
         contentContainerStyle={{ padding: spacing.lg, paddingTop: insets.top + spacing.xl, paddingBottom: 140 }}
       >
-        {prevBranch || isAdmin ? (
+        {prevBranch || (isAdmin && !fixedRole) ? (
           <Pressable onPress={prevBranch ? cancelBranchChange : resetRole} hitSlop={10} style={{ alignSelf: 'flex-start', marginBottom: spacing.md }}>
             <Text style={{ color: colors.accent, fontWeight: '800', fontSize: font.body }}>‹ Geri</Text>
           </Pressable>

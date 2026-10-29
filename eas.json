@@ -7,21 +7,36 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "env": { "APP_VARIANT": "ogretmen" },
       "ios": {
         "simulator": false
       }
     },
     "preview": {
       "distribution": "internal",
+      "env": { "APP_VARIANT": "ogretmen" },
       "ios": {
         "simulator": false
       }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": { "APP_VARIANT": "ogretmen" }
+    },
+    "ogrenci-preview": {
+      "distribution": "internal",
+      "env": { "APP_VARIANT": "ogrenci" },
+      "ios": {
+        "simulator": false
+      }
+    },
+    "ogrenci-production": {
+      "autoIncrement": true,
+      "env": { "APP_VARIANT": "ogrenci" }
     }
   },
   "submit": {
-    "production": {}
+    "production": {},
+    "ogrenci-production": {}
   }
 }

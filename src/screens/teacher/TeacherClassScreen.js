@@ -283,7 +283,7 @@ function JoinCodeCard({ cls, total }) {
       setBusy(false);
     });
   const share = async () => {
-    const r = await shareText(`Okul uygulaması · ${cls.name} sınıf kodu: ${formatJoinCode(cls.code)}\nUygulamada “Derse katıl”a bu kodu ve okul numaranı yaz.`);
+    const r = await shareText(`${cls.name} sınıf kodu: ${formatJoinCode(cls.code)}\n“Okul Öğrenci” uygulamasını indir, “Derse katıl”a bu kodu ve okul numaranı yaz.`);
     if (r === 'copied') setMsg({ ok: true, text: 'Kopyalandı.' });
   };
 
@@ -320,7 +320,7 @@ function JoinCodeCard({ cls, total }) {
         {code}
       </Text>
       <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: 2 }}>
-        Tahtaya yaz; öğrenciler Okul uygulamasında “Derse katıl”a bu kodu ve okul numarasını girer. Yenileyince eski kod çalışmaz, sınıftakiler kalır.
+        Tahtaya yaz; öğrenciler “Okul Öğrenci” uygulamasında “Derse katıl”a bu kodu ve okul numarasını girer. Yenileyince eski kod çalışmaz, sınıftakiler kalır.
       </Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.sm }}>
         <SmallButton title="⛶ Tahtada göster" onPress={() => setBig(true)} />

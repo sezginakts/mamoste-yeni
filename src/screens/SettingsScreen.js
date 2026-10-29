@@ -22,7 +22,7 @@ export default function SettingsScreen({ navigation }) {
   const { colors, mode, setThemeMode, accent, setAccent } = useTheme();
   const styles = useThemedStyles(makeStyles);
   // Rol kalıcıdır (yalnız yönetici sıfırlar); branş her öğretmen için değiştirilebilir, her branşın verisi ayrıdır.
-  const { role, branch, branchId, myBranchObjects, switchBranch, resetRole, resetBranch } = useRole();
+  const { role, branch, branchId, myBranchObjects, switchBranch, resetRole, resetBranch, fixedRole } = useRole();
   const auth = useAuth();
   const t = useTeacher();
   const desk = useDesk();
@@ -97,7 +97,7 @@ export default function SettingsScreen({ navigation }) {
           </Pressable>
         </>
       ) : null}
-      {auth.isAdmin ? (
+      {auth.isAdmin && !fixedRole ? (
         <View style={styles.adminRow}>
           <Pressable onPress={resetRole} style={[styles.adminBtn, { borderColor: colors.accent }]}>
             <Text style={[styles.back, { textAlign: 'center' }]}>‹ Öğretmen / öğrenci seçimine dön</Text>

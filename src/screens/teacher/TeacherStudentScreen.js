@@ -124,7 +124,7 @@ export default function TeacherStudentScreen({ route, navigation }) {
               )
             ) : (
               <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: 4 }}>
-                Öğrenci Okul uygulamasında “Derse katıl”a sınıf kodunu ve {s.no} numarasını yazarak katılır.
+                Öğrenci “Okul Öğrenci” uygulamasında “Derse katıl”a sınıf kodunu ve {s.no} numarasını yazarak katılır.
               </Text>
             )}
           </Card>

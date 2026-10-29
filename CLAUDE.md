@@ -6,6 +6,7 @@ Expo SDK 54 / React Native 0.81 uygulaması. Ortaokul öğretmenleri (branş se�
 Web testi: iki sekme = iki hesap — `http://localhost:8082` öğretmen, `http://127.0.0.1:8082` öğrenci (adres farklı → depo ve rol ayrı). Sınıfa katılmayı uçtan uca denemek için öğretmen sekmesinde giriş yapılmış ve migration'lar uygulanmış olmalı.
 
 ## Mimari
+- **İki mağaza uygulaması, tek kod:** `app.config.js` + `APP_VARIANT` (eas.json profilleri): `ogretmen` → “Okul” (com.ingapp.cumle, profiller preview/production), `ogrenci` → “Okul Öğrenci” (com.ingapp.ogrenci, profiller ogrenci-preview/ogrenci-production). İkisi de aynı Supabase ve aynı Expo projesi. Rol `utils/appVariant.js → FIXED_ROLE` ile sabit, rol seçim ekranı çıkmaz. Değişken yoksa (npm start / web) ikisi bir arada, rol seçilir — iki sekmeli web testi böyle. Launch: web (8082, ikisi), web-ogrenci (8083), web-ogretmen (8084).
 - İçerik: `src/data/patterns.js` (tek kaynak). Cümle id'leri (ör. `can-12`) ses dosyalarına ve kayıtlara bağlıdır; metni değiştirirsen sesi yeniden üret (`generate-audio.py` + Kalıp Tahtası için `node tools/etkinlik/sesler.mjs`).
 - Öğrenci durumu: `src/context/ProgressContext.js` (SRS kartları + `student` + `homeworks`), AsyncStorage.
 - Öğretmen verisi: `src/teacher/TeacherContext.js` — cihazda asıl kopya (sınıf başına ayrı AsyncStorage anahtarı); giriş yapılmışsa `src/teacher/cloud.js` ile Supabase'e eşitlenir. Öğrencinin gerçek adı sunucuya GİTMEZ (yalnızca okul numarası + öğrencinin yazdığı takma ad).

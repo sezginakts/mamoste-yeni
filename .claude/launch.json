@@ -4,8 +4,46 @@
     {
       "name": "web",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["expo", "start", "--web", "--port", "8082"],
+      "runtimeArgs": [
+        "expo",
+        "start",
+        "--web",
+        "--port",
+        "8082"
+      ],
       "port": 8082
+    },
+    {
+      "name": "web-ogrenci",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "expo",
+        "start",
+        "--web",
+        "--port",
+        "8083",
+        "--clear"
+      ],
+      "env": {
+        "APP_VARIANT": "ogrenci"
+      },
+      "port": 8083
+    },
+    {
+      "name": "web-ogretmen",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "expo",
+        "start",
+        "--web",
+        "--port",
+        "8084",
+        "--clear"
+      ],
+      "env": {
+        "APP_VARIANT": "ogretmen"
+      },
+      "port": 8084
     }
   ]
 }

@@ -1,7 +1,21 @@
-# App Store yayını — Okul
+# App Store yayını — Okul (öğretmen) ve Okul Öğrenci
 
 Bu belge App Store Connect'te doldurulacak her alanı ve yayın sırasını içerir. Uygulamadaki uyum ayarları kodda
 yapıldı (aşağıda “Uygulamada yapılanlar”).
+
+**İki ayrı uygulama, tek kod, aynı sunucu** (`app.config.js`, `APP_VARIANT`):
+
+| | Okul (öğretmen) | Okul Öğrenci |
+|---|---|---|
+| Telefonda görünen ad | Okul | Okul Öğrenci |
+| Paket kimliği | `com.ingapp.cumle` | `com.ingapp.ogrenci` |
+| EAS profili (deneme / mağaza) | `preview` / `production` | `ogrenci-preview` / `ogrenci-production` |
+| Açılış | Doğrudan öğretmen (rol seçimi yok) | Doğrudan öğrenci (rol seçimi yok) |
+
+`npm start` / `npm run web` (değişken yok): ikisi bir arada, rol seçilir — yalnız geliştirme ve web testi için.
+Öğrenci uygulamasının ilk derlemesinde EAS yeni paket kimliği için Apple hesabına giriş ister (yeni App ID + imza).
+
+Aşağıdaki bölümlerin çoğu öğretmen uygulaması içindir; öğrenci uygulamasının farkları “Okul Öğrenci” bölümünde.
 
 ## Adresler (herkese açık sayfalar)
 
@@ -116,6 +130,58 @@ when the teacher attaches a photo or video to a homework.
 - Görüntülerde gerçek öğrenci adı olmamalı; demo verisi kullan.
 - HAZIR: `magaza-ekran/` (7 görüntü, 1320×2868, git dışında). Web sürümünden demo verisiyle (Sosyal Bilgiler öğretmeni, uydurma sınıf ve öğrenciler) Edge ile çekildi.
 
+## Okul Öğrenci (ayrı mağaza kaydı)
+
+| Alan | Değer |
+|---|---|
+| Ad | Okul Öğrenci (alınmışsa: “Okul Öğrenci – Ödevlerim”) |
+| Alt başlık (≤30) | Derslerin ve ödevlerin |
+| Paket kimliği | com.ingapp.ogrenci |
+| SKU | okul-ogrenci-ios-1 |
+| Kategori | Eğitim |
+| Gizlilik / Destek URL'si | Öğretmen uygulamasıyla aynı (sayfalar iki uygulamayı da kapsar) |
+| Yaş derecelendirmesi | Öğretmen uygulamasıyla aynı yanıtlar; “Çocuklar için yapıldı”: **Hayır** |
+
+**Anahtar kelimeler:** `öğrenci,ödev,sınıf kodu,ders,okul,ingilizce,kalıp,ortaokul,öğretmen`
+
+**Açıklama:**
+
+```
+Okul Öğrenci, öğretmenin Okul uygulamasıyla verdiği ödevleri almak için hazırlanmış ücretsiz ve reklamsız bir uygulamadır.
+
+DERSE KATIL
+Hesap açman gerekmez. Öğretmeninin tahtaya yazdığı 8 haneli sınıf kodunu ve okul numaranı gir; bütün derslerin tek uygulamada.
+
+ÖDEVLERİN
+Öğretmenin ödev verdiğinde bildirim gelir. Ödevi aç, tamamla, öğretmeninin geri bildirimini ve puanını gör.
+
+İNGİLİZCE ÇALIŞ
+İngilizce dersinde kalıp cümleler, günlük hedef, seri ve rozetler.
+
+Gerçek ad, fotoğraf, telefon numarası istenmez.
+
+Gizlilik: https://sezginakts.github.io/mamoste-tahta/uygulama/gizlilik.html
+```
+
+**Uygulama Gizliliği yanıtları** (takip yok, hepsi kullanıcıya bağlı, amaç Uygulama İşlevi):
+İletişim bilgileri → Ad (isteğe bağlı takma ad) · Kullanıcı içeriği → Diğer kullanıcı içeriği (okul numarası, ödev sonuçları,
+öğrenci notu) · Tanımlayıcılar → Kullanıcı kimliği (cihaz anahtarı). E-posta, fotoğraf, konum toplanmaz.
+
+**İnceleme notu (İngilizce):**
+
+```
+Okul Öğrenci is the student companion of the teacher app "Okul". Students have no account: tap "Derse katıl"
+(join a class) and enter the class code and a school number.
+
+Demo class code: <öğretmen demo hesabındaki sınıfın 8 haneli kodu>   School number: any (e.g. 15)
+
+After joining, the demo teacher's homework appears under "Ödevlerim"; the demo class is an English class, so the
+English pattern practice ("Kalıplar") also appears on the home screen. The app is meant to be used together with a
+teacher; please use the demo class code above. No ads, no tracking, no in-app purchases, no photo/location collection.
+```
+
+**Ekran görüntüleri:** ayrı set gerekir (derse katıl, ödevlerim, ödev, profil) — HENÜZ HAZIRLANMADI.
+
 ## Yayın sırası
 
 1. Sunucu: `supabase/migrations/20261029000000_delete_account.sql` SQL Editor'da çalıştırılır (hesap silme için ŞART).
@@ -125,6 +191,9 @@ when the teacher attaches a photo or video to a homework.
 5. Derleme: `npx eas-cli build -p ios --profile production` (yalnız istenince) → `npx eas-cli submit -p ios` (App Store
    Connect'e yükler; Apple hesabıyla giriş ister).
 6. Derleme App Store Connect'e düşünce sürüme ekle → “İncelemeye gönder”.
+7. Okul Öğrenci için 3–6'yı tekrarla: paket `com.ingapp.ogrenci`, profil `ogrenci-production`
+   (`npx eas-cli build -p ios --profile ogrenci-production` → `npx eas-cli submit -p ios --profile ogrenci-production`).
+   İnceleme notundaki sınıf kodu öğretmen demo hesabından gelir; öğretmen uygulaması önce hazır olmalı.
 
 ## Uygulamada yapılanlar (ret sebeplerine karşı)
 

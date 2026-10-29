@@ -6,6 +6,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BRANCH_BY_ID, branchOf } from '../data/branches';
 import { loadBranchNames, setBranchName } from '../teacher/branchNames';
+import { FIXED_ROLE } from '../utils/appVariant';
 
 const KEY = '@ingapp/role/v1';
 const BRANCH_KEY = '@ingapp/branch/v1';
@@ -22,7 +23,8 @@ const temizListe = (list) => {
 };
 
 export function RoleProvider({ children }) {
-  const [role, setRoleState] = useState(null);
+  // Mağaza uygulamalarında rol sabittir (Okul = öğretmen, Okul Öğrenci = öğrenci); rol seçim ekranı hiç çıkmaz.
+  const [role, setRoleState] = useState(FIXED_ROLE);
   const [branchId, setBranchState] = useState(null);
   const [myBranches, setMyBranchesState] = useState([]);
   const [prevBranch, setPrevBranch] = useState(null); // branş değiştirirken vazgeçilirse dönülecek branş
@@ -33,7 +35,10 @@ export function RoleProvider({ children }) {
     (async () => {
       try {
         const [saved, br, list] = await Promise.all([AsyncStorage.getItem(KEY), AsyncStorage.getItem(BRANCH_KEY), AsyncStorage.getItem(LIST_KEY)]);
-        if (saved === 'student' || saved === 'teacher') setRoleState(saved);
+        if (FIXED_ROLE) {
+          setRoleState(FIXED_ROLE);
+          if (saved !== FIXED_ROLE) AsyncStorage.setItem(KEY, FIXED_ROLE).catch(() => {});
+        } else if (saved === 'student' || saved === 'teacher') setRoleState(saved);
         if (br && BRANCH_BY_ID[br]) {
           setBranchState(br);
           const kayitli = temizListe(list ? JSON.parse(list) : []);
@@ -117,6 +122,7 @@ export function RoleProvider({ children }) {
   };
   // Yalnızca yönetici (AuthContext.isAdmin) için: rol seçimine geri dön.
   const resetRole = () => {
+    if (FIXED_ROLE) return; // mağaza uygulamasında rol değişmez
     setBranchState(null);
     setPrevBranch(null);
     setMyBranchesState([]);
@@ -142,6 +148,7 @@ export function RoleProvider({ children }) {
       prevBranch,
       cancelBranchChange,
       resetRole,
+      fixedRole: FIXED_ROLE, // mağaza uygulamasında sabit rol (null = geliştirme, rol seçilir)
       branchNames,
       renameBranch,
       loaded,
