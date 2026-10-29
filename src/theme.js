@@ -25,15 +25,15 @@ export const LIGHT = {
 };
 
 export const DARK = {
-  // Fazla karanlık değil: slate-900 yerine slate-800 aralığı (arka plan ile kartlar ayrışsın).
-  bg: '#1C2637',
-  bgSoft: '#243044',
-  card: '#27344B',
-  cardSoft: '#2E3C56',
-  border: '#3A4964',
+  // Fazla karanlık değil (2026-10-29'da bir ton daha açıldı): arka plan koyu gri-lacivert, kartlar ondan açık.
+  bg: '#28344A',
+  bgSoft: '#2F3C54',
+  card: '#34425C',
+  cardSoft: '#3C4B67',
+  border: '#4B5B79',
   text: '#F1F5F9',
-  textMuted: '#A9B6CA',
-  textFaint: '#7C8BA3',
+  textMuted: '#B0BCCF',
+  textFaint: '#8B99B0',
   primary: '#2DD4BF',
   primaryDark: '#0D9488',
   onPrimary: '#042F2B',
