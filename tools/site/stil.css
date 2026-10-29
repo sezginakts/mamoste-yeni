@@ -1,0 +1,53 @@
+/* Okul uygulamasının yasal ve destek sayfaları — tek stil. */
+:root {
+  --bg: #f1f5f9;
+  --kart: #ffffff;
+  --yazi: #0f172a;
+  --soluk: #475569;
+  --cizgi: #e2e8f0;
+  --vurgu: #0d9488;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f172a;
+    --kart: #1e293b;
+    --yazi: #e2e8f0;
+    --soluk: #94a3b8;
+    --cizgi: #334155;
+    --vurgu: #2dd4bf;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--yazi);
+  font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+main { max-width: 760px; margin: 0 auto; padding: 32px 16px 64px; }
+header { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+header img { width: 48px; height: 48px; border-radius: 12px; }
+header b { font-size: 20px; }
+nav { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 8px 0 24px; font-size: 15px; }
+nav a { color: var(--vurgu); text-decoration: none; font-weight: 600; }
+nav a[aria-current="page"] { color: var(--yazi); }
+h1 { font-size: 28px; line-height: 1.25; margin: 0 0 4px; }
+h2 { font-size: 19px; margin: 28px 0 8px; }
+.tarih { color: var(--soluk); font-size: 14px; margin: 0 0 20px; }
+.kart { background: var(--kart); border: 1px solid var(--cizgi); border-radius: 14px; padding: 20px; }
+ul { padding-left: 22px; }
+li { margin: 4px 0; }
+a { color: var(--vurgu); }
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+th, td { text-align: left; vertical-align: top; padding: 8px 6px; border-bottom: 1px solid var(--cizgi); }
+th { color: var(--soluk); font-weight: 600; }
+footer { color: var(--soluk); font-size: 14px; margin-top: 32px; }
+@media (max-width: 520px) {
+  h1 { font-size: 24px; }
+  .kart { padding: 16px; }
+  table, thead, tbody, tr, th, td { display: block; }
+  thead { display: none; }
+  td { border-bottom: none; padding: 2px 0; }
+  tr { border-bottom: 1px solid var(--cizgi); padding: 8px 0; }
+  td:first-child { font-weight: 600; }
+}

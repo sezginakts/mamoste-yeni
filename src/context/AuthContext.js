@@ -14,6 +14,7 @@ import { supabase, cloudEnabled, authProviders } from '../lib/supabase';
 
 const REMEMBER_KEY = '@ingapp/auth/remember';
 const EMAIL_KEY = '@ingapp/auth/email';
+const GUEST_KEY = '@ingapp/auth/guest';
 // Yönetici: rol ve branş seçimine geri dönebilir (başkalarında seçim kalıcıdır).
 const ADMIN_EMAILS = ['szgngst@gmail.com'];
 const isWeb = Platform.OS === 'web' && typeof window !== 'undefined';
@@ -67,10 +68,16 @@ export function AuthProvider({ children }) {
   const [recovery, setRecovery] = useState(false);
   const [googleEnabled, setGoogleEnabled] = useState(false); // sunucuda Google girişi açık mı
   const [lastEmail, setLastEmail] = useState('');
+  // Hesap açmadan devam: öğretmen ders programı, plan, evrak, etkinlik gibi cihazdaki özellikleri hesapsız kullanır
+  // (App Store 5.1.1: hesaba bağlı olmayan özellikler için kayıt zorunlu tutulmaz). Sınıf kodu/ödev için hesap gerekir.
+  const [guest, setGuestState] = useState(false);
 
   useEffect(() => {
     AsyncStorage.getItem(EMAIL_KEY)
       .then((e) => e && setLastEmail(e))
+      .catch(() => {});
+    AsyncStorage.getItem(GUEST_KEY)
+      .then((g) => g === '1' && setGuestState(true))
       .catch(() => {});
   }, []);
 
@@ -209,8 +216,30 @@ export function AuthProvider({ children }) {
       },
 
       signOut: () => supabase && supabase.auth.signOut(),
+
+      guest,
+      // Hesap açmadan devam et / giriş ekranına dön.
+      setGuest: (on) => {
+        setGuestState(!!on);
+        AsyncStorage.setItem(GUEST_KEY, on ? '1' : '0').catch(() => {});
+      },
+
+      // Hesabı sil (App Store 5.1.1(v)): önce öğretmenin ödev dosyaları Storage'dan, sonra sunucu fonksiyonu
+      // auth kaydını ve zincirleme bütün sınıf/öğrenci/ödev verisini siler; en son yerel oturum kapanır.
+      deleteAccount: async () => {
+        if (!supabase || !session) throw new Error('Önce giriş yapmalısın.');
+        const { data: hws } = await supabase.from('homeworks').select('attachments');
+        const paths = (hws || []).flatMap((h) => (h.attachments || []).map((a) => a && a.path).filter(Boolean));
+        for (let i = 0; i < paths.length; i += 100) {
+          await supabase.storage.from('homework-media').remove(paths.slice(i, i + 100)).catch(() => {});
+        }
+        must(await supabase.rpc('delete_my_account'));
+        await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
+        await AsyncStorage.removeItem(EMAIL_KEY).catch(() => {});
+        setLastEmail('');
+      },
     };
-  }, [loaded, session, recovery, googleEnabled, lastEmail]);
+  }, [loaded, session, recovery, googleEnabled, lastEmail, guest]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 

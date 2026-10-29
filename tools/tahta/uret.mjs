@@ -58,3 +58,11 @@ for (const b of BRANCHES) {
   }
 }
 console.log(`tahta-site/: index.html + ${n} etkinlik (${(bytes / 1048576).toFixed(1)} MB)`);
+
+// Uygulamanın gizlilik / destek / kullanım koşulları sayfaları (App Store Connect'e bu adresler yazılır):
+// tools/site → tahta-site/uygulama/ (simge: assets/icon.png). Adres: https://sezginakts.github.io/mamoste-tahta/uygulama/
+const UYG = path.join(OUT, 'uygulama');
+fs.mkdirSync(UYG, { recursive: true });
+for (const f of fs.readdirSync(path.join(ROOT, 'tools/site'))) fs.copyFileSync(path.join(ROOT, 'tools/site', f), path.join(UYG, f));
+fs.copyFileSync(path.join(ROOT, 'assets/icon.png'), path.join(UYG, 'simge.png'));
+console.log('tahta-site/uygulama/: gizlilik, destek, kullanım koşulları');

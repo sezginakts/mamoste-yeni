@@ -54,7 +54,9 @@ import ActivitiesScreen from './src/screens/teacher/ActivitiesScreen';
 import ActivityPlayScreen from './src/screens/teacher/ActivityPlayScreen';
 
 // Geliştirmede girişi atlamak için true yap (sunucu özellikleri — ödev gönderme, eşitleme — o zaman çalışmaz).
-const SKIP_TEACHER_LOGIN = true;
+// ASLA true commit etme: mağaza sürümünde öğretmen giriş ekranına hiç ulaşamaz. Giriş ekranındaki
+// "Hesap açmadan devam et" aynı işi görür.
+const SKIP_TEACHER_LOGIN = false;
 import NewPasswordScreen from './src/screens/teacher/NewPasswordScreen';
 import { ConfirmHost } from './src/teacher/ui';
 import BellOverlay from './src/components/BellOverlay';
@@ -161,7 +163,8 @@ function RootNavigator() {
   // Öğretmen sunucuya bağlıyken önce giriş yapar (sınıflar ve ödevler hesabına bağlanır).
   // Geliştirme sırasında (Expo Go / simülatör) giriş ekranı atlanır; veriler yalnız cihazda kalır.
   // Mağaza sürümünde (__DEV__ false) giriş istenir.
-  if (isTeacher && auth.cloudEnabled && !auth.session && !SKIP_TEACHER_LOGIN) {
+  // "Hesap açmadan devam et" seçildiyse (auth.guest) giriş istenmez; Ayarlar'dan sonra girilebilir.
+  if (isTeacher && auth.cloudEnabled && !auth.session && !auth.guest && !SKIP_TEACHER_LOGIN) {
     return (
       <>
         <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />

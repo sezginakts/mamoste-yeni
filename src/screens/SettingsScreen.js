@@ -8,6 +8,7 @@ import { useRole } from '../context/RoleContext';
 import { useAuth } from '../context/AuthContext';
 import { useTeacher } from '../teacher/TeacherContext';
 import { useDesk } from '../teacher/DeskContext';
+import { confirmAction, notify } from '../teacher/ui';
 import { ringBell } from '../components/BellOverlay';
 import { bellsRolling, MAX_BELLS } from '../utils/bell';
 
@@ -26,6 +27,27 @@ export default function SettingsScreen({ navigation }) {
   const t = useTeacher();
   const desk = useDesk();
   const hasTimes = Object.values(desk.schedules || {}).some((s) => (s.periods || []).some((p) => p.start));
+  const [siliniyor, setSiliniyor] = React.useState(false);
+  const hesabiSil = () =>
+    confirmAction({
+      title: 'Hesabını sil',
+      message:
+        'Hesabın ve sunucudaki bütün sınıfların, öğrenci kayıtların, ödevlerin ve ödev dosyaların kalıcı olarak silinir; öğrenciler derslerine erişemez. Geri alınamaz.\n\nBu cihazdaki ders programı, planlar ve notlar silinmez.',
+      ok: 'Hesabı sil',
+      destructive: true,
+      onOk: async () => {
+        setSiliniyor(true);
+        try {
+          await auth.deleteAccount();
+          t.forgetCloud();
+          auth.setGuest(true);
+          notify('Hesabın silindi', 'Sunucudaki bütün verilerin silindi. Uygulamayı hesapsız kullanmaya devam edebilirsin.');
+        } catch (e) {
+          notify('Hesap silinemedi', /fetch|network/i.test(e.message) ? 'İnternet bağlantısı yok gibi görünüyor.' : e.message);
+        }
+        setSiliniyor(false);
+      },
+    });
 
   return (
     <View style={styles.screen}>
@@ -83,12 +105,24 @@ export default function SettingsScreen({ navigation }) {
         </View>
       ) : null}
       {role === 'teacher' && auth.user ? (
-        <View style={[styles.toggleRow, { marginTop: spacing.sm }]}>
-          <Text style={[styles.toggleLabel, { flex: 1 }]} numberOfLines={1}>☁️ {auth.user.email}</Text>
-          <Pressable onPress={auth.signOut} hitSlop={8}>
-            <Text style={[styles.back, { color: colors.danger }]}>Çıkış yap</Text>
+        <>
+          <View style={[styles.toggleRow, { marginTop: spacing.sm }]}>
+            <Text style={[styles.toggleLabel, { flex: 1 }]} numberOfLines={1}>☁️ {auth.user.email}</Text>
+            <Pressable onPress={auth.signOut} hitSlop={8}>
+              <Text style={[styles.back, { color: colors.danger }]}>Çıkış yap</Text>
+            </Pressable>
+          </View>
+          {/* Hesabı sil (App Store 5.1.1(v)): sunucudaki hesap ve bütün sınıf/öğrenci/ödev verisi silinir. */}
+          <Pressable onPress={hesabiSil} disabled={siliniyor} style={[styles.toggleRow, { marginTop: spacing.sm }]} accessibilityRole="button">
+            <Text style={[styles.toggleLabel, { flex: 1, color: colors.danger }]}>{siliniyor ? 'Hesap siliniyor…' : '🗑 Hesabımı sil'}</Text>
           </Pressable>
-        </View>
+        </>
+      ) : role === 'teacher' && auth.cloudEnabled ? (
+        // Hesap açmadan devam edildiyse: sınıf kodu ve ödev için giriş buradan.
+        <Pressable onPress={() => auth.setGuest(false)} style={[styles.toggleRow, { marginTop: spacing.sm }]}>
+          <Text style={[styles.toggleLabel, { flex: 1 }]}>☁️ Giriş yap ya da hesap aç</Text>
+          <Text style={[styles.back, { fontSize: font.small }]}>›</Text>
+        </Pressable>
       ) : null}
 
       {/* Öğretmen verileri: yedek (eşitleme arka planda kendiliğinden) */}

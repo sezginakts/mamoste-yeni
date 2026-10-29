@@ -165,6 +165,24 @@ export function TeacherProvider({ children }) {
     mutate(id, (c) => (c.name = name));
     requestSync();
   };
+  // Hesap silindikten sonra: cihazdaki sınıflar kalır ama sunucu bağları (rid, kod, eşitleme izi) temizlenir;
+  // başka hesapla girilirse sınıflar yeniden açılır.
+  const forgetCloud = () => {
+    Object.keys(classes).forEach((id) =>
+      mutate(id, (c) => {
+        delete c.rid;
+        delete c.code;
+        delete c.cc;
+        delete c.syncedName;
+        delete c.subsSince;
+        Object.values(c.students || {}).forEach((s) => {
+          delete s.rid;
+          s.joined = false;
+        });
+        (c.homeworks || []).forEach((h) => delete h.rid);
+      })
+    );
+  };
   const removeClass = (id) => {
     const c = classes[id];
     if (c && c.rid) cloud(cloudDeleteClass(c.rid));
@@ -419,6 +437,7 @@ export function TeacherProvider({ children }) {
     addClass,
     renameClass,
     removeClass,
+    forgetCloud,
     addStudents,
     addStudentList,
     updateStudent,

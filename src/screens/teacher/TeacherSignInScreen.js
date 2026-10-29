@@ -196,7 +196,8 @@ export default function TeacherSignInScreen() {
               <Text style={{ color: colors.accent, fontWeight: '700' }}>‹ Girişe dön</Text>
             </Pressable>
           </>
-        ) : auth.googleEnabled ? (
+        ) : auth.googleEnabled && Platform.OS !== 'ios' ? (
+          // iPhone'da Google girişi yok: App Store 4.8 Google girişinin yanında "Apple ile giriş" de ister.
           <>
             <View style={st.orRow}>
               <View style={[st.line, { backgroundColor: colors.border }]} />
@@ -217,6 +218,15 @@ export default function TeacherSignInScreen() {
 
         <Text style={[st.note, { color: colors.textFaint }]}>
           Sınıfların ve ödevlerin bu hesaba bağlanır. Öğrenci adları sunucuya gönderilmez; yalnızca okul numaraları gider.
+        </Text>
+
+        {/* Hesap açmadan devam: ders programı, plan, evrak, etkinlikler, notlar cihazda çalışır. */}
+        <Pressable onPress={() => auth.setGuest(true)} style={{ marginTop: spacing.lg, paddingVertical: spacing.sm }} accessibilityRole="button">
+          <Text style={{ color: colors.accent, fontWeight: '800', fontSize: font.body, textAlign: 'center' }}>Hesap açmadan devam et ›</Text>
+        </Pressable>
+        <Text style={[st.note, { color: colors.textFaint, marginTop: 0 }]}>
+          Ders programı, yıllık plan, evraklar, etkinlikler ve notlar bu cihazda çalışır. Öğrencilere sınıf kodu ve ödev göndermek için
+          sonra Ayarlar'dan giriş yapabilirsin.
         </Text>
       </ScrollView>
     </KeyboardAvoidingView>
