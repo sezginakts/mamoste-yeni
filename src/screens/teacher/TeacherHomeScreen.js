@@ -571,7 +571,7 @@ const st = StyleSheet.create({
   hero: { paddingHorizontal: spacing.lg, paddingBottom: spacing.md, overflow: 'hidden', borderBottomLeftRadius: 28, borderBottomRightRadius: 28 },
   blob: { position: 'absolute', borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.10)' },
   heroTop: { flexDirection: 'row', alignItems: 'center' },
-  logo: { height: 34, width: Math.round((34 * 669) / 200) }, // assets/logo.png (beyaz harfler) oranı 669×200
+  logo: { height: 34, width: Math.round((34 * 669) / 200) }, // assets/logo.png (beyaz karakalem OKUL) 669×200
   logoText: { fontSize: 30, fontWeight: '900', letterSpacing: 3 },
   heroDate: { color: '#fff', fontSize: font.h3, fontWeight: '900', marginTop: spacing.sm },
   // Branş: profil/ayarlar ikonlarının hemen altında, sağa yaslı sabit yazı.
