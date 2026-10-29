@@ -53,19 +53,33 @@ export function planSatirlari(weeks) {
 const trKisa = (k) => (k ? `${k.slice(8, 10)}.${k.slice(5, 7)}.${k.slice(0, 4)}` : '');
 // Öğrenme çıktısı metni → kodlu çıktılar (tekrarsız): "MAT.7.1.2. …", "T.K.7.1. …", "ENG.6.1.L1. …". Alt maddeler (a, b…)
 // atılır; kodu olmayan metinde satırlar alınır. BEP'in kısa dönemli amaçları için (yıllık plan tam metni kullanır).
-const KOD_ONU = /(?=(?:^|\s)[A-ZÇĞİÖŞÜ]{1,6}\d*(?:\.[A-Za-z0-9]+){2,}\.\s)/;
+// Kod bitişik yazılmış olabilir ("Spoken InteractionE7.1.SI1."): kodun önünde büyük harf ya da nokta yoksa oradan bölünür
+// (MAT.7.1.2'nin içindeki "T.7.1.2" kod sayılmaz).
+const KOD = '[A-ZÇĞİÖŞÜ]{1,6}\\d*(?:\\.[A-Za-z0-9]+){2,}\\.\\s';
+const KOD_ONU = new RegExp(`(^|[^A-ZÇĞİÖŞÜ.])(?=${KOD})`, 'g');
 const KOD_BASI = /^[A-ZÇĞİÖŞÜ]{1,6}\d*(?:\.[A-Za-z0-9]+){2,}\./;
 function kodluCiktilar(metin, gorulen) {
   const parcalar = String(metin || '')
-    .split(KOD_ONU)
+    .replace(KOD_ONU, '$1\u0001')
+    .split('\u0001')
     .map((s) => s.replace(/\s+/g, ' ').trim())
     .filter(Boolean);
-  const kodlu = parcalar.filter((s) => KOD_BASI.test(s)).map((s) => s.replace(/\s+[a-zçğıöşü]\)\s.*$/, ''));
+  // Alt maddeler (a, b…) ve kodun metninden sonra yapışan beceri başlığı ("… personalities. Spoken Interaction") atılır.
+  const kodlu = parcalar
+    .filter((s) => KOD_BASI.test(s))
+    .map((s) => {
+      const kod = s.match(KOD_BASI)[0];
+      const govde = s.slice(kod.length).replace(/\s+[a-zçğıöşü]\)\s.*$/, '').replace(/\.\s+[A-ZÇĞİÖŞÜa-zçğıöşü][^.]{0,30}$/, '.');
+      return kod + govde;
+    });
   const liste = kodlu.length ? kodlu : String(metin || '').split('\n').map(temiz).filter(Boolean);
+  // Aynı kod ya da aynı metin bir kez (kaynak planda kodu eksik yazılmış tekrarlar da: "SB.5.1.2." / "B.5.1.2.").
   return liste.filter((s) => {
-    const anahtar = (s.match(KOD_BASI) || [s])[0];
-    if (gorulen.has(anahtar)) return false;
-    gorulen.add(anahtar);
+    const kod = (s.match(KOD_BASI) || [''])[0];
+    const govde = 'm:' + s.slice(kod.length).trim().toLocaleLowerCase('tr');
+    if ((kod && gorulen.has(kod)) || (govde.length > 8 && gorulen.has(govde))) return false;
+    if (kod) gorulen.add(kod);
+    gorulen.add(govde);
     return true;
   });
 }
