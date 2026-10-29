@@ -1,13 +1,13 @@
 // Öğretmen: branşını seç (ilk açılışta; sonra Ayarlar'dan değiştirilebilir, her branşın verisi ayrı).
 // Branşlar ORTAOKUL / LİSE başlıkları altında, katlanır bölüm olarak listelenir.
-import React, { useState } from 'react';
-import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, Pressable, ScrollView, StyleSheet, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { radius, spacing, font } from '../theme';
 import { useTheme } from '../context/ThemeContext';
 import { useRole, MAX_BRANCHES } from '../context/RoleContext';
 import { useAuth } from '../context/AuthContext';
-import { BRANCHES } from '../data/branches';
+import { BRANCHES, branchOf } from '../data/branches';
 import Button from '../components/Button';
 import Collapsible from '../components/Collapsible';
 
@@ -19,13 +19,23 @@ const SECTIONS = [
 export default function BranchSelectScreen() {
   const insets = useSafeAreaInsets();
   const { colors, shadow } = useTheme();
-  const { setBranch, resetRole, prevBranch, cancelBranchChange, myBranches, setMyBranches } = useRole();
+  const { setBranch, resetRole, prevBranch, cancelBranchChange, myBranches, setMyBranches, branchNames, renameBranch } = useRole();
   const { isAdmin } = useAuth();
-  const [picked, setPicked] = useState(() => (prevBranch ? [prevBranch] : myBranches || []));
+  // Profilden gelindiğinde mevcut derslerin HEPSİ seçili gelsin (kaydederken ders kaybolmasın).
+  const [picked, setPicked] = useState(() => (myBranches && myBranches.length ? myBranches : prevBranch ? [prevBranch] : []));
+  // Seçmeli derslerin adı: "Seçmeli Ders 1" → ör. "Yaşayan Diller"
+  const [adlar, setAdlar] = useState(() => ({ 'secmeli-1': branchNames['secmeli-1'] || '', 'secmeli-2': branchNames['secmeli-2'] || '' }));
+  useEffect(() => {
+    setAdlar((a) => ({ 'secmeli-1': branchNames['secmeli-1'] || a['secmeli-1'], 'secmeli-2': branchNames['secmeli-2'] || a['secmeli-2'] }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [branchNames['secmeli-1'], branchNames['secmeli-2']]);
+  const secmeliler = picked.filter((id) => id === 'secmeli-1' || id === 'secmeli-2');
+  const adKaydet = (id) => renameBranch(id, adlar[id] || '');
   // En çok 3 ders: seçiliyse çıkar, değilse ekle (3'ü geçemez).
   const toggle = (id) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : p.length >= MAX_BRANCHES ? p : [...p, id]));
   const kaydet = () => {
     if (!picked.length) return;
+    secmeliler.forEach((id) => adKaydet(id));
     if (prevBranch) {
       // Profilden gelindi: aktif ders değişmesin — eski ders listede kaldıysa başta tutulur.
       setMyBranches(picked.includes(prevBranch) ? [prevBranch, ...picked.filter((x) => x !== prevBranch)] : picked);
@@ -55,12 +65,38 @@ export default function BranchSelectScreen() {
             <Collapsible key={sec.key} title={sec.label} style={{ marginTop: spacing.lg }}>
               <View style={st.grid}>
                 {items.map((b) => (
-                  <BranchCard key={b.id} b={b} selected={picked.includes(b.id)} onPress={() => toggle(b.id)} colors={colors} shadow={shadow} />
+                  <BranchCard key={b.id} b={branchOf(b.id)} selected={picked.includes(b.id)} onPress={() => toggle(b.id)} colors={colors} shadow={shadow} />
                 ))}
               </View>
             </Collapsible>
           );
         })}
+
+        {/* Seçmeli ders adları: seçildiyse adını yaz (ör. Yaşayan Diller) */}
+        {secmeliler.length ? (
+          <View style={[st.adKart, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={{ color: colors.text, fontWeight: '900', fontSize: font.body, marginBottom: spacing.xs }}>Seçmeli dersin adı</Text>
+            <Text style={{ color: colors.textMuted, fontSize: font.small, marginBottom: spacing.sm }}>
+              Boş bırakırsan “Seçmeli Ders” olarak kalır. Yazdığın ad profilde, ana sayfada ve ders programında görünür.
+            </Text>
+            {secmeliler.map((id) => (
+              <View key={id} style={{ marginBottom: spacing.sm }}>
+                <Text style={{ color: colors.textMuted, fontSize: font.tiny, fontWeight: '800', marginBottom: 4 }}>
+                  {id === 'secmeli-1' ? '1. SEÇMELİ DERS' : '2. SEÇMELİ DERS'}
+                </Text>
+                <TextInput
+                  value={adlar[id] || ''}
+                  onChangeText={(v) => setAdlar((a) => ({ ...a, [id]: v }))}
+                  onEndEditing={() => adKaydet(id)}
+                  onBlur={() => adKaydet(id)}
+                  placeholder="ör. Yaşayan Diller"
+                  placeholderTextColor={colors.textFaint}
+                  style={[st.adInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.cardSoft }]}
+                />
+              </View>
+            ))}
+          </View>
+        ) : null}
       </ScrollView>
       <View style={[st.footer, { backgroundColor: colors.bg, paddingBottom: insets.bottom + spacing.md }]}>
         <Button
@@ -104,4 +140,6 @@ const st = StyleSheet.create({
   name: { fontSize: font.body, fontWeight: '800' },
   check: { position: 'absolute', top: 10, right: 10, width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   footer: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: spacing.lg, paddingTop: spacing.sm },
+  adKart: { marginTop: spacing.lg, borderWidth: 1, borderRadius: radius.lg, padding: spacing.md },
+  adInput: { borderWidth: 1, borderRadius: radius.md, paddingHorizontal: spacing.sm, paddingVertical: 10, fontSize: font.body },
 });

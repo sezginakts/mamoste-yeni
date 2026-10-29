@@ -34,5 +34,27 @@ export const BRANCHES = [
 ];
 
 export const BRANCH_BY_ID = Object.fromEntries(BRANCHES.map((b) => [b.id, b]));
-export const branchOf = (id) => BRANCH_BY_ID[id] || BRANCH_BY_ID.ingilizce;
+
+// Seçmeli derslerin adı öğretmen tarafından değiştirilebilir (ör. "Seçmeli Ders 1" → "Yaşayan Diller").
+// Bu harita cihazda saklanır (src/teacher/branchNames.js) ve branchOf() aynı adı her yerde döndürür.
+export const BRANCH_NAME_OVERRIDE = {};
+
+// "Yaşayan Diller" → "YD" (ders programındaki kısa etiket)
+export const kisaAd = (ad) =>
+  String(ad || '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => w[0])
+    .join('')
+    .toLocaleUpperCase('tr')
+    .slice(0, 3);
+
+export const branchOf = (id) => {
+  const b = BRANCH_BY_ID[id] || BRANCH_BY_ID.ingilizce;
+  const ad = BRANCH_NAME_OVERRIDE[b.id];
+  if (!ad) return b;
+  return { ...b, name: ad, short: kisaAd(ad) || b.short };
+};
+
 export const branchesOfLevel = (level) => BRANCHES.filter((b) => b.level === level);

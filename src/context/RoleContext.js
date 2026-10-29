@@ -5,6 +5,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BRANCH_BY_ID, branchOf } from '../data/branches';
+import { loadBranchNames, setBranchName } from '../teacher/branchNames';
 
 const KEY = '@ingapp/role/v1';
 const BRANCH_KEY = '@ingapp/branch/v1';
@@ -25,6 +26,7 @@ export function RoleProvider({ children }) {
   const [branchId, setBranchState] = useState(null);
   const [myBranches, setMyBranchesState] = useState([]);
   const [prevBranch, setPrevBranch] = useState(null); // branş değiştirirken vazgeçilirse dönülecek branş
+  const [branchNames, setBranchNamesState] = useState({}); // seçmeli derslerin özel adları (id → ad)
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -38,9 +40,19 @@ export function RoleProvider({ children }) {
           setMyBranchesState(kayitli.length ? (kayitli.includes(br) ? kayitli : temizListe([br, ...kayitli])) : [br]);
         }
       } catch (e) {}
+      try {
+        setBranchNamesState(await loadBranchNames());
+      } catch (e) {}
       setLoaded(true);
     })();
   }, []);
+
+  // Seçmeli ders adını değiştir (ör. "Seçmeli Ders 1" → "Yaşayan Diller").
+  const renameBranch = async (id, ad) => {
+    if (!BRANCH_BY_ID[id]) return;
+    const next = await setBranchName(id, ad);
+    setBranchNamesState(next);
+  };
 
   // Rol yalnızca bir kez seçilir (ilk açılış); sonradan değiştirilemez.
   const setRole = (r) => {
@@ -130,11 +142,13 @@ export function RoleProvider({ children }) {
       prevBranch,
       cancelBranchChange,
       resetRole,
+      branchNames,
+      renameBranch,
       loaded,
       isTeacher: role === 'teacher',
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [role, branchId, myBranches, prevBranch, loaded]
+    [role, branchId, myBranches, prevBranch, loaded, branchNames]
   );
   return <RoleContext.Provider value={value}>{children}</RoleContext.Provider>;
 }
