@@ -10,7 +10,9 @@ import { branchOf } from '../data/branches';
 
 const GUN = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum'];
 
-export default function HomeTimetable({ buyuk = false }) {
+// alan: { h } verilirse (tam ekran) ızgara bu yüksekliğe TAM sığar — satır yüksekliği ve yazı boyu ondan hesaplanır,
+// kaydırma gerekmez.
+export default function HomeTimetable({ buyuk = false, alan = null }) {
   const { colors } = useTheme();
   const desk = useDesk();
   const week = desk.weekLessons();
@@ -27,16 +29,35 @@ export default function HomeTimetable({ buyuk = false }) {
   const saatVar = gunSaatleri.some((s) => doluSaat(s));
   const en = (day, period) => week.find((w) => w.day === day && w.period === period) || null;
 
-  const olcu = {
-    saatKolon: buyuk ? 76 : 44,
-    gunT: buyuk ? 15 : 10,
-    saatT: buyuk ? 13 : 9,
-    hucreY: buyuk ? 58 : 34,
-    boxT: buyuk ? 17 : 10,
-    boxSaat: buyuk ? 12 : 8,
-    boxTag: buyuk ? 12 : 8,
-    headPad: buyuk ? 8 : 4,
-  };
+  const sinirla = (v, a, b) => Math.max(a, Math.min(b, v));
+  const notY = (!saatVar ? 18 : 0) + (!week.length ? 20 : 0);
+  // Tam ekran: başlık satırı ~28 px, kalan yükseklik ders satırlarına bölünür.
+  const sigY = alan && alan.h ? Math.floor((alan.h - 30 - notY) / sonDers) : null;
+  const olcu = sigY
+    ? {
+        saatKolon: 58,
+        gunT: 14,
+        saatT: sinirla(Math.round(sigY * 0.26), 9, 13),
+        hucreY: sigY,
+        sabitY: true,
+        boxT: sinirla(Math.round(sigY * 0.36), 10, 20),
+        boxSaat: sinirla(Math.round(sigY * 0.22), 8, 12),
+        boxTag: sinirla(Math.round(sigY * 0.24), 8, 12),
+        headPad: 4,
+        // Satır çok kısaysa kutudaki saat yazılmaz (soldaki sütunda zaten var).
+        kutuSaat: sigY >= 54,
+      }
+    : {
+        saatKolon: buyuk ? 76 : 44,
+        gunT: buyuk ? 15 : 10,
+        saatT: buyuk ? 13 : 9,
+        hucreY: buyuk ? 58 : 34,
+        boxT: buyuk ? 17 : 10,
+        boxSaat: buyuk ? 12 : 8,
+        boxTag: buyuk ? 12 : 8,
+        headPad: buyuk ? 8 : 4,
+        kutuSaat: buyuk,
+      };
 
   return (
     <View>
@@ -59,7 +80,7 @@ export default function HomeTimetable({ buyuk = false }) {
         const s = saatler[i] || {};
         return (
           <View key={period} style={[st.row, { borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth }]}>
-            <View style={[st.saatKolon, { width: olcu.saatKolon }]}>
+            <View style={[st.saatKolon, { width: olcu.saatKolon }, olcu.sabitY && { paddingVertical: 0, height: olcu.hucreY }]}>
               {ayniSaat && s.start ? (
                 <>
                   <Text style={[st.saatT, { color: colors.text, fontSize: olcu.saatT }]}>{s.start}</Text>
@@ -76,10 +97,10 @@ export default function HomeTimetable({ buyuk = false }) {
               const besMi = !!(l && l.label && /^\s*5\s*[-/.\s]/.test(l.label));
               const isToday = d === bugun;
               return (
-                <View key={d} style={[st.hucre, { minHeight: olcu.hucreY }, isToday && { backgroundColor: colors.accent + '0D' }]}>
+                <View key={d} style={[st.hucre, olcu.sabitY ? { height: olcu.hucreY, overflow: 'hidden' } : { minHeight: olcu.hucreY }, isToday && { backgroundColor: colors.accent + '0D' }]}>
                   {l ? (
-                    <View style={[st.kutu, { backgroundColor: besMi ? '#FEF3C7' : col + '1F', borderColor: besMi ? '#F5B301' : col + '66' }]}>
-                      {((!ayniSaat && l.start) || buyuk) && l.start ? (
+                    <View style={[st.kutu, olcu.sabitY && { flex: 1, paddingVertical: 1 }, { backgroundColor: besMi ? '#FEF3C7' : col + '1F', borderColor: besMi ? '#F5B301' : col + '66' }]}>
+                      {((!ayniSaat && l.start) || olcu.kutuSaat) && l.start ? (
                         <Text style={[st.kutuSaat, { color: colors.textMuted, fontSize: olcu.boxSaat }]}>{l.start}</Text>
                       ) : null}
                       <Text style={[st.kutuT, { color: colors.text, fontSize: olcu.boxT }]} numberOfLines={1}>{l.label || '—'}</Text>

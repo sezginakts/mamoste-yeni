@@ -67,6 +67,7 @@ export default function TeacherHomeScreen({ navigation }) {
   };
   const [weekPlanId, setWeekPlanId] = useState(null); // program yokken üst kartta gösterilen düzey
   const [tamEkran, setTamEkran] = useState(false); // ders programı tam ekran (yatay) modu
+  const [tamAlan, setTamAlan] = useState(null); // tam ekranda ızgaraya kalan alan (sığdırmak için)
   const sonDokunus = useRef(0);
   const programaDokun = () => {
     const simdi = Date.now();
@@ -80,6 +81,7 @@ export default function TeacherHomeScreen({ navigation }) {
   };
   const tamEkraniKapat = () => {
     setTamEkran(false);
+    setTamAlan(null);
     dikeyKilitle();
   };
   // Tam ekranda da çift dokunuşla kapanır (✕ tek dokunuş).
@@ -511,19 +513,32 @@ export default function TeacherHomeScreen({ navigation }) {
 
       {/* Tam ekran ders programı: çift dokununca açılır, yatay kilide geçer; ✕ veya çift dokun ile kapanır. */}
       <Modal visible={tamEkran} animationType="fade" supportedOrientations={['portrait', 'landscape']} onRequestClose={tamEkraniKapat}>
-        <View style={{ flex: 1, backgroundColor: colors.bg, paddingTop: insets.top, paddingBottom: insets.bottom, paddingHorizontal: spacing.md }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.sm }}>
-            <Text style={{ color: colors.text, fontWeight: '900', fontSize: font.h3, flex: 1 }}>🗓️ Haftalık Ders Programı</Text>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: colors.bg,
+            paddingTop: Math.max(insets.top, spacing.xs),
+            paddingBottom: Math.max(insets.bottom, spacing.xs),
+            paddingLeft: Math.max(insets.left, spacing.md),
+            paddingRight: Math.max(insets.right, spacing.md),
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 4 }}>
+            <Text style={{ color: colors.text, fontWeight: '900', fontSize: font.body, flex: 1 }}>🗓️ Haftalık Ders Programı</Text>
             <Pressable onPress={tamEkraniKapat} hitSlop={10} accessibilityLabel="Tam ekranı kapat" style={{ paddingHorizontal: spacing.sm }}>
               <Text style={{ color: colors.accent, fontWeight: '900', fontSize: font.h3 }}>✕</Text>
             </Pressable>
           </View>
-          <ScrollView contentContainerStyle={{ paddingBottom: spacing.lg }}>
-            <Pressable onPress={tamEkrandaDokun} accessibilityLabel="Kapatmak için çift dokun">
-              <HomeTimetable buyuk />
-            </Pressable>
-            <Text style={{ color: colors.textFaint, fontSize: font.small, marginTop: spacing.md, textAlign: 'center' }}>Kapatmak için çift dokun ya da ✕</Text>
-          </ScrollView>
+          {/* Izgara kalan alana TAM sığar (kaydırma yok): alanın yüksekliği ölçülüp satırlara bölünür. */}
+          <Pressable
+            onPress={tamEkrandaDokun}
+            onLayout={(e) => setTamAlan({ h: e.nativeEvent.layout.height })}
+            style={{ flex: 1 }}
+            accessibilityLabel="Kapatmak için çift dokun"
+          >
+            {tamAlan ? <HomeTimetable buyuk alan={tamAlan} /> : null}
+          </Pressable>
+          <Text style={{ color: colors.textFaint, fontSize: font.tiny, paddingVertical: 4, textAlign: 'center' }}>Küçültmek için çift dokun ya da ✕</Text>
         </View>
       </Modal>
     </View>
