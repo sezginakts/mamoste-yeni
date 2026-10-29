@@ -386,6 +386,8 @@ export default function TeacherHomeScreen({ navigation }) {
         <View style={st.grid}>
           <Tile icon="📁" tint={colors.second} title="Evraklar" onPress={() => navigation.navigate('Docs')} />
           <Tile icon="🏫" tint={colors.second} title="Sınıf" onPress={() => navigation.navigate('Classes')} />
+          <Tile icon="🎯" tint={colors.accent} title="Etkinlikler" onPress={() => navigation.navigate('Activities')} />
+          <Tile icon="🖥️" tint={colors.second} title="Akıllı tahta" onPress={() => navigation.navigate('Board')} />
           <Tile
             icon="📝"
             tint={colors.accent}
@@ -393,8 +395,6 @@ export default function TeacherHomeScreen({ navigation }) {
             badge={todayNotes.length || null}
             onPress={() => navigation.navigate('Notes')}
           />
-          <Tile icon="🖥️" tint={colors.second} title="Akıllı tahta" onPress={() => navigation.navigate('Board')} />
-          <Tile icon="🎯" tint={colors.accent} title="Etkinlikler" onPress={() => navigation.navigate('Activities')} />
           <Tile icon="📅" tint={colors.accent} title="Yıllık plan" onPress={() => navigation.navigate('YearPlan')} />
         </View>
         </Collapsible>
