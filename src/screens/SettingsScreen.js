@@ -93,7 +93,7 @@ export default function SettingsScreen({ navigation }) {
           ) : null}
           <Pressable onPress={resetBranch} style={[styles.toggleRow, { marginTop: spacing.sm }]}>
             <Text style={[styles.toggleLabel, { flex: 1 }]}>{(myBranchObjects || []).length > 1 ? 'Derslerim' : branch ? `${branch.emoji} ${branch.name}` : 'Branş'}</Text>
-            <Text style={[styles.back, { fontSize: font.small }]}>Derslerimi değiştir ›</Text>
+            <Text style={[styles.back, { fontSize: 13 }]}>Derslerimi değiştir ›</Text>
           </Pressable>
         </>
       ) : null}
@@ -121,7 +121,7 @@ export default function SettingsScreen({ navigation }) {
         // Hesap açmadan devam edildiyse: sınıf kodu ve ödev için giriş buradan.
         <Pressable onPress={() => auth.setGuest(false)} style={[styles.toggleRow, { marginTop: spacing.sm }]}>
           <Text style={[styles.toggleLabel, { flex: 1 }]}>☁️ Giriş yap ya da hesap aç</Text>
-          <Text style={[styles.back, { fontSize: font.small }]}>›</Text>
+          <Text style={[styles.back, { fontSize: 13 }]}>›</Text>
         </Pressable>
       ) : null}
 
@@ -131,7 +131,7 @@ export default function SettingsScreen({ navigation }) {
           <Text style={styles.sectionTitle}>Veriler</Text>
           <Pressable onPress={() => navigation.navigate('TeacherBackup')} style={styles.toggleRow}>
             <Text style={[styles.toggleLabel, { flex: 1 }]}>💾 Yedek</Text>
-            <Text style={[styles.back, { fontSize: font.small }]}>›</Text>
+            <Text style={[styles.back, { fontSize: 13 }]}>›</Text>
           </Pressable>
         </>
       ) : null}
@@ -149,7 +149,7 @@ export default function SettingsScreen({ navigation }) {
               const active = desk.bell.mode === k;
               return (
                 <Pressable key={k} onPress={() => desk.setBell({ mode: k })} style={[styles.themeChip, active && { borderColor: colors.accent, backgroundColor: colors.accent + (mode === 'dark' ? '33' : '1A') }]}>
-                  <Text style={[styles.themeLabel, { fontSize: font.small }, active && { color: colors.accent }]}>{l}</Text>
+                  <Text style={[styles.themeLabel, { fontSize: 13 }, active && { color: colors.accent }]}>{l}</Text>
                 </Pressable>
               );
             })}
@@ -164,11 +164,11 @@ export default function SettingsScreen({ navigation }) {
               </Pressable>
               {!hasTimes ? (
                 <Pressable onPress={() => navigation.navigate('Timetable')} style={[styles.toggleRow, { marginTop: spacing.sm }]}>
-                  <Text style={[styles.toggleDesc, { flex: 1, marginTop: 0, fontSize: font.small }]}>Zil için ders saatlerini gir ›</Text>
+                  <Text style={[styles.toggleDesc, { flex: 1, marginTop: 0, fontSize: 13 }]}>Zil için ders saatlerini gir ›</Text>
                 </Pressable>
               ) : desk.bell.mode === 'mine' && !desk.hasTimetable ? (
                 <Pressable onPress={() => navigation.navigate('Timetable')} style={[styles.toggleRow, { marginTop: spacing.sm }]}>
-                  <Text style={[styles.toggleDesc, { flex: 1, marginTop: 0, fontSize: font.small }]}>Derslerinde çalması için ders programını gir ›</Text>
+                  <Text style={[styles.toggleDesc, { flex: 1, marginTop: 0, fontSize: 13 }]}>Derslerinde çalması için ders programını gir ›</Text>
                 </Pressable>
               ) : (
                 <Text style={[styles.toggleDesc, { marginTop: spacing.sm, marginLeft: spacing.xs }]}>
@@ -181,7 +181,7 @@ export default function SettingsScreen({ navigation }) {
           ) : null}
           <Pressable onPress={() => ringBell({ title: '🔔 Ders başladı', body: 'Zil böyle çalar' })} style={[styles.toggleRow, { marginTop: spacing.sm }]}>
             <Text style={[styles.toggleLabel, { flex: 1 }]}>🔔 Zili dene</Text>
-            <Text style={[styles.back, { fontSize: font.small }]}>›</Text>
+            <Text style={[styles.back, { fontSize: 13 }]}>›</Text>
           </Pressable>
         </>
       ) : null}
@@ -234,26 +234,26 @@ const makeStyles = (colors, shadow) => StyleSheet.create({
   accentItem: { width: 72, alignItems: 'center' },
   accentDot: { width: 40, height: 40, borderRadius: 20, borderWidth: 3, alignItems: 'center', justifyContent: 'center' },
   accentLabel: { color: colors.textMuted, fontSize: font.tiny, marginTop: 4 },
-  themeLabel: { color: colors.text, fontSize: font.body, fontWeight: '800' },
-  back: { color: colors.accent, fontSize: font.body, fontWeight: '800' },
-  title: { color: colors.text, fontSize: font.h3, fontWeight: '900' },
-  sectionTitle: { color: colors.text, fontSize: font.h3, fontWeight: '800', marginTop: spacing.lg, marginBottom: spacing.sm },
-  help: { color: colors.textMuted, fontSize: font.small, marginBottom: spacing.md },
+  themeLabel: { color: colors.text, fontSize: 14.5, fontWeight: '800' },
+  back: { color: colors.accent, fontSize: 14.5, fontWeight: '800' },
+  title: { color: colors.text, fontSize: 18, fontWeight: '900' },
+  sectionTitle: { color: colors.text, fontSize: 17, fontWeight: '800', marginTop: spacing.lg, marginBottom: spacing.sm },
+  help: { color: colors.textMuted, fontSize: 13, marginBottom: spacing.md },
   goalRow: { flexDirection: 'row', gap: spacing.sm },
   goalChip: { flex: 1, backgroundColor: colors.card, borderRadius: radius.md, paddingVertical: spacing.md, alignItems: 'center', borderWidth: 2, borderColor: colors.border },
   goalNum: { color: colors.text, fontSize: font.h2, fontWeight: '900' },
   goalLabel: { color: colors.textMuted, fontSize: font.tiny },
   toggleRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card, borderRadius: radius.md, padding: spacing.md, borderWidth: 1, borderColor: colors.border },
-  toggleLabel: { color: colors.text, fontSize: font.body, fontWeight: '700' },
+  toggleLabel: { color: colors.text, fontSize: 14.5, fontWeight: '700' },
   branchRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderWidth: 1.5, borderRadius: radius.sm, paddingHorizontal: spacing.md, paddingVertical: 10, marginTop: 6 },
   radio: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   radioDot: { width: 10, height: 10, borderRadius: 5 },
   toggleDesc: { color: colors.textMuted, fontSize: font.tiny, marginTop: 2 },
   infoCard: { backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.lg, marginTop: spacing.xl, borderWidth: 1, borderColor: colors.border },
-  infoTitle: { color: colors.text, fontSize: font.body, fontWeight: '800', marginBottom: spacing.sm },
-  infoText: { color: colors.textMuted, fontSize: font.small, lineHeight: 22 },
+  infoTitle: { color: colors.text, fontSize: 14.5, fontWeight: '800', marginBottom: spacing.sm },
+  infoText: { color: colors.textMuted, fontSize: 13, lineHeight: 20 },
   resetBtn: { marginTop: spacing.xl, padding: spacing.md, alignItems: 'center' },
-  resetText: { color: colors.danger, fontWeight: '800', fontSize: font.body },
+  resetText: { color: colors.danger, fontWeight: '800', fontSize: 14.5 },
   switch: { width: 46, height: 28, borderRadius: 14, padding: 3, justifyContent: 'center' },
   knob: { width: 22, height: 22, borderRadius: 11, backgroundColor: '#fff' },
   adminRow: { gap: spacing.sm, marginTop: spacing.sm },
