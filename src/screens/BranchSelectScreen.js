@@ -14,6 +14,7 @@ import Collapsible from '../components/Collapsible';
 const SECTIONS = [
   { key: 'ortaokul', label: 'ORTAOKUL' },
   { key: 'lise', label: 'LİSE' },
+  { key: 'secmeli', label: 'SEÇMELİ DERSLER' },
 ];
 
 export default function BranchSelectScreen() {

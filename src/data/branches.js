@@ -28,6 +28,23 @@ export const BRANCHES = [
   { id: 'tarih', short: 'TAR', level: 'lise', name: 'Tarih', emoji: '📜', color: '#E2574C', grades: [9, 10, 11, 12], enabled: true, drills: false, hwKinds: ['task'], board: 'plan' },
   { id: 'cografya', short: 'COĞ', level: 'lise', name: 'Coğrafya', emoji: '🗺️', color: '#0284C7', grades: [9, 10, 11, 12], enabled: true, drills: false, hwKinds: ['task'], board: 'plan' },
   { id: 'felsefe', short: 'FEL', level: 'lise', name: 'Felsefe', emoji: '💭', color: '#0D9488', grades: [10, 11, 12], enabled: true, drills: false, hwKinds: ['task'], board: 'plan' },
+
+  // ---- Seçmeli dersler (ortaokul + lise) ----
+  { id: 'kuran', short: 'KUR', level: 'secmeli', name: "Kur'an-ı Kerim", emoji: '📖', color: '#0D9488', grades: [5, 6, 7, 8], enabled: true, drills: false, hwKinds: ['task'], board: 'plan' },
+  { id: 'peygamber', short: 'PGH', level: 'secmeli', name: 'Peygamberimizin Hayatı', emoji: '🕌', color: '#0284C7', grades: [5, 6, 7, 8], enabled: true, drills: false, hwKinds: ['task'], board: 'plan' },
+  { id: 'temel-din', short: 'TDB', level: 'secmeli', name: 'Temel Dinî Bilgiler', emoji: '📗', color: '#E2574C', grades: [5, 6, 7, 8], enabled: true, drills: false, hwKinds: ['task'], board: 'plan' },
+  { id: 'arapca', short: 'ARP', level: 'secmeli', name: 'Arapça', emoji: '🔤', color: '#0D9488', grades: [5, 6, 7, 8, 9, 10, 11, 12], enabled: true, drills: false, hwKinds: ['task'], board: 'plan' },
+  { id: 'almanca', short: 'ALM', level: 'secmeli', name: 'Almanca', emoji: '🇩🇪', color: '#0284C7', grades: [5, 6, 7, 8, 9, 10, 11, 12], enabled: true, drills: false, hwKinds: ['task'], board: 'plan' },
+  { id: 'fransizca', short: 'FRS', level: 'secmeli', name: 'Fransızca', emoji: '🇫🇷', color: '#E2574C', grades: [5, 6, 7, 8, 9, 10, 11, 12], enabled: true, drills: false, hwKinds: ['task'], board: 'plan' },
+  { id: 'satranc', short: 'SAT', level: 'secmeli', name: 'Satranç', emoji: '♟️', color: '#0D9488', grades: [5, 6, 7, 8], enabled: true, drills: false, hwKinds: ['task'], board: 'plan' },
+  { id: 'zeka-oyunlari', short: 'ZEK', level: 'secmeli', name: 'Zekâ Oyunları', emoji: '🧩', color: '#0284C7', grades: [5, 6, 7, 8], enabled: true, drills: false, hwKinds: ['task'], board: 'plan' },
+  { id: 'drama', short: 'DRA', level: 'secmeli', name: 'Drama', emoji: '🎭', color: '#E2574C', grades: [5, 6, 7, 8], enabled: true, drills: false, hwKinds: ['task'], board: 'plan' },
+  { id: 'halk-kulturu', short: 'HK', level: 'secmeli', name: 'Halk Kültürü', emoji: '🏺', color: '#0D9488', grades: [5, 6, 7, 8], enabled: true, drills: false, hwKinds: ['task'], board: 'plan' },
+  { id: 'matematik-uygulama', short: 'MAU', level: 'secmeli', name: 'Matematik Uygulamaları', emoji: '➗', color: '#0284C7', grades: [5, 6, 7, 8], enabled: true, drills: false, hwKinds: ['task'], board: 'plan' },
+  { id: 'fen-uygulama', short: 'FNU', level: 'secmeli', name: 'Fen Bilimleri Uygulamaları', emoji: '🔬', color: '#E2574C', grades: [5, 6, 7, 8], enabled: true, drills: false, hwKinds: ['task'], board: 'plan' },
+  { id: 'yazarlik', short: 'YZB', level: 'secmeli', name: 'Yazarlık ve Yazma Becerileri', emoji: '✍️', color: '#0D9488', grades: [5, 6, 7, 8], enabled: true, drills: false, hwKinds: ['task'], board: 'plan' },
+  { id: 'spor-etkinlik', short: 'SFE', level: 'secmeli', name: 'Spor ve Fizikî Etkinlikler', emoji: '🏃', color: '#0284C7', grades: [5, 6, 7, 8], enabled: true, drills: false, hwKinds: ['task'], board: 'plan' },
+  { id: 'dusunme', short: 'DÜŞ', level: 'secmeli', name: 'Düşünme Eğitimi', emoji: '🧠', color: '#E2574C', grades: [7, 8, 9, 10], enabled: true, drills: false, hwKinds: ['task'], board: 'plan' },
 ];
 
 export const BRANCH_BY_ID = Object.fromEntries(BRANCHES.map((b) => [b.id, b]));
