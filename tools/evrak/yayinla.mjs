@@ -150,10 +150,19 @@ if (KONTROL) {
 }
 
 // ---------- yaz ----------
+// Yalnız içeriği değişen dosya yazılır (docx'in zip saatleri her üretimde değişir; boş git farkı olmasın); listede olmayan silinir.
 const hedef = path.join(YAYIN, KLASOR);
-fs.rmSync(hedef, { recursive: true, force: true });
 fs.mkdirSync(hedef, { recursive: true });
-for (const s of sablonlar) fs.writeFileSync(path.join(hedef, `${s.meta.id}.docx`), s.bytes);
+const yazilacak = new Set(sablonlar.map((s) => `${s.meta.id}.docx`));
+for (const f of fs.readdirSync(hedef)) if (!yazilacak.has(f)) fs.rmSync(path.join(hedef, f));
+let degisen = 0;
+for (const s of sablonlar) {
+  const dosya = path.join(hedef, `${s.meta.id}.docx`);
+  if (fs.existsSync(dosya) && ozet(fs.readFileSync(dosya)) === ozet(s.bytes)) continue;
+  fs.writeFileSync(dosya, s.bytes);
+  degisen++;
+}
+console.log(`  Değişen şablon dosyası: ${degisen}`);
 fs.writeFileSync(path.join(YAYIN, LISTE), JSON.stringify({ surum: 3, guncelleme: bugun, evraklar: satirlar }, null, 2) + '\n');
 console.log(`✓ ${satirlar.length} şablon → tahta-site/evrak/${KLASOR}/ + ${LISTE} (${ozetSatir})`);
 console.log(`  Kullanılmayan etiketler: ${Object.keys(ETIKETLER).filter((e) => !satirlar.some((r) => r.etiketler.includes(e))).join(', ') || 'yok'}`);
