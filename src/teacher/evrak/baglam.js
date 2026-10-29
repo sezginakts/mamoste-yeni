@@ -87,8 +87,8 @@ export function uniteSatirlari(weeks) {
   const out = [];
   for (const w of weeks || []) {
     if (w.holiday) continue;
-    // Geçiş haftası iki ünite içerebilir ("A\nB"): önceki uzar, yenisi başlar; haftanın çıktıları yeni üniteye.
-    const adlar = uniteAdi(w).split('\n').map(temiz).filter(Boolean);
+    // Geçiş haftası iki ünite içerebilir ("A\nB" ya da MEB planında "A / B"): önceki uzar, yenisi başlar; çıktılar yeniye.
+    const adlar = uniteAdi(w).split(/\n| \/ /).map(temiz).filter(Boolean);
     adlar.forEach((unite, i) => {
       const son = out[out.length - 1];
       const u = son && son.unite === unite ? son : null;

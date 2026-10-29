@@ -11,6 +11,7 @@ import { useDesk, weekdayOf, periodAt } from '../../teacher/DeskContext';
 import { Header, Card, SectionTitle, Field, SmallButton, Chip, formatDate, formatDateLong, confirmAction } from '../../teacher/ui';
 import { dayKey } from '../../utils/helpers';
 import { useRole } from '../../context/RoleContext';
+import { mebPlans, MEB_PLAN_YEAR } from '../../data/yearPlans';
 
 const GRADES = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 const DAY_NAMES = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
@@ -137,7 +138,9 @@ export default function YearPlanScreen({ route, navigation }) {
       setPlanId(null);
       setOffset(0);
     };
-    const msg = `“${plan.name}” planı silinsin mi?`;
+    // Kendi planı silinince o düzeyde MEB planı (varsa) yeniden kullanılır (PlanContext).
+    const meb = plan.grade && mebPlans(branchId)[plan.grade];
+    const msg = `“${plan.name}” planı silinsin mi?\n\n${meb ? `${plan.grade}. sınıf için yeniden MEB'in ${MEB_PLAN_YEAR} çerçeve yıllık planı kullanılacak.` : 'Bu sınıf için MEB planı yok; ana sayfada öğrenme çıktısı görünmez.'}`;
     confirmAction({ title: 'Planı sil', message: msg, ok: 'Sil', destructive: true, onOk: go });
   };
 
@@ -160,7 +163,9 @@ export default function YearPlanScreen({ route, navigation }) {
             </View>
             {replaces ? (
               <Text style={{ color: colors.warning, fontSize: font.small }}>
-                {draft.grade}. sınıf için yüklü plan bunun yerine geçecek.
+                {replaces.builtin
+                  ? `${draft.grade}. sınıfta MEB planı yerine bu plan kullanılacak. Bu planı silersen MEB planı geri gelir.`
+                  : `${draft.grade}. sınıf için yüklediğin önceki plan bununla değişecek.`}
               </Text>
             ) : null}
 
