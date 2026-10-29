@@ -1,17 +1,17 @@
-// Kulübüm: kulüp adı, danışman, üyeler (sınıf listelerinden işaretlenir ya da elle yazılır), başkan (⭐).
+// Kulübüm: kulüp adı, danışman, üyeler (sınıf listelerinden işaretlenir ya da elle yazılır), başkan (üyede “Başkan yap”).
 // Kulüp evraklarının üye tabloları, başkanı ve üye sayısı buradan dolar. Kayıt Okul bilgileri ile aynı yerde (docs.js → kulup).
 import React, { useEffect, useState } from 'react';
 import { Modal, View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacing, font, radius } from '../theme';
 import { useTheme } from '../context/ThemeContext';
-import { Field, SmallButton } from './ui';
+import { Field, SmallButton, confirmAction } from './ui';
 
 const anahtar = (u) => `${u.sinif || ''}|${u.no || ''}|${u.ad}`;
-// "123 Ali Veli" / "Ali Veli" satırları → [{ no, ad }]
+// "123 Ali Veli" / "Ali Veli" satırları (ya da virgülle ayrılmış) → [{ no, ad }]
 const elleAyikla = (metin) =>
   String(metin || '')
-    .split(/\n|;/)
+    .split(/\n|;|,/)
     .map((l) => l.trim())
     .filter(Boolean)
     .map((l) => {
@@ -59,7 +59,15 @@ export default function EvrakKulup({ visible, kulup, classes, ogretmen, onClose,
             <Text style={{ color: colors.textMuted, fontWeight: '800' }}>Vazgeç</Text>
           </Pressable>
           <Text style={{ color: colors.text, fontWeight: '900', fontSize: font.h3 }}>Kulübüm</Text>
-          <Pressable onPress={() => onSave({ ...k, uyeler })} hitSlop={10} accessibilityRole="button">
+          <Pressable
+            onPress={() =>
+              uyeler.length && !k.baskan
+                ? confirmAction({ title: 'Kulüp başkanı seçilmedi', message: 'Evraklarda başkanın yeri "……" kalır. Üyelerden birinde “Başkan yap”a dokunabilirsin.', ok: 'Başkansız kaydet', onOk: () => onSave({ ...k, uyeler }) })
+                : onSave({ ...k, uyeler })
+            }
+            hitSlop={10}
+            accessibilityRole="button"
+          >
             <Text style={{ color: colors.accent, fontWeight: '900' }}>Kaydet</Text>
           </Pressable>
         </View>
@@ -67,20 +75,35 @@ export default function EvrakKulup({ visible, kulup, classes, ogretmen, onClose,
           <Field label="Kulüp adı" value={k.ad} onChangeText={(v) => setK({ ...k, ad: v })} placeholder="ör. Satranç" />
           <Field label="Danışman öğretmen" value={k.danisman} onChangeText={(v) => setK({ ...k, danisman: v })} placeholder={ogretmen || 'Boşsa senin adın yazılır'} />
 
-          <Text style={[st.baslik, { color: colors.textMuted }]}>ÜYELER ({uyeler.length}) · ⭐ = kulüp başkanı</Text>
+          <View style={[st.baskanKutu, { borderColor: k.baskan ? colors.accent : colors.danger, backgroundColor: (k.baskan ? colors.accent : colors.danger) + '12' }]}>
+            <Text style={[st.baslik, { color: colors.textMuted, marginBottom: 2 }]}>KULÜP BAŞKANI</Text>
+            <Text style={{ color: colors.text, fontWeight: '900', fontSize: font.body }}>
+              {k.baskan ? `⭐ ${k.baskan}` : uyeler.length ? 'Seçilmedi — aşağıdaki üyelerden birinde “Başkan yap”a dokun' : 'Önce üye ekle, sonra birini başkan yap'}
+            </Text>
+          </View>
+
+          <Text style={[st.baslik, { color: colors.textMuted }]}>ÜYELER ({uyeler.length})</Text>
           {uyeler.length ? (
             <View style={{ gap: 6, marginBottom: spacing.md }}>
               {uyeler.map((u) => {
-                const baskan = k.baskan && k.baskan === u.ad;
+                const baskan = !!k.baskan && k.baskan === u.ad;
                 return (
-                  <View key={anahtar(u)} style={[st.uye, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                    <Pressable onPress={() => setK({ ...k, baskan: baskan ? '' : u.ad })} hitSlop={8} accessibilityLabel={`${u.ad} başkan`}>
-                      <Text style={{ fontSize: 18, opacity: baskan ? 1 : 0.25 }}>⭐</Text>
+                  <View key={anahtar(u)} style={[st.uye, { backgroundColor: colors.card, borderColor: baskan ? colors.accent : colors.border }]}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ color: colors.text, fontWeight: '700' }} numberOfLines={1}>
+                        {u.ad}
+                      </Text>
+                      {u.sinif || u.no ? <Text style={{ color: colors.textMuted, fontSize: font.small }}>{[u.sinif, u.no].filter(Boolean).join(' · ')}</Text> : null}
+                    </View>
+                    <Pressable
+                      onPress={() => setK({ ...k, baskan: baskan ? '' : u.ad })}
+                      hitSlop={6}
+                      accessibilityRole="button"
+                      accessibilityLabel={baskan ? `${u.ad} başkanlıktan al` : `${u.ad} başkan yap`}
+                      style={[st.baskanDugme, { borderColor: colors.accent, backgroundColor: baskan ? colors.accent : 'transparent' }]}
+                    >
+                      <Text style={{ color: baskan ? colors.onAccent : colors.accent, fontWeight: '900', fontSize: font.small }}>{baskan ? '⭐ Başkan' : 'Başkan yap'}</Text>
                     </Pressable>
-                    <Text style={{ color: colors.text, fontWeight: '700', flex: 1 }} numberOfLines={1}>
-                      {u.ad}
-                    </Text>
-                    <Text style={{ color: colors.textMuted, fontSize: font.small }}>{[u.sinif, u.no].filter(Boolean).join(' · ')}</Text>
                     <Pressable onPress={() => degistir(u)} hitSlop={8} accessibilityLabel={`${u.ad} çıkar`}>
                       <Text style={{ color: colors.danger, fontWeight: '900' }}>✕</Text>
                     </Pressable>
@@ -122,7 +145,7 @@ export default function EvrakKulup({ visible, kulup, classes, ogretmen, onClose,
           )}
 
           <Text style={[st.baslik, { color: colors.textMuted, marginTop: spacing.md }]}>ELLE EKLE</Text>
-          <Field value={elle} onChangeText={setElle} placeholder={'Her satıra bir öğrenci: 123 Ali Veli'} multiline />
+          <Field value={elle} onChangeText={setElle} placeholder={'Her satıra (ya da virgülle) bir öğrenci: 123 Ali Veli'} multiline />
           <SmallButton title="Listeye ekle" onPress={elleEkle} disabled={!elle.trim()} style={{ alignSelf: 'flex-start' }} />
         </ScrollView>
       </View>
@@ -134,6 +157,8 @@ const st = StyleSheet.create({
   ust: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.md, paddingVertical: spacing.md, borderBottomWidth: 1 },
   baslik: { fontSize: font.tiny, fontWeight: '900', letterSpacing: 1, marginBottom: spacing.sm },
   uye: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderWidth: 1, borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: 8 },
+  baskanKutu: { borderWidth: 1.5, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.md },
+  baskanDugme: { borderWidth: 1.5, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 6 },
   sinif: { borderWidth: 1, borderRadius: radius.md, marginBottom: spacing.sm, overflow: 'hidden' },
   sinifBas: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.md },
   ogr: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.md, paddingVertical: 8 },

@@ -25,7 +25,7 @@ const YAYIN = path.join(ROOT, 'tahta-site/evrak');
 const KLASOR = 'v3';
 const LISTE = 'liste3.json';
 const KONTROL = process.argv.includes('--kontrol');
-const KATEGORILER = ['zumre', 'sok', 'yillik-plan', 'sinav', 'olcme', 'kulup', 'veli', 'rehberlik', 'sinif'];
+const KATEGORILER = ['zumre', 'sok', 'yillik-plan', 'sinav', 'olcme', 'kulup', 'veli', 'rehberlik', 'sinif', 'bep'];
 
 // ---------- örnek veri ----------
 const ADLAR = ['Ali Yılmaz', 'Ayşe Kaya', 'Mehmet Demir', 'Zeynep Çelik', 'Emre Şahin', 'Elif Öztürk', 'Can Aydın', 'Ece Arslan', 'Burak Doğan', 'İrem Koç'];
@@ -36,7 +36,7 @@ const tamVeri = evrakVerisi({
   tarih: TARIH,
   brans: 'İngilizce',
   profil: { ad: 'Deneme Öğretmen', okul: 'Atatürk Ortaokulu', il: 'Ankara', ilce: 'Çankaya', mudur: 'Müdür Bey', mudurYrd: 'Yardımcı Hanım', rehber: 'Rehber Bey', zumre: 'Zümre Bir, Zümre İki', zumreBaskani: 'Zümre Bir' },
-  sinif: { ad: '6-A', danisman: 'Danışman Hanım', ogrenciler, haftalikSaat: 3, plan: mebPlan },
+  sinif: { ad: '6-A', danisman: 'Danışman Hanım', ogrenciler, haftalikSaat: 3, plan: mebPlan, secili: ogrenciler[4] },
   duzey: { duzey: 6, weeks: mebPlan, kaynak: 'MEB 2026-2027 çerçeve yıllık planı' },
   kulup: { ad: 'Satranç Kulübü', baskan: 'Ayşe Kaya 2', danisman: '', uyeler: ogrenciler.slice(0, 12).map((o) => ({ ...o, sinif: '6-A' })) },
 });

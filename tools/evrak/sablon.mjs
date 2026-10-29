@@ -124,6 +124,7 @@ const sign = {
     ),
   // Kulüp toplantıları: katılan üyeler (Kulübüm'deki üye listesi) + imzalar
   kulupToplanti: () => p('') + section('TOPLANTIYA KATILAN ÜYELER') + uyeTablosu() + sign.kulup(),
+  bep: () => bepBirim(),
 };
 
 // Toplantı tutanağı: gündem maddeleri, her maddenin görüşülmesi, kararlar.
@@ -725,6 +726,236 @@ const REHBERLIK = {
     sign.rehber(),
 };
 
+// ---------- BEP (bireyselleştirilmiş eğitim programı) ----------
+// Kaynaştırma / bütünleştirme yoluyla eğitim alan öğrenci için; indirirken sınıf + ÖĞRENCİ seçilir. Uzun dönemli amaçlar
+// (UDA) o sınıf düzeyinin yıllık planındaki üniteler, kısa dönemli amaçlar (KDA) ünitenin öğrenme çıktılarıdır: öğretmen
+// öğrencinin performansına göre siler / sadeleştirir. Dayanak: MEB Özel Eğitim Hizmetleri Yönetmeliği (BEP geliştirme birimi).
+const BEP_DAYANAK = 'Millî Eğitim Bakanlığı Özel Eğitim Hizmetleri Yönetmeliği';
+const BEP_OGRENCI = (extra = []) =>
+  infoTable([
+    ['Öğrencinin adı soyadı', '{ogrenci_ad}'],
+    ['Okul numarası', '{ogrenci_no}'],
+    ['Sınıf / şube', '{sinif}'],
+    ['Ders', '{brans}'],
+    ['Ders öğretmeni', '{ogretmen}'],
+    ['Sınıf rehber öğretmeni', '{danisman}'],
+    ...extra,
+  ]);
+// BEP geliştirme birimi imzaları (birim başkanı: müdür yardımcısı)
+const bepBirim = () =>
+  p('') +
+  section('BEP GELİŞTİRME BİRİMİ') +
+  table(
+    [
+      ['Görevi', 'Adı Soyadı', 'İmza'],
+      ['Birim başkanı (Müdür Yardımcısı)', '{mudur_yrd}', ''],
+      ['Rehber öğretmen', '{rehber_ogretmen}', ''],
+      ['Sınıf rehber öğretmeni', '{danisman}', ''],
+      ['{brans} öğretmeni', '{ogretmen}', ''],
+      ['Ders öğretmeni', '', ''],
+      ['Ders öğretmeni', '', ''],
+      ['Özel eğitim öğretmeni', '', ''],
+      ['Öğrencinin velisi', '', ''],
+      ['Öğrenci', '{ogrenci_ad}', ''],
+    ],
+    [3600, 4000, 2000]
+  ) +
+  p('') +
+  table([['UYGUNDUR'], ['{tarih}\n{mudur}\nOkul Müdürü']], [9600]);
+
+const BEP_TUTANAK = {
+  id: 'bep-birim-tutanak',
+  kategori: 'bep',
+  ad: 'BEP geliştirme birimi toplantı tutanağı',
+  kisa: 'BEP Geliştirme Birimi Toplantı Tutanağı',
+  donem: 'Eylül · BEP hazırlanmadan önce',
+  gun: '09-25',
+  body: () =>
+    meeting({
+      title: '{egitim_yili} EĞİTİM-ÖĞRETİM YILI BEP GELİŞTİRME BİRİMİ TOPLANTI TUTANAĞI',
+      info: MEETING_INFO([['Öğrencinin adı soyadı', '{ogrenci_ad}'], ['Okul numarası', '{ogrenci_no}'], ['Sınıf / şube', '{sinif}']]),
+      imza: 'bep',
+      items: [
+        ['Açılış ve birimin oluşturulması', `Toplantı birim başkanı müdür yardımcısının açılış konuşmasıyla başladı. ${BEP_DAYANAK} gereğince öğrenci için BEP geliştirme biriminin; müdür yardımcısı, rehber öğretmen, sınıf rehber öğretmeni, ders öğretmenleri, özel eğitim öğretmeni (varsa), öğrencinin velisi ve uygun durumda öğrencinin katılımıyla oluşturulduğu belirtildi.`],
+        ['Öğrenciye ait raporların incelenmesi', 'Öğrencinin rehberlik ve araştırma merkezince düzenlenen özel eğitim değerlendirme kurulu raporu, eğitsel değerlendirme sonuçları ve önceki yıllara ait BEP ile gelişim bilgileri incelendi.'],
+        ['Eğitim performansının belirlenmesi', 'Ders öğretmenleri, öğrencinin derslerdeki mevcut performansını kaba değerlendirme ve gözlemlerle belirledi; öğrencinin güçlü yönleri ve desteklenmesi gereken alanları kayda geçirildi.'],
+        ['Uzun ve kısa dönemli amaçların belirlenmesi', 'Her ders için öğretim programının öğrenme çıktıları, öğrencinin performansı dikkate alınarak uzun dönemli amaçlar (ünite) ve kısa dönemli amaçlar (öğrenme çıktıları) olarak belirlendi; amaçların süreleri yıllık plana göre planlandı.'],
+        ['Öğretim yöntemleri, materyaller ve uyarlamalar', 'Öğrencinin öğrenme özelliklerine uygun öğretim yöntem ve teknikleri, materyaller ile sınıf içi düzenlemeler (oturma yeri, ek süre, görsel destek, yönergelerin sadeleştirilmesi gibi) belirlendi.'],
+        ['Ölçme ve değerlendirme uyarlamaları', 'Öğrencinin başarısının BEP’te yer alan amaçlara göre değerlendirileceği; sınavlarda gerekli uyarlamaların (ek süre, ayrı ortam, okuyucu-yazıcı desteği, büyük punto, soru sayısının düzenlenmesi gibi) yapılacağı görüşüldü.'],
+        ['Destek eğitim hizmetleri ve veli iş birliği', 'Öğrencinin destek eğitim odası hizmetlerinden yararlanma ihtiyacı değerlendirildi. Velinin BEP sürecine katılımı, evde yapılabilecek destekleyici çalışmalar ve düzenli bilgilendirme konuşuldu.'],
+        ['Dilek ve temenniler', 'Öğrencinin gelişimine katkı dileğiyle toplantı sona erdi.'],
+      ],
+      kararlar: [
+        'Öğrencinin her ders için BEP’i, belirlenen uzun ve kısa dönemli amaçlarla hazırlanacaktır.',
+        'Öğretim ve ölçme-değerlendirme uyarlamaları bütün ders öğretmenlerince uygulanacaktır.',
+        'Öğrencinin başarısı BEP’teki amaçlara göre değerlendirilecek, sınavlarda gerekli uyarlamalar yapılacaktır.',
+        'Veli BEP süreci hakkında bilgilendirilecek, görüşü alınacaktır.',
+        'BEP geliştirme birimi dönem sonunda toplanarak öğrencinin ilerlemesini değerlendirecek, gerekirse BEP’i güncelleyecektir.',
+      ],
+    }),
+};
+
+const BEP_PERFORMANS = {
+  id: 'bep-performans',
+  kategori: 'bep',
+  ad: 'BEP eğitsel performans belirleme formu',
+  kisa: 'Eğitsel Performans Belirleme Formu',
+  donem: 'BEP’ten önce · kaba değerlendirme',
+  gun: '09-30',
+  body: () =>
+    head('{egitim_yili} EĞİTİM-ÖĞRETİM YILI {brans} DERSİ EĞİTSEL PERFORMANS BELİRLEME FORMU') +
+    BEP_OGRENCI([['Değerlendirme tarihi', '{tarih}']]) +
+    p('') +
+    p('Öğrencinin dersteki mevcut performansı, sınıf düzeyinin öğrenme çıktılarına göre gözlem, çalışma kâğıdı ve sözlü sorularla belirlenir. Her ünite için uygun sütun işaretlenir; BEP’in uzun ve kısa dönemli amaçları bu forma göre seçilir.', { justify: true, i: true }) +
+    table([['ÜNİTE', 'ÖĞRENME ÇIKTILARI', 'Yapabiliyor', 'Kısmen', 'Yapamıyor'], dongu('uniteler', ['{unite}', '{ciktilar}', '', '', ''])], [2000, 4900, 900, 900, 900], { size: 9 }) +
+    p('') +
+    section('GÜÇLÜ YÖNLERİ') +
+    p('……') +
+    section('DESTEKLENMESİ GEREKEN YÖNLERİ') +
+    p('……') +
+    p('') +
+    table([['Ders Öğretmeni', 'Sınıf Rehber Öğretmeni'], ['{ogretmen}\n{brans} Öğretmeni', '{danisman}']], [4800, 4800]),
+};
+
+const BEP_FORMU = {
+  id: 'bep-formu',
+  kategori: 'bep',
+  ad: 'Bireyselleştirilmiş eğitim programı (BEP)',
+  kisa: 'BEP Formu (ders planı)',
+  donem: 'Ekim başı · yıl boyunca uygulanır',
+  gun: '10-09',
+  yatay: true,
+  body: () =>
+    head('{egitim_yili} EĞİTİM-ÖĞRETİM YILI {brans} DERSİ BİREYSELLEŞTİRİLMİŞ EĞİTİM PROGRAMI (BEP)') +
+    table(
+      [
+        ['Öğrencinin adı soyadı', '{ogrenci_ad}', 'Okul numarası', '{ogrenci_no}'],
+        ['Sınıf / şube', '{sinif}', 'Ders', '{brans}'],
+        ['Ders öğretmeni', '{ogretmen}', 'Sınıf rehber öğretmeni', '{danisman}'],
+        ['BEP başlangıç', '{gun:@ders_basi}', 'BEP bitiş', '{gun:@ders_sonu}'],
+        ['Özel eğitim değerlendirme kurulu raporu', '……', 'Eğitsel tanı', '……'],
+      ],
+      [3300, 3900, 3300, 3900],
+      { head: false }
+    ) +
+    p('') +
+    section('EĞİTİM PERFORMANSI') +
+    p('Eğitsel performans belirleme formuna göre öğrencinin derste yapabildikleri ve desteklenmesi gereken alanlar: ……', { justify: true }) +
+    section('UZUN VE KISA DÖNEMLİ AMAÇLAR') +
+    p('Uzun dönemli amaçlar sınıf düzeyinin yıllık planındaki ünitelerden, kısa dönemli amaçlar o ünitenin öğrenme çıktılarından alınmıştır. Öğrencinin performansına uymayan amaçları siliniz ya da sadeleştiriniz.', { justify: true, i: true, size: 9 }) +
+    table(
+      [
+        ['UZUN DÖNEMLİ AMAÇ (ÜNİTE)', 'KISA DÖNEMLİ AMAÇLAR (ÖĞRENME ÇIKTILARI)', 'BAŞLAMA – BİTİŞ', 'YÖNTEM VE TEKNİKLER', 'MATERYALLER', 'DEĞERLENDİRME'],
+        dongu('uniteler', [
+          '{sira}. {unite}',
+          '{ciktilar}',
+          '{baslangic}\n{bitis}\n({sure})',
+          'Doğrudan öğretim, model olma, ipucuyla öğretim, tekrar',
+          'Ders kitabı, görsel kartlar, somut materyal, çalışma kâğıdı',
+          'Gözlem, kontrol listesi\n☐ Gerçekleşti\n☐ Kısmen\n☐ Gerçekleşmedi',
+        ]),
+      ],
+      [2000, 5600, 1500, 1900, 1900, 1500],
+      { size: 9 }
+    ) +
+    p('') +
+    section('ÖĞRETİMSEL UYARLAMALAR') +
+    numbered([
+      'Öğrenci öğretmene yakın, dikkat dağıtıcı uyaranlardan uzak bir yere oturtulur.',
+      'Yönergeler kısa, açık ve adım adım verilir; gerektiğinde tekrarlanır ve görsel destek kullanılır.',
+      'Etkinliklerde ek süre verilir; iş yükü öğrencinin performansına göre azaltılır.',
+      'Başarılı davranışlar anında pekiştirilir; akran desteği ve iş birliğine dayalı çalışmalar kullanılır.',
+    ]) +
+    section('ÖLÇME VE DEĞERLENDİRME UYARLAMALARI') +
+    numbered([
+      'Öğrencinin başarısı bu BEP’teki kısa dönemli amaçlara göre değerlendirilir.',
+      'Sınavlarda ek süre, büyük punto, soruların okunması, ayrı ortam gibi uyarlamalar gerektiğinde yapılır (sınav uyarlama formu).',
+      'Süreç değerlendirmesinde gözlem ve kontrol listesi kullanılır.',
+    ]) +
+    sign.bep(),
+};
+
+const BEP_VELI = {
+  id: 'bep-veli-bilgilendirme',
+  kategori: 'bep',
+  ad: 'BEP veli bilgilendirme ve görüş formu',
+  kisa: 'Veli Bilgilendirme ve Görüş Formu',
+  donem: 'BEP hazırlanınca',
+  gun: '10-09',
+  body: () =>
+    head('BEP VELİ BİLGİLENDİRME VE GÖRÜŞ FORMU') +
+    BEP_OGRENCI([['Tarih', '{tarih}']]) +
+    p('') +
+    p('Sayın Veli,', { b: true }) +
+    p(`Velisi bulunduğunuz öğrencimiz için ${BEP_DAYANAK} gereğince bireyselleştirilmiş eğitim programı (BEP) hazırlanmıştır. BEP; öğrencimizin mevcut performansına göre belirlenen uzun ve kısa dönemli amaçları, uygulanacak öğretim yöntemlerini, sınıf içi düzenlemeleri ve ölçme-değerlendirme uyarlamalarını içerir. Öğrencimizin başarısı BEP’teki amaçlara göre değerlendirilecektir.`, { justify: true }) +
+    p('BEP geliştirme biriminin üyesi olarak programın hazırlanması ve uygulanması sürecine katılabilir, görüş ve önerilerinizi bildirebilirsiniz. Evde yapacağınız destekleyici çalışmalar ve öğretmenlerle düzenli iletişim, öğrencimizin gelişimine önemli katkı sağlayacaktır.', { justify: true }) +
+    section('VELİNİN GÖRÜŞ VE ÖNERİLERİ') +
+    p('……') +
+    p('') +
+    p('Öğrencim için hazırlanan BEP hakkında bilgilendirildim; bir örneğini aldım / inceledim.', { i: true }) +
+    table([['Velinin adı soyadı', 'Yakınlığı', 'Telefonu', 'İmza'], ['', '', '', '']], [3200, 1800, 2400, 2200]) +
+    p('') +
+    table([['Ders Öğretmeni', 'Sınıf Rehber Öğretmeni'], ['{ogretmen}\n{brans} Öğretmeni', '{danisman}']], [4800, 4800]),
+};
+
+const BEP_SINAV = {
+  id: 'bep-sinav-uyarlama',
+  kategori: 'bep',
+  ad: 'BEP sınav uyarlama formu',
+  kisa: 'Sınav Uyarlama Formu',
+  donem: 'Her yazılı sınavdan önce',
+  gun: null,
+  body: () =>
+    head('{egitim_yili} EĞİTİM-ÖĞRETİM YILI ÖZEL EĞİTİM GEREKSİNİMİ OLAN ÖĞRENCİ SINAV UYARLAMA FORMU') +
+    BEP_OGRENCI([['Sınav', '{donem} …… yazılı sınavı'], ['Sınav tarihi', '{tarih}']]) +
+    p('') +
+    p('Öğrencinin sınavı BEP’te yer alan kısa dönemli amaçlara göre hazırlanır. Uygulanacak uyarlamaları işaretleyiniz.', { justify: true, i: true }) +
+    table(
+      [
+        ['UYARLAMA', 'UYGULANACAK'],
+        ...[
+          'Sorular BEP’teki kısa dönemli amaçlara göre hazırlandı',
+          'Soru sayısı azaltıldı / sorular sadeleştirildi',
+          'Ek süre verildi (…… dakika)',
+          'Sınav ayrı ve sessiz bir ortamda yapıldı',
+          'Sorular öğrenciye okundu (okuyucu desteği)',
+          'Cevaplar öğrencinin söylediği şekilde yazıldı (yazıcı desteği)',
+          'Büyük punto / görsel destekli soru kâğıdı kullanıldı',
+          'Sözlü ya da uygulamalı sınav yapıldı',
+          'Diğer: ……',
+        ].map((x) => [x, '☐']),
+      ],
+      [7800, 1800]
+    ) +
+    p('') +
+    section('SINAV SONUCU VE DEĞERLENDİRME') +
+    p('Puanı: …… · Açıklama: ……') +
+    p('') +
+    table([['Ders Öğretmeni', 'Müdür Yardımcısı'], ['{ogretmen}\n{brans} Öğretmeni', '{mudur_yrd}']], [4800, 4800]),
+};
+
+const BEP_DEGERLENDIRME = {
+  id: 'bep-donem-degerlendirme',
+  kategori: 'bep',
+  ad: 'BEP dönem sonu değerlendirme raporu',
+  kisa: 'Dönem Sonu Değerlendirme Raporu',
+  donem: 'Her dönemin son haftası',
+  gun: ['@donem1_sonu-5', '@ders_sonu-5'],
+  body: () =>
+    head('{egitim_yili} EĞİTİM-ÖĞRETİM YILI {brans} DERSİ BEP {donem|buyuk} SONU DEĞERLENDİRME RAPORU') +
+    BEP_OGRENCI([['Değerlendirme tarihi', '{tarih}']]) +
+    p('') +
+    section('UZUN DÖNEMLİ AMAÇLARIN GERÇEKLEŞME DURUMU') +
+    table([['UZUN DÖNEMLİ AMAÇ (ÜNİTE)', 'SÜRE', 'Gerçekleşti', 'Kısmen', 'Gerçekleşmedi', 'AÇIKLAMA'], dongu('uniteler', ['{sira}. {unite}', '{baslangic}–{bitis}', '', '', '', ''])], [3400, 2000, 1000, 900, 1100, 1200], { size: 9 }) +
+    p('') +
+    section('GENEL DEĞERLENDİRME') +
+    p('Öğrenci dönem boyunca BEP’te yer alan amaçlar doğrultusunda desteklenmiş; uygulanan öğretim ve ölçme-değerlendirme uyarlamalarıyla derse katılımı sağlanmıştır. Gerçekleşmeyen amaçlar için ek çalışma yapılması planlanmaktadır.', { justify: true }) +
+    section('ÖNERİLER (BEP GÜNCELLEMESİ)') +
+    p('……') +
+    sign.bep(),
+};
+const BEP = [BEP_TUTANAK, BEP_PERFORMANS, BEP_FORMU, BEP_VELI, BEP_SINAV, BEP_DEGERLENDIRME];
+
 // ---------- Yıllık plan (TEK şablon) ----------
 // Haftalar uygulamadan gelir: öğretmenin o düzeye yüklediği plan, yoksa MEB çerçeve planı (PlanContext → planForGrade).
 const YILLIK_PLAN = {
@@ -765,7 +996,7 @@ const doc = (body, landscape) => `<?xml version="1.0" encoding="UTF-8" standalon
 // Üretilen şablonlar: [{ meta: { id, kategori, ad, kisa?, grup?, donem, gun }, bytes: Buffer }]
 export async function uret() {
   const out = [];
-  for (const s of [ZUMRE_BASI, ZUMRE_ORTA, ZUMRE_SONU, SOK_BASI, SOK_SONU, VELI_1, VELI_2, REHBERLIK, YILLIK_PLAN, ...KULUP]) {
+  for (const s of [ZUMRE_BASI, ZUMRE_ORTA, ZUMRE_SONU, SOK_BASI, SOK_SONU, VELI_1, VELI_2, REHBERLIK, YILLIK_PLAN, ...KULUP, ...BEP]) {
     const zip = new JSZip();
     zip.file('[Content_Types].xml', CT);
     zip.file('_rels/.rels', RELS);

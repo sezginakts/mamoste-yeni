@@ -4,7 +4,7 @@
 // Yeni / güncel şablon için uygulama derlemesi gerekmez.
 //
 // liste3.json satırı: { id, kategori, ad, kisa?, grup?, donem, dosya, brans (null = herkes), tarih (şablonun güncellenme günü),
-//   gun (varsayılan evrak tarihi — evrak/takvim.js), etiketler (şablonun kullandığı), ister (['sinif'|'kulup'|'duzey']), surum: 3 }
+//   gun (varsayılan evrak tarihi — evrak/takvim.js), etiketler (şablonun kullandığı), ister (['sinif'|'ogrenci'|'kulup'|'duzey']), surum: 3 }
 // İndirirken şablon cihazda doldurulur: evrak/baglam.js (veri) + evrak/motor.js (docxtemplater).
 // liste.json (eski derlemeler için donmuş, eski {OGRETMEN} biçimi → docFill.js) yalnız liste3 alınamazsa kullanılır.
 import { useEffect, useState } from 'react';
@@ -27,6 +27,7 @@ export const CATEGORIES = [
   { id: 'veli', icon: '👪', name: 'Veli toplantısı' },
   { id: 'rehberlik', icon: '🧭', name: 'Sınıf rehberlik planı' },
   { id: 'sinif', icon: '🧑‍🏫', name: 'Sınıf ve danışman evrakları' },
+  { id: 'bep', icon: '🧩', name: 'BEP (bireyselleştirilmiş eğitim programı)' },
 ];
 
 const BASE = TAHTA_URL ? `${TAHTA_URL.replace(/\/?$/, '/')}evrak/` : '';
@@ -144,7 +145,7 @@ export function evrakGirdisi(doc, info, { brans, branchId, tarih, sinif = null, 
       zumre: (info.zumreler || {})[branchId] || '',
       zumreBaskani: (info.zumreBaskanlari || {})[branchId] || '',
     },
-    sinif: ister.includes('sinif') ? sinif : null,
+    sinif: ister.includes('sinif') || ister.includes('ogrenci') ? sinif : null,
     duzey: ister.includes('duzey') ? duzey : null,
     kulup: ister.includes('kulup') ? info.kulup : null,
   };

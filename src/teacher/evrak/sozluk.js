@@ -5,7 +5,8 @@
 // Yazım (docxtemplater): {okul} · büyük harf: {okul|buyuk} · tarih: {gun:11-10} (takvim.js kuralı, ör. {gun:@donem1_sonu})
 // Döngü (tablo satırı çoğalır): {#ogrenciler}{sira} {no} {ad}{/ogrenciler}
 //
-// ister: evrak indirilirken ne sorulur — 'sinif' (sınıf seçilir), 'kulup' (kulüp kaydı), 'duzey' (sınıf düzeyi: plan)
+// ister: evrak indirilirken ne sorulur — 'sinif' (sınıf seçilir), 'ogrenci' (sınıf + tek öğrenci), 'kulup' (kulüp kaydı),
+//        'duzey' (sınıf düzeyi: plan)
 // bilgi: boşsa uyarıda gösterilecek ad ve nereden doldurulacağı (profil = Evraklar → Okul bilgileri)
 export const ETIKETLER = {
   // Öğretmen ve okul (Okul bilgileri)
@@ -33,6 +34,11 @@ export const ETIKETLER = {
   // Öğrenci başına bir sayfa (öz değerlendirme, öğrenci tanıma, veli izni): sayfanın tamamı döngü içinde
   ogrenci_sayfalari: { bilgi: 'Öğrenci listesi', yer: 'sinif', ister: 'sinif', dongu: ['sira', 'no', 'ad'] },
   haftalik_saat: { bilgi: 'Haftalık ders saati (ders programından)', yer: 'program', ister: 'sinif' },
+  // Tek öğrenci (BEP gibi öğrenciye özel evrak: sınıf + öğrenci seçilir)
+  ogrenci_ad: { bilgi: 'Öğrencinin adı', yer: 'sinif', ister: 'ogrenci' },
+  ogrenci_no: { bilgi: 'Öğrencinin numarası', yer: 'sinif', ister: 'ogrenci' },
+  // Sınıf düzeyinin planındaki üniteler (sırayla): BEP uzun / kısa dönemli amaçları
+  uniteler: { bilgi: 'Yıllık plandaki üniteler', yer: 'plan', ister: 'sinif', dongu: ['sira', 'unite', 'ciktilar', 'baslangic', 'bitis', 'sure'] },
   // Yıllık plan (düzey seçilir; öğretmenin yüklediği plan, yoksa MEB çerçeve planı)
   haftalar: { bilgi: 'Yıllık plan haftaları', yer: 'plan', ister: 'duzey', dongu: ['ay', 'hafta', 'tarihler', 'saat', 'unite', 'ciktilar'] },
   plan_kaynagi: { bilgi: 'Planın kaynağı', yer: 'plan', ister: 'duzey' },

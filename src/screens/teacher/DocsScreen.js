@@ -22,7 +22,7 @@ import EvrakKulup from '../../teacher/EvrakKulup';
 import DateWheel from '../../components/DateWheel';
 import Collapsible from '../../components/Collapsible';
 
-const ISTER_YAZI = { sinif: 'sınıf seçilir', kulup: 'Kulübüm’den', duzey: 'düzey seçilir' };
+const ISTER_YAZI = { sinif: 'sınıf seçilir', ogrenci: 'öğrenci seçilir', kulup: 'Kulübüm’den', duzey: 'düzey seçilir' };
 
 export default function DocsScreen({ navigation }) {
   const { colors, shadow } = useTheme();
@@ -67,7 +67,7 @@ export default function DocsScreen({ navigation }) {
   };
 
   // Sınıf → evrak verisi: öğrenciler (no + öğretmenin yazdığı ad), haftalık ders saati (programdan), sınıf düzeyinin planı.
-  const sinifVerisi = (cls, danisman) => {
+  const sinifVerisi = (cls, danisman, secili = null) => {
     if (!cls) return null;
     const plan = planForGrade(gradeOfName(cls.name));
     const haftalikSaat = Object.values(lessons || {}).filter((l) => (l.label ? l.label.trim() === cls.name.trim() : l.classId === cls.id) && (!l.ders || l.ders === branchId)).length;
@@ -77,6 +77,7 @@ export default function DocsScreen({ navigation }) {
       ogrenciler: Object.values(cls.students || {}).map((s) => ({ no: s.no, ad: s.nk || '' })),
       haftalikSaat,
       plan: plan ? plan.weeks : null,
+      secili, // BEP: seçilen öğrenci { no, ad }
     };
   };
 
@@ -99,7 +100,7 @@ export default function DocsScreen({ navigation }) {
       brans: branch ? branch.name : '',
       branchId,
       tarih: dates.dateOf(doc),
-      sinif: sinifVerisi(secim.sinif, secim.danisman),
+      sinif: sinifVerisi(secim.sinif, secim.danisman, secim.ogrenci),
       duzey: secim.duzey ? { duzey: secim.duzey.grade, weeks: secim.duzey.weeks, kaynak: secim.duzey.builtin ? 'Millî Eğitim Bakanlığının çerçeve yıllık planı' : 'öğretmenin yıllık planı' } : null,
     });
     const eksik = evrakEksikleri(doc, girdi);
@@ -121,7 +122,7 @@ export default function DocsScreen({ navigation }) {
       setKulupAcik(true);
       return undefined;
     }
-    if (ister.includes('sinif') || ister.includes('duzey')) {
+    if (ister.includes('sinif') || ister.includes('ogrenci') || ister.includes('duzey')) {
       setSecimDoc(doc);
       return undefined;
     }
@@ -267,7 +268,7 @@ export default function DocsScreen({ navigation }) {
                               ) : null}
                             </View>
                             <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: 2 }}>
-                              {[d.donem, ...(d.ister || []).filter((x) => x !== 'kulup').map((x) => ISTER_YAZI[x]), d.bos ? 'Boş şablon' : null].filter(Boolean).join(' · ')}
+                              {[d.donem, ...(d.ister || []).filter((x) => x !== 'kulup' && !(x === 'sinif' && (d.ister || []).includes('ogrenci'))).map((x) => ISTER_YAZI[x]), d.bos ? 'Boş şablon' : null].filter(Boolean).join(' · ')}
                             </Text>
                             <DateChip doc={d} tint={tint} />
                           </View>

@@ -27,6 +27,9 @@ const bosSatirlar = (n, alanlar) => Array.from({ length: n }, (_, i) => ({ ...al
 // "Satranç Kulübü" → "Satranç" (şablon "{kulup} Kulübü" der).
 export const kulupAdi = (s) => temiz(s).replace(/\s+kul[uü]b[uü]$/i, '');
 
+// Ünite / tema adı: MEB planlarının çoğunda 'content' alanında (matematik, fen, Türkçe…), İngilizce ve DKAB'de 'unit'te.
+const uniteAdi = (w) => temiz(w.unit) || temiz(w.content) || temiz(w.topic);
+
 const ddmm = (k) => (k ? `${k.slice(8, 10)}.${k.slice(5, 7)}` : '');
 
 // Plan haftaları (teacher/yearPlan.js biçimi) → tablo satırları; ay adı yalnız ay değişince yazılır.
@@ -41,10 +44,59 @@ export function planSatirlari(weeks) {
       hafta: w.week ? `${w.week}. hafta` : '',
       tarihler: w.start ? `${ddmm(w.start)}–${ddmm(w.end)}` : '',
       saat: w.hours ? String(w.hours) : '',
-      unite: w.holiday ? temiz(w.unit) || 'Tatil' : temiz(w.unit || w.topic),
+      unite: w.holiday ? temiz(w.unit) || 'Tatil' : uniteAdi(w),
       ciktilar: w.holiday ? '' : temiz(w.outcomes),
     };
   });
+}
+// Plan haftaları → üniteler (art arda aynı ünite tek satır): BEP'te uzun dönemli amaç = ünite, kısa dönemli = çıktılar.
+const trKisa = (k) => (k ? `${k.slice(8, 10)}.${k.slice(5, 7)}.${k.slice(0, 4)}` : '');
+// Öğrenme çıktısı metni → kodlu çıktılar (tekrarsız): "MAT.7.1.2. …", "T.K.7.1. …", "ENG.6.1.L1. …". Alt maddeler (a, b…)
+// atılır; kodu olmayan metinde satırlar alınır. BEP'in kısa dönemli amaçları için (yıllık plan tam metni kullanır).
+const KOD_ONU = /(?=(?:^|\s)[A-ZÇĞİÖŞÜ]{1,6}\d*(?:\.[A-Za-z0-9]+){2,}\.\s)/;
+const KOD_BASI = /^[A-ZÇĞİÖŞÜ]{1,6}\d*(?:\.[A-Za-z0-9]+){2,}\./;
+function kodluCiktilar(metin, gorulen) {
+  const parcalar = String(metin || '')
+    .split(KOD_ONU)
+    .map((s) => s.replace(/\s+/g, ' ').trim())
+    .filter(Boolean);
+  const kodlu = parcalar.filter((s) => KOD_BASI.test(s)).map((s) => s.replace(/\s+[a-zçğıöşü]\)\s.*$/, ''));
+  const liste = kodlu.length ? kodlu : String(metin || '').split('\n').map(temiz).filter(Boolean);
+  return liste.filter((s) => {
+    const anahtar = (s.match(KOD_BASI) || [s])[0];
+    if (gorulen.has(anahtar)) return false;
+    gorulen.add(anahtar);
+    return true;
+  });
+}
+export function uniteSatirlari(weeks) {
+  const out = [];
+  for (const w of weeks || []) {
+    if (w.holiday) continue;
+    // Geçiş haftası iki ünite içerebilir ("A\nB"): önceki uzar, yenisi başlar; haftanın çıktıları yeni üniteye.
+    const adlar = uniteAdi(w).split('\n').map(temiz).filter(Boolean);
+    adlar.forEach((unite, i) => {
+      const son = out[out.length - 1];
+      const u = son && son.unite === unite ? son : null;
+      if (u) {
+        u.bitis = trKisa(w.end || w.start);
+        u.hafta++;
+      } else out.push({ unite, baslangic: trKisa(w.start), bitis: trKisa(w.end || w.start), hafta: 1, ham: [] });
+      if (i === adlar.length - 1 && temiz(w.outcomes)) out[out.length - 1].ham.push(w.outcomes);
+    });
+  }
+  const gorulen = new Set();
+  const satir = out.map((u) => ({ ...u, ciktilar: u.ham.flatMap((m) => kodluCiktilar(m, gorulen)) }));
+  // Çıktısı olmayan haftalar (uyum, tekrar, okul temelli planlama) amaç değildir — hiç çıktı yoksa hepsi kalır.
+  const amacli = satir.some((u) => u.ciktilar.length) ? satir.filter((u) => u.ciktilar.length) : satir;
+  // Arası çıkarılınca yan yana gelen aynı ünite tek satır olur.
+  const birlesik = [];
+  for (const u of amacli) {
+    const son = birlesik[birlesik.length - 1];
+    if (son && son.unite === u.unite) Object.assign(son, { bitis: u.bitis, hafta: son.hafta + u.hafta, ciktilar: [...son.ciktilar, ...u.ciktilar] });
+    else birlesik.push({ ...u });
+  }
+  return birlesik.map((u, i) => ({ sira: String(i + 1), unite: u.unite, ciktilar: u.ciktilar.join('\n'), baslangic: u.baslangic, bitis: u.bitis, sure: `${u.hafta} hafta` }));
 }
 // Tarihin düştüğü plan haftası (yoksa o tarihten sonraki ilk hafta).
 export function haftaBul(weeks, tarih) {
@@ -56,7 +108,7 @@ export function haftaBul(weeks, tarih) {
 // girdi: {
 //   tarih: Date, brans: 'İngilizce',
 //   profil: { ad, okul, il, ilce, mudur, mudurYrd, rehber, zumre: 'ad, ad', zumreBaskani },
-//   sinif?: { ad: '6-A', danisman, ogrenciler: [{ no, ad }], haftalikSaat, plan?: weeks },
+//   sinif?: { ad: '6-A', danisman, ogrenciler: [{ no, ad }], haftalikSaat, plan?: weeks, secili?: { no, ad } (BEP: tek öğrenci) },
 //   duzey?: { duzey: 6, weeks, kaynak },
 //   kulup?: { ad, baskan, danisman, uyeler: [{ no, ad, sinif }] },
 // }
@@ -102,11 +154,15 @@ export function evrakVerisi(girdi) {
     ogrenciler,
     ogrenci_sayfalari: gercekOgrenci ? ogrenciler : [{ sira: '1', no: '', ad: '' }],
     haftalik_saat: sinif && sinif.haftalikSaat ? String(sinif.haftalikSaat) : '',
+    ogrenci_ad: sinif && sinif.secili ? temiz(sinif.secili.ad) : '',
+    ogrenci_no: sinif && sinif.secili ? temiz(sinif.secili.no) : '',
+    // Plan yoksa elle doldurulacak boş satırlar
+    uniteler: sinif && sinif.plan && uniteSatirlari(sinif.plan).length ? uniteSatirlari(sinif.plan) : bosSatirlar(6, { unite: '', ciktilar: '', baslangic: '', bitis: '', sure: '' }),
     // plan
     haftalar: duzey ? planSatirlari(duzey.weeks) : [],
     plan_kaynagi: duzey ? temiz(duzey.kaynak) : '',
     hafta_no: sinifHaftasi && sinifHaftasi.week ? `${sinifHaftasi.week}. hafta` : '',
-    hafta_unite: sinifHaftasi ? temiz(sinifHaftasi.unit || sinifHaftasi.topic) : '',
+    hafta_unite: sinifHaftasi ? uniteAdi(sinifHaftasi) : '',
     hafta_ciktilari: sinifHaftasi ? temiz(sinifHaftasi.outcomes) : '',
     // kulüp
     kulup: kulup ? kulupAdi(kulup.ad) : '',
