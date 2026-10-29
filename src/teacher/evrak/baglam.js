@@ -2,7 +2,7 @@
 // Kaynaklar: Okul bilgileri (profil, cihazda), seçilen sınıf (TeacherContext: öğrenci no + ad — ad sunucuya gitmez),
 // kulüp kaydı, yıllık plan (öğretmenin yüklediği ya da MEB çerçeve planı), ders programı, takvim.
 // Uygulamaya bağımlı değil: çağıran taraf (DocsScreen) bunları toplayıp verir.
-import { egitimYili, donemOf, trTarih, isoDay } from './takvim.js';
+import { egitimYili, donemOf, trTarih, isoDay, yilVerisi, ilkYil, fromIso } from './takvim.js';
 
 const AYLAR = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
 const AY_BUYUK = AYLAR.map((a) => a.replace(/i/g, 'İ').replace(/ı/g, 'I').toUpperCase());
@@ -112,6 +112,18 @@ export function uniteSatirlari(weeks) {
   }
   return birlesik.map((u, i) => ({ sira: String(i + 1), unite: u.unite, ciktilar: u.ciktilar.join('\n'), baslangic: u.baslangic, bitis: u.bitis, sure: `${u.hafta} hafta` }));
 }
+// Eğitim-öğretim yılı takvimi → tarih sırasıyla satırlar (çalışma takvimi evrakı ve takvim ekranı).
+const TUR_ADI = { resmi: 'Resmî tatil', ders: 'Öğrenci tatili', yarim: 'Yarım gün', mesleki: 'Mesleki çalışma', toplanti: 'Toplantı', gun: 'Belirli gün / hafta', donem: 'Dönem' };
+export function takvimSatirlari(tarih = new Date()) {
+  const v = yilVerisi(ilkYil(tarih));
+  const aralik = (a, b) => (b && b !== a ? `${trTarih(fromIso(a))} – ${trTarih(fromIso(b))}` : trTarih(fromIso(a)));
+  const satir = [
+    ...v.tatiller.map(([a, b, tur, ad]) => ({ k: a, tarih: aralik(a, b), tur: TUR_ADI[tur || 'resmi'], olay: ad || '' })),
+    ...(v.mesleki || []).map(([a, b, ad]) => ({ k: a, tarih: aralik(a, b), tur: TUR_ADI.mesleki, olay: ad })),
+    ...(v.olaylar || []).map(([a, ad, tur, b]) => ({ k: a, tarih: aralik(a, b), tur: TUR_ADI[tur] || '', olay: ad })),
+  ];
+  return satir.sort((x, y) => (x.k < y.k ? -1 : x.k > y.k ? 1 : 0)).map(({ k, ...r }) => r);
+}
 // Tarihin düştüğü plan haftası (yoksa o tarihten sonraki ilk hafta).
 export function haftaBul(weeks, tarih) {
   const k = isoDay(tarih);
@@ -160,6 +172,9 @@ export function evrakVerisi(girdi) {
     tarih: trTarih(tarih),
     egitim_yili: egitimYili(tarih),
     donem: donemOf(tarih),
+    takvim: takvimSatirlari(tarih),
+    takvim_notu: yilVerisi(ilkYil(tarih)).yaklasik ? 'Bu eğitim yılının resmî takvimi henüz eklenmedi; tarihler önceki yıla göre yaklaşıktır.' : yilVerisi(ilkYil(tarih)).not || '',
+    takvim_kaynagi: yilVerisi(ilkYil(tarih)).kaynak || 'Millî Eğitim Bakanlığı',
     // sınıf
     sinif: sinif ? temiz(sinif.ad) : '',
     duzey: duzey ? String(duzey.duzey) : '',

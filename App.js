@@ -65,6 +65,8 @@ import BranchSelectScreen from './src/screens/BranchSelectScreen';
 import TaskScreen from './src/screens/TaskScreen';
 import TaskCreateScreen from './src/screens/teacher/TaskCreateScreen';
 import { onHomeworkNotification } from './src/utils/push';
+import { takvimiYenile } from './src/teacher/takvimYukle';
+import TakvimScreen from './src/screens/teacher/TakvimScreen';
 
 const Stack = createNativeStackNavigator();
 const navRef = createNavigationContainerRef();
@@ -96,6 +98,10 @@ function RootNavigator() {
       else navRef.navigate('StudentHomework', branch ? { branch } : undefined);
     }, 50);
   };
+  // Eğitim takvimi yayından güncellenir (yeni yıl derlemesiz gelir; evrak tarihleri, zil tatilleri, takvim ekranı).
+  useEffect(() => {
+    takvimiYenile();
+  }, []);
   useEffect(() => {
     if (!loaded || role !== 'student') return undefined;
     return onHomeworkNotification(openHomework);
@@ -210,6 +216,7 @@ function RootNavigator() {
             <Stack.Screen name="TeacherBackup" component={TeacherBackupScreen} />
             <Stack.Screen name="Board" component={BoardScreen} />
             <Stack.Screen name="Docs" component={DocsScreen} />
+            <Stack.Screen name="Takvim" component={TakvimScreen} />
             <Stack.Screen name="BoardConnect" component={BoardConnectScreen} />
             <Stack.Screen name="BoardRemote" component={BoardRemoteScreen} />
             <Stack.Screen name="Activities" component={ActivitiesScreen} />

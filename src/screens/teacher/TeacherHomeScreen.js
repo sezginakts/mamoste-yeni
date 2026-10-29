@@ -238,7 +238,12 @@ export default function TeacherHomeScreen({ navigation }) {
             ) : null}
           </View>
         </View>
-        <Text style={[st.heroDate, { color: colors.onAccent }]}>{DAY_NAMES[now.getDay()]}, {now.getDate()} {MONTH_NAMES[now.getMonth()]}</Text>
+        {/* Tarihe dokununca eğitim-öğretim yılı takvimi açılır */}
+        <Pressable onPress={() => navigation.navigate('Takvim')} hitSlop={8} accessibilityRole="button" accessibilityLabel="Eğitim takvimini aç" style={{ alignSelf: 'flex-start' }}>
+          <Text style={[st.heroDate, { color: colors.onAccent }]}>
+            {DAY_NAMES[now.getDay()]}, {now.getDate()} {MONTH_NAMES[now.getMonth()]} 🗓️
+          </Text>
+        </Pressable>
       </View>
 
       <View style={{ paddingHorizontal: spacing.md, marginTop: -spacing.sm }}>

@@ -24,6 +24,10 @@ export const ETIKETLER = {
   tarih: { bilgi: 'Evrak tarihi', yer: 'otomatik' },
   egitim_yili: { bilgi: 'Eğitim yılı', yer: 'otomatik' },
   donem: { bilgi: 'Dönem', yer: 'otomatik' },
+  // Eğitim-öğretim yılı takvimi (evrak tarihinin eğitim yılı)
+  takvim: { bilgi: 'Çalışma takvimi', yer: 'otomatik', dongu: ['tarih', 'tur', 'olay'] },
+  takvim_notu: { bilgi: 'Takvim notu', yer: 'otomatik' },
+  takvim_kaynagi: { bilgi: 'Takvim kaynağı', yer: 'otomatik' },
   // Sınıf (indirirken seçilir)
   sinif: { bilgi: 'Sınıf / şube', yer: 'sinif', ister: 'sinif' },
   duzey: { bilgi: 'Sınıf düzeyi', yer: 'sinif', ister: 'duzey' },

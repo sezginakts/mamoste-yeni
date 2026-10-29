@@ -19,6 +19,7 @@ import { varsayilanTarih, egitimYili } from './evrak/takvim';
 
 // Ekrandaki başlıklar (sıra tools/evrak/yayinla.mjs → KATEGORILER ile aynı).
 export const CATEGORIES = [
+  { id: 'takvim', icon: '🗓️', name: 'Eğitim-öğretim yılı takvimi' },
   { id: 'zumre', icon: '👥', name: 'Zümre tutanakları (okul ve ilçe)' },
   { id: 'sok', icon: '🏫', name: 'ŞÖK tutanakları ve yıllık plan' },
   { id: 'sinav', icon: '📝', name: 'Sınav evrakları' },

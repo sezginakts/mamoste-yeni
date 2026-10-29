@@ -18,6 +18,7 @@ import { doldur, sablonMetni } from '../../src/teacher/evrak/motor.js';
 import { ETIKETLER, etiketleriAyikla, isterler } from '../../src/teacher/evrak/sozluk.js';
 import { evrakVerisi } from '../../src/teacher/evrak/baglam.js';
 import { kuralTarihi } from '../../src/teacher/evrak/takvim.js';
+import TAKVIM from '../../src/data/egitimTakvimi.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const KAYNAK = path.join(ROOT, 'evrak-kaynak');
@@ -26,7 +27,7 @@ const KLASOR = 'v3';
 const LISTE = 'liste3.json';
 const KONTROL = process.argv.includes('--kontrol');
 // Ekrandaki başlıklar (docs.js → CATEGORIES ile aynı sıra): sok = ŞÖK ve yıllık plan; sinif = veli toplantısı, sınıf rehberlik dahil
-const KATEGORILER = ['zumre', 'sok', 'sinav', 'olcme', 'kulup', 'sinif', 'bep'];
+const KATEGORILER = ['takvim', 'zumre', 'sok', 'sinav', 'olcme', 'kulup', 'sinif', 'bep'];
 
 // ---------- örnek veri ----------
 const ADLAR = ['Ali Yılmaz', 'Ayşe Kaya', 'Mehmet Demir', 'Zeynep Çelik', 'Emre Şahin', 'Elif Öztürk', 'Can Aydın', 'Ece Arslan', 'Burak Doğan', 'İrem Koç'];
@@ -82,6 +83,21 @@ function denetle({ meta, bytes }) {
     }
   }
   return { etiketler, hatalar };
+}
+
+// ---------- eğitim takvimi (her yıl güncellenen veri) ----------
+// Uygulama takvim.json'u yayından okur (derleme gerekmeden yeni yıl). Her yılda şablonların kullandığı adlı günler olmalı.
+const GEREKEN_GUNLER = ['ders_basi', 'donem1_sonu', 'donem2_basi', 'ders_sonu', 'zumre_1', 'zumre_2', 'zumre_3', 'ilce_zumre_1', 'ilce_zumre_3'];
+const iso = (x) => /^\d{4}-\d{2}-\d{2}$/.test(x || '');
+for (const [y, v] of Object.entries(TAKVIM)) {
+  const h = [];
+  for (const g of GEREKEN_GUNLER) if (!iso(v.tarihler && v.tarihler[g])) h.push(`tarihler.${g} yok / bozuk`);
+  for (const t of v.tatiller || []) if (!iso(t[0]) || !iso(t[1]) || t[1] < t[0] || !['resmi', 'ders', 'yarim'].includes(t[2])) h.push(`tatil bozuk: ${JSON.stringify(t)}`);
+  for (const o of v.olaylar || []) if (!iso(o[0]) || !o[1]) h.push(`olay bozuk: ${JSON.stringify(o)}`);
+  if (h.length) {
+    console.error(`✗ takvim ${y}\n   - ${h.join('\n   - ')}`);
+    process.exitCode = 1;
+  }
 }
 
 // ---------- topla ----------
@@ -164,6 +180,8 @@ for (const s of sablonlar) {
 }
 console.log(`  Değişen şablon dosyası: ${degisen}`);
 fs.writeFileSync(path.join(YAYIN, LISTE), JSON.stringify({ surum: 3, guncelleme: bugun, evraklar: satirlar }, null, 2) + '\n');
+fs.writeFileSync(path.join(YAYIN, 'takvim.json'), JSON.stringify({ surum: 1, yillar: TAKVIM }, null, 2) + '\n');
+console.log(`  Eğitim takvimi: ${Object.values(TAKVIM).map((v) => v.ad).join(', ')} → tahta-site/evrak/takvim.json`);
 console.log(`✓ ${satirlar.length} şablon → tahta-site/evrak/${KLASOR}/ + ${LISTE} (${ozetSatir})`);
 console.log(`  Kullanılmayan etiketler: ${Object.keys(ETIKETLER).filter((e) => !satirlar.some((r) => r.etiketler.includes(e))).join(', ') || 'yok'}`);
 console.log('  Yayın: cd tahta-site && git add -A && git commit -m "Evrak şablonları" && git push');

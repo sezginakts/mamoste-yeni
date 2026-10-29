@@ -11,6 +11,12 @@ evrak-kaynak/
 
 Kodla üretilen şablonlar (zümre, ŞÖK, veli, rehberlik planı, kulüp, yıllık plan) `tools/evrak/sablon.mjs` içindedir.
 
+## Her yıl: eğitim takvimi
+
+MEB yeni yılın çalışma takvimini açıklayınca `src/data/egitimTakvimi.js`e yeni yılı ekle (önceki yıl örnek: adlı günler, tatiller,
+mesleki çalışma, toplantılar, belirli günler), `node tools/evrak/yayinla.mjs` çalıştır, tahta-site'ı push et. Evrak tarihleri,
+zil tatilleri ve takvim ekranı kendiliğinden yeni yıla geçer; uygulama derlemesi gerekmez.
+
 ## Yeni evrak eklemek
 
 1. Ham dosyayı `gelen/<kategori>/` altına koy (kategori: `zumre` `sok` `yillik-plan` `sinav` `olcme` `kulup` `veli` `rehberlik` `sinif`).

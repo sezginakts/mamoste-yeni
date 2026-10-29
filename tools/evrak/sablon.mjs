@@ -152,7 +152,7 @@ const PROGRAM =
 // ---------- Zümre ----------
 const ZUMRE_BASI = {
   id: 'zumre-yil-basi',
-  gun: '09-08', // eylül mesleki çalışma
+  gun: '@zumre_1', // takvim: okul zümre toplantıları (2026: 2 Eylül)
   kategori: 'zumre',
   ad: 'Zümre öğretmenler kurulu tutanağı — yıl başı',
   donem: 'Eylül · eğitim-öğretim yılı başı',
@@ -193,7 +193,7 @@ const ZUMRE_BASI = {
 
 const ZUMRE_ORTA = {
   id: 'zumre-2-donem-basi',
-  gun: '02-03', // yarıyıl mesleki çalışma
+  gun: '@zumre_2', // takvim: 2. dönem okul zümresi
   kategori: 'zumre',
   ad: 'Zümre öğretmenler kurulu tutanağı — 2. dönem başı',
   donem: 'Şubat · ikinci dönem başı',
@@ -226,7 +226,7 @@ const ZUMRE_ORTA = {
 
 const ZUMRE_SONU = {
   id: 'zumre-yil-sonu',
-  gun: '06-28', // haziran mesleki çalışma
+  gun: '@zumre_3', // takvim: yıl sonu okul zümresi
   kategori: 'zumre',
   ad: 'Zümre öğretmenler kurulu tutanağı — yıl sonu',
   donem: 'Haziran · eğitim-öğretim yılı sonu',
@@ -258,7 +258,7 @@ const ZUMRE_SONU = {
 
 // ---------- İlçe zümre ----------
 // İlçe zümre öğretmenler kurulu: ilçedeki okulların zümre başkanları, okul zümrelerinden sonra ilçe millî eğitim müdürlüğünün
-// belirlediği tarihte toplanır (yıl başı, gerekirse yıl sonu). Tarih ilçeden ilçeye değişir: varsayılan günler yaklaşık.
+// belirlediği tarihte toplanır (yıl başı, yıl sonu). Varsayılan gün eğitim takvimindeki ilçe zümre günü (src/data/egitimTakvimi.js).
 const headIlce = (title) =>
   p('T.C.', { center: true, b: true, after: 0 }) +
   p('{ilce} KAYMAKAMLIĞI', { center: true, b: true, after: 0 }) +
@@ -302,8 +302,8 @@ const ILCE_ZUMRE_BASI = {
   id: 'ilce-zumre-yil-basi',
   kategori: 'zumre',
   ad: 'İlçe zümre öğretmenler kurulu tutanağı — yıl başı',
-  donem: 'Eylül · okul zümrelerinden sonra (tarihi ilçe belirler)',
-  gun: '09-10',
+  donem: 'Eylül · okul zümrelerinden sonra',
+  gun: '@ilce_zumre_1',
   body: () =>
     ilceToplanti({
       title: '{egitim_yili} EĞİTİM-ÖĞRETİM YILI {brans} DERSİ İLÇE ZÜMRE ÖĞRETMENLER KURULU YIL BAŞI TOPLANTI TUTANAĞI',
@@ -334,8 +334,8 @@ const ILCE_ZUMRE_SONU = {
   id: 'ilce-zumre-yil-sonu',
   kategori: 'zumre',
   ad: 'İlçe zümre öğretmenler kurulu tutanağı — yıl sonu',
-  donem: 'Haziran · mesleki çalışma (ilçe toplarsa)',
-  gun: '06-29',
+  donem: 'Haziran · yıl sonu mesleki çalışma',
+  gun: '@ilce_zumre_3',
   body: () =>
     ilceToplanti({
       title: '{egitim_yili} EĞİTİM-ÖĞRETİM YILI {brans} DERSİ İLÇE ZÜMRE ÖĞRETMENLER KURULU YIL SONU TOPLANTI TUTANAĞI',
@@ -1056,6 +1056,23 @@ const BEP_DEGERLENDIRME = {
 };
 const BEP = [BEP_TUTANAK, BEP_PERFORMANS, BEP_FORMU, BEP_VELI, BEP_SINAV, BEP_DEGERLENDIRME];
 
+// ---------- Eğitim-öğretim yılı çalışma takvimi ----------
+// Satırlar uygulamadaki takvimden (src/data/egitimTakvimi.js / yayındaki takvim.json) gelir: yeni yıl = yalnız takvim verisi.
+const TAKVIM_EVRAK = {
+  id: 'egitim-takvimi',
+  kategori: 'takvim',
+  ad: 'Eğitim-öğretim yılı çalışma takvimi',
+  kisa: 'Çalışma Takvimi',
+  donem: 'Dönem, tatil, mesleki çalışma, toplantı ve belirli günler',
+  gun: null,
+  body: () =>
+    head('{egitim_yili} EĞİTİM-ÖĞRETİM YILI ÇALIŞMA TAKVİMİ') +
+    table([['TARİH', 'TÜR', 'FAALİYET'], dongu('takvim', ['{tarih}', '{tur}', '{olay}'])], [2600, 1900, 5100]) +
+    p('') +
+    p('{takvim_notu}', { i: true, size: 9, justify: true }) +
+    p('Kaynak: {takvim_kaynagi}', { i: true, size: 9 }),
+};
+
 // ---------- Yıllık plan (TEK şablon) ----------
 // Haftalar uygulamadan gelir: öğretmenin o düzeye yüklediği plan, yoksa MEB çerçeve planı (PlanContext → planForGrade).
 const YILLIK_PLAN = {
@@ -1096,7 +1113,7 @@ const doc = (body, landscape) => `<?xml version="1.0" encoding="UTF-8" standalon
 // Üretilen şablonlar: [{ meta: { id, kategori, ad, kisa?, grup?, donem, gun }, bytes: Buffer }]
 export async function uret() {
   const out = [];
-  for (const s of [ZUMRE_BASI, ZUMRE_ORTA, ZUMRE_SONU, ILCE_ZUMRE_BASI, ILCE_ZUMRE_SONU, SOK_BASI, SOK_SONU, YILLIK_PLAN, VELI_1, VELI_2, REHBERLIK, ...KULUP, ...BEP]) {
+  for (const s of [TAKVIM_EVRAK, ZUMRE_BASI, ZUMRE_ORTA, ZUMRE_SONU, ILCE_ZUMRE_BASI, ILCE_ZUMRE_SONU, SOK_BASI, SOK_SONU, YILLIK_PLAN, VELI_1, VELI_2, REHBERLIK, ...KULUP, ...BEP]) {
     const zip = new JSZip();
     zip.file('[Content_Types].xml', CT);
     zip.file('_rels/.rels', RELS);
