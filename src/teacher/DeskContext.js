@@ -12,7 +12,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { shortId } from '../utils/codec';
 import { useRole } from '../context/RoleContext';
 import { getBranchItem } from '../utils/branchStore';
-import { bellTimes, scheduleBells } from '../utils/bell';
+import { AppState } from 'react-native';
+import { bellTimes, scheduleBells, bellsRolling } from '../utils/bell';
 import { scheduleReminder, cancelReminder } from '../utils/notify';
 
 const TT_KEY = '@ingapp/teacher/v1/timetable'; // ESKİ (branşa özel): yalnız migration için okunur
@@ -237,6 +238,12 @@ export function DeskProvider({ children }) {
     bellTimer.current = setTimeout(() => scheduleBells(bells), 800);
     return () => clearTimeout(bellTimer.current);
   }, [bells, branchId, sharedLoaded]);
+  // Tarihli kurulumda (haftalık zil iPhone sınırını aşınca) önümüzdeki günlerin zilleri uygulama her öne geldiğinde yenilenir.
+  useEffect(() => {
+    if (!bellsRolling(bells)) return undefined;
+    const sub = AppState.addEventListener('change', (s) => s === 'active' && scheduleBells(bells));
+    return () => sub.remove();
+  }, [bells]);
 
   const saveNotes = (fn) =>
     setNotes((prev) => {

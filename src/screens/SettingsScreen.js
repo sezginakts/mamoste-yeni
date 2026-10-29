@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTeacher } from '../teacher/TeacherContext';
 import { useDesk } from '../teacher/DeskContext';
 import { ringBell } from '../components/BellOverlay';
+import { bellsRolling, MAX_BELLS } from '../utils/bell';
 
 const THEMES = [
   { key: 'light', label: 'Aydınlık', emoji: '☀️' },
@@ -110,7 +111,11 @@ export default function SettingsScreen({ navigation }) {
                   <Text style={[styles.toggleDesc, { flex: 1, marginTop: 0, fontSize: font.small }]}>Derslerinde çalması için ders programını gir ›</Text>
                 </Pressable>
               ) : (
-                <Text style={[styles.toggleDesc, { marginTop: spacing.sm, marginLeft: spacing.xs }]}>Haftada {desk.bells.length} zil kurulu.</Text>
+                <Text style={[styles.toggleDesc, { marginTop: spacing.sm, marginLeft: spacing.xs }]}>
+                  {bellsRolling(desk.bells)
+                    ? `Haftada ${desk.bells.length} zil (ders başı ${desk.bells.filter((b) => b.kind === 'start').length}, ders sonu ${desk.bells.filter((b) => b.kind === 'end').length}). Telefon aynı anda en fazla ${MAX_BELLS} zil bekletebildiği için önümüzdeki günlerin zilleri kurulur; uygulamayı açtıkça yenilenir. Tatil günlerinde çalmaz.`
+                    : `Haftada ${desk.bells.length} zil kurulu${desk.bell.end ? ` (ders başı ${desk.bells.filter((b) => b.kind === 'start').length}, ders sonu ${desk.bells.filter((b) => b.kind === 'end').length})` : ''}.`}
+                </Text>
               )}
             </>
           ) : null}

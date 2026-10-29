@@ -1,10 +1,14 @@
 // Ders zili: ders saatlerine (DeskContext → periods, lessons) göre her hafta tekrarlayan YEREL bildirimler.
 // Ses: assets/sounds/zil.wav (tek vuruş). Android'de "zil" kanalı, iOS'ta bildirimin kendi sesi.
 // Uygulama açıkken bildirim yerine uygulamanın içinde zil animasyonu görünür (components/BellOverlay).
-// iOS aynı anda en fazla 64 bildirim bekletir: zil en fazla MAX_BELLS; aşarsa ders bitiş zilleri düşer.
+// iOS aynı anda en fazla 64 bildirim bekletir (zil için MAX_BELLS). Haftalık zil sayısı buna sığıyorsa her hafta tekrarlayan
+// bildirim; sığmıyorsa (ör. haftada 30 ders × başlangıç + bitiş = 60) zillerin HEPSİ korunur, önümüzdeki günlerinki tarihleriyle
+// kurulur (tatil günleri atlanır) ve uygulama her öne geldiğinde yenilenir (DeskContext → AppState).
 import { Platform } from 'react-native';
+import { tatilMi } from '../teacher/evrak/takvim';
 
-const MAX_BELLS = 56;
+export const MAX_BELLS = 56;
+const ILERI_GUN = 14; // tarihli kurulumda en fazla kaç gün ilerisi
 export const BELL_SOUND = 'zil.wav';
 const CHANNEL = 'zil';
 
@@ -26,8 +30,29 @@ export function bellTimes({ periods = [], dayPeriods = null, lessons = {}, mode 
       if (end && valid(p.end)) out.push({ day, time: p.end, kind: 'end', period, label });
     });
   }
-  if (out.length <= MAX_BELLS) return out;
-  return out.filter((b) => b.kind === 'start').slice(0, MAX_BELLS);
+  return out;
+}
+// Haftalık tekrar sığmıyorsa tarihli (yuvarlanan) kurulum.
+export const bellsRolling = (bells) => bells.length > MAX_BELLS;
+
+// Önümüzdeki zil anları (tarihli): şimdiden sonrası, tatil (ara tatil, yarıyıl dahil) ve hafta sonu hariç, en fazla MAX_BELLS.
+export function upcomingBells(bells, now = new Date()) {
+  const out = [];
+  for (let g = 0; g < ILERI_GUN && out.length < MAX_BELLS; g++) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + g, 12);
+    const day = ((d.getDay() + 6) % 7) + 1; // Pzt = 1
+    if (day > 5 || tatilMi(d, true)) continue;
+    bells
+      .filter((b) => b.day === day)
+      .map((b) => {
+        const [h, m] = b.time.split(':').map(Number);
+        return { ...b, at: new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, m, 0) };
+      })
+      .filter((b) => b.at > now)
+      .sort((a, b) => a.at - b.at)
+      .forEach((b) => out.length < MAX_BELLS && out.push(b));
+  }
+  return out;
 }
 
 export const bellText = (b) =>
@@ -60,6 +85,16 @@ export async function scheduleBells(bells) {
     if (!perm.granted) return null;
     if (Platform.OS === 'android') {
       await n.setNotificationChannelAsync(CHANNEL, { name: 'Ders zili', importance: n.AndroidImportance.HIGH, sound: BELL_SOUND, vibrationPattern: [0, 250] });
+    }
+    if (bellsRolling(bells)) {
+      const yakin = upcomingBells(bells);
+      for (const b of yakin) {
+        await n.scheduleNotificationAsync({
+          content: { ...bellText(b), sound: BELL_SOUND, data: { type: 'zil', kind: b.kind, period: b.period } },
+          trigger: { type: n.SchedulableTriggerInputTypes.DATE, date: b.at, channelId: CHANNEL },
+        });
+      }
+      return yakin.length;
     }
     for (const b of bells) {
       const [h, m] = b.time.split(':').map(Number);
