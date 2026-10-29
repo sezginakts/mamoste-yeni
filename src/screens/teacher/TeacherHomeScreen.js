@@ -241,7 +241,7 @@ export default function TeacherHomeScreen({ navigation }) {
         {/* Tarihe dokununca eğitim-öğretim yılı takvimi açılır */}
         <Pressable onPress={() => navigation.navigate('Takvim')} hitSlop={8} accessibilityRole="button" accessibilityLabel="Eğitim takvimini aç" style={{ alignSelf: 'flex-start' }}>
           <Text style={[st.heroDate, { color: colors.onAccent }]}>
-            {DAY_NAMES[now.getDay()]}, {now.getDate()} {MONTH_NAMES[now.getMonth()]} 🗓️
+            {DAY_NAMES[now.getDay()]}, {now.getDate()} {MONTH_NAMES[now.getMonth()]} <Text style={st.dateIcon}>🗓️</Text>
           </Text>
         </Pressable>
       </View>
@@ -590,8 +590,9 @@ const st = StyleSheet.create({
   logo: { height: 34, width: Math.round((34 * 669) / 200) }, // assets/logo.png (beyaz karakalem OKUL) 669×200
   logoText: { fontSize: 30, fontWeight: '900', letterSpacing: 3 },
   heroDate: { color: '#fff', fontSize: font.h3, fontWeight: '900', marginTop: spacing.sm },
+  dateIcon: { fontSize: 15 }, // tarihin yanındaki takvim simgesi tarihten küçük
   // Branş: profil/ayarlar ikonlarının hemen altında, sağa yaslı sabit yazı.
-  branchUnderIcons: { color: '#FFFFFF', fontSize: font.small, fontWeight: '800', letterSpacing: 0.3, marginTop: 5, maxWidth: 168, textAlign: 'right', opacity: 0.95 },
+  branchUnderIcons: { color: '#FFFFFF', fontSize: 12.5, fontWeight: '800', letterSpacing: 0.3, marginTop: 5, maxWidth: 168, textAlign: 'right', opacity: 0.95 },
   tools: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(15,23,42,0.22)', borderRadius: radius.pill, padding: 3 },
   tool: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   toolOn: { backgroundColor: 'rgba(255,255,255,0.18)' },

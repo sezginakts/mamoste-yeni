@@ -21,7 +21,7 @@ export default function SettingsScreen({ navigation }) {
   const { colors, mode, setThemeMode, accent, setAccent } = useTheme();
   const styles = useThemedStyles(makeStyles);
   // Rol kalıcıdır (yalnız yönetici sıfırlar); branş her öğretmen için değiştirilebilir, her branşın verisi ayrıdır.
-  const { role, branch, resetRole, resetBranch } = useRole();
+  const { role, branch, branchId, myBranchObjects, switchBranch, resetRole, resetBranch } = useRole();
   const auth = useAuth();
   const t = useTeacher();
   const desk = useDesk();
@@ -44,10 +44,36 @@ export default function SettingsScreen({ navigation }) {
         <Text style={[styles.toggleLabel, { flex: 1 }]}>{role === 'teacher' ? '👩‍🏫 Öğretmen' : '🎒 Öğrenci'}</Text>
       </View>
       {role === 'teacher' ? (
-        <Pressable onPress={resetBranch} style={[styles.toggleRow, { marginTop: spacing.sm }]}>
-          <Text style={[styles.toggleLabel, { flex: 1 }]}>{branch ? `${branch.emoji} ${branch.name}` : 'Branş'}</Text>
-          <Text style={[styles.back, { fontSize: font.small }]}>Branş değiştir ›</Text>
-        </Pressable>
+        <>
+          {/* Seçili derslerden biri öne alınır: ana sayfa, sınıflar ve planlar o derse göre açılır. */}
+          {(myBranchObjects || []).length > 1 ? (
+            <View style={[styles.toggleRow, { marginTop: spacing.sm, flexDirection: 'column', alignItems: 'stretch' }]}>
+              <Text style={[styles.toggleLabel, { marginBottom: 2 }]}>Öndeki ders</Text>
+              {myBranchObjects.map((d) => {
+                const on = d.id === branchId;
+                return (
+                  <Pressable
+                    key={d.id}
+                    onPress={() => switchBranch(d.id)}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: on }}
+                    style={[styles.branchRow, { borderColor: on ? d.color : colors.border, backgroundColor: on ? d.color + '1A' : 'transparent' }]}
+                  >
+                    <View style={[styles.radio, { borderColor: on ? d.color : colors.border }]}>{on ? <View style={[styles.radioDot, { backgroundColor: d.color }]} /> : null}</View>
+                    <Text style={[styles.toggleLabel, { flex: 1 }]} numberOfLines={1}>
+                      {d.short ? `${d.short} · ` : ''}
+                      {d.name}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          ) : null}
+          <Pressable onPress={resetBranch} style={[styles.toggleRow, { marginTop: spacing.sm }]}>
+            <Text style={[styles.toggleLabel, { flex: 1 }]}>{(myBranchObjects || []).length > 1 ? 'Derslerim' : branch ? `${branch.emoji} ${branch.name}` : 'Branş'}</Text>
+            <Text style={[styles.back, { fontSize: font.small }]}>Derslerimi değiştir ›</Text>
+          </Pressable>
+        </>
       ) : null}
       {auth.isAdmin ? (
         <View style={styles.adminRow}>
@@ -184,6 +210,9 @@ const makeStyles = (colors, shadow) => StyleSheet.create({
   goalLabel: { color: colors.textMuted, fontSize: font.tiny },
   toggleRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card, borderRadius: radius.md, padding: spacing.md, borderWidth: 1, borderColor: colors.border },
   toggleLabel: { color: colors.text, fontSize: font.body, fontWeight: '700' },
+  branchRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderWidth: 1.5, borderRadius: radius.sm, paddingHorizontal: spacing.md, paddingVertical: 10, marginTop: 6 },
+  radio: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  radioDot: { width: 10, height: 10, borderRadius: 5 },
   toggleDesc: { color: colors.textMuted, fontSize: font.tiny, marginTop: 2 },
   infoCard: { backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.lg, marginTop: spacing.xl, borderWidth: 1, borderColor: colors.border },
   infoTitle: { color: colors.text, fontSize: font.body, fontWeight: '800', marginBottom: spacing.sm },

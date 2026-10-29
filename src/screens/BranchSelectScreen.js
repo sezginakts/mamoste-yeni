@@ -1,6 +1,6 @@
 // Öğretmen: branşını seç (ilk açılışta; sonra Ayarlar'dan değiştirilebilir, her branşın verisi ayrı).
 // Branşlar ORTAOKUL / LİSE başlıkları altında, katlanır bölüm olarak listelenir.
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { radius, spacing, font } from '../theme';
@@ -32,7 +32,25 @@ export default function BranchSelectScreen() {
   const secmeliler = picked.filter((id) => id === 'secmeli-1' || id === 'secmeli-2');
   const adKaydet = (id) => renameBranch(id, adlar[id] || '');
   // En çok 3 ders: seçiliyse çıkar, değilse ekle (3'ü geçemez).
-  const toggle = (id) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : p.length >= MAX_BRANCHES ? p : [...p, id]));
+  const toggle = (id) => {
+    const ekleniyor = !picked.includes(id) && picked.length < MAX_BRANCHES;
+    setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : p.length >= MAX_BRANCHES ? p : [...p, id]));
+    if (ekleniyor && (id === 'secmeli-1' || id === 'secmeli-2')) setOdak(id);
+  };
+  // Seçmeli ders seçilince ad kutusu listenin altında kalıp görünmüyordu: ekranı oraya kaydır ve kutuya odaklan.
+  const scrollRef = useRef(null);
+  const adY = useRef(0);
+  const inputs = useRef({});
+  const [odak, setOdak] = useState(null);
+  useEffect(() => {
+    if (!odak) return undefined;
+    const t = setTimeout(() => {
+      if (scrollRef.current) scrollRef.current.scrollTo({ y: Math.max(0, adY.current - spacing.lg), animated: true });
+      if (inputs.current[odak]) inputs.current[odak].focus();
+      setOdak(null);
+    }, 120);
+    return () => clearTimeout(t);
+  }, [odak]);
   const kaydet = () => {
     if (!picked.length) return;
     secmeliler.forEach((id) => adKaydet(id));
@@ -46,7 +64,12 @@ export default function BranchSelectScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingTop: insets.top + spacing.xl, paddingBottom: 140 }}>
+      <ScrollView
+        ref={scrollRef}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
+        contentContainerStyle={{ padding: spacing.lg, paddingTop: insets.top + spacing.xl, paddingBottom: 140 }}
+      >
         {prevBranch || isAdmin ? (
           <Pressable onPress={prevBranch ? cancelBranchChange : resetRole} hitSlop={10} style={{ alignSelf: 'flex-start', marginBottom: spacing.md }}>
             <Text style={{ color: colors.accent, fontWeight: '800', fontSize: font.body }}>‹ Geri</Text>
@@ -74,7 +97,7 @@ export default function BranchSelectScreen() {
 
         {/* Seçmeli ders adları: seçildiyse adını yaz (ör. Yaşayan Diller) */}
         {secmeliler.length ? (
-          <View style={[st.adKart, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View onLayout={(e) => (adY.current = e.nativeEvent.layout.y)} style={[st.adKart, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Text style={{ color: colors.text, fontWeight: '900', fontSize: font.body, marginBottom: spacing.xs }}>Seçmeli dersin adı</Text>
             <Text style={{ color: colors.textMuted, fontSize: font.small, marginBottom: spacing.sm }}>
               Boş bırakırsan “Seçmeli Ders” olarak kalır. Yazdığın ad profilde, ana sayfada ve ders programında görünür.
@@ -85,6 +108,7 @@ export default function BranchSelectScreen() {
                   {id === 'secmeli-1' ? '1. SEÇMELİ DERS' : '2. SEÇMELİ DERS'}
                 </Text>
                 <TextInput
+                  ref={(r) => (inputs.current[id] = r)}
                   value={adlar[id] || ''}
                   onChangeText={(v) => setAdlar((a) => ({ ...a, [id]: v }))}
                   onEndEditing={() => adKaydet(id)}
