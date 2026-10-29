@@ -385,7 +385,7 @@ export default function TeacherHomeScreen({ navigation }) {
         <Collapsible title="KISAYOLLAR" defaultOpen style={{ marginTop: spacing.lg }}>
         <View style={st.grid}>
           <Tile icon="📁" tint={colors.second} title="Evraklar" onPress={() => navigation.navigate('Docs')} />
-          <Tile icon="🏫" tint={colors.second} title="Sınıf" onPress={sinifaGit} />
+          <Tile icon="🏫" tint={colors.second} title="Sınıf" onPress={() => navigation.navigate('Classes')} />
           <Tile
             icon="📝"
             tint={colors.accent}

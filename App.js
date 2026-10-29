@@ -28,6 +28,7 @@ import StudentHomeworkScreen from './src/screens/StudentHomeworkScreen';
 import HomeworkDoneScreen from './src/screens/HomeworkDoneScreen';
 import TeacherHomeScreen from './src/screens/teacher/TeacherHomeScreen';
 import TeacherClassScreen from './src/screens/teacher/TeacherClassScreen';
+import ClassesScreen from './src/screens/teacher/ClassesScreen';
 import TeacherStudentScreen from './src/screens/teacher/TeacherStudentScreen';
 import HomeworkCreateScreen from './src/screens/teacher/HomeworkCreateScreen';
 import HomeworkShareScreen from './src/screens/teacher/HomeworkShareScreen';
@@ -197,6 +198,7 @@ function RootNavigator() {
         {isTeacher ? (
           <>
             <Stack.Screen name="TeacherClass" component={TeacherClassScreen} />
+            <Stack.Screen name="Classes" component={ClassesScreen} />
             <Stack.Screen name="TeacherStudent" component={TeacherStudentScreen} />
             <Stack.Screen name="RosterImport" component={RosterImportScreen} />
             <Stack.Screen name="YearPlan" component={YearPlanScreen} />
