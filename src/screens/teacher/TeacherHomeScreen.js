@@ -286,7 +286,8 @@ export default function TeacherHomeScreen({ navigation }) {
                   <>
                     {w.unit || w.topic ? (
                       <Text style={[st.unit, { color: colors.textMuted }]} numberOfLines={1}>
-                        {(w.unit || w.topic).toLocaleUpperCase('tr')}
+                        {/* İngilizce ünite adı Türkçe kuralla büyütülürse "BİOGRAPHİES" olur. */}
+                        {(w.unit || w.topic).toLocaleUpperCase(branch && branch.id === 'ingilizce' ? 'en' : 'tr')}
                       </Text>
                     ) : null}
                     <Text style={[st.outHead, { color: colors.textFaint }]}>

@@ -292,7 +292,14 @@ export function outcomeLines(w) {
     .split(/\n+/)
     .flatMap((chunk) => chunk.replace(CODE_BEFORE, '\n').split('\n'))
     .map((s) => s.trim())
-    .filter(Boolean);
+    .filter((s) => s && !bosBeceriBasligi(s));
+}
+// Planlarda beceri adı çoğu zaman tek başına bir satırda başlık olarak durur ("Listening", "Spoken Interaction"):
+// kendisi bir öğrenme çıktısı değildir; ayrı satır sayılırsa kartta içi boş "Dinleme" görünür ve dersler arası
+// dağıtım kayar. Beceri adı altındaki kodlu satırdan zaten okunur.
+function bosBeceriBasligi(line) {
+  const o = splitOutcome(line);
+  return !!o.label && !o.code && !/[0-9A-Za-zÇĞİÖŞÜçğıöşü]/.test(o.text);
 }
 
 export function outcomesForLesson(w, idx, count) {
