@@ -14,7 +14,7 @@ import { useTeacherProfile } from '../../teacher/profile';
 import { useTeacher } from '../../teacher/TeacherContext';
 import { useDesk, gradeOfName } from '../../teacher/DeskContext';
 import { usePlans } from '../../teacher/PlanContext';
-import { CATEGORIES, useDocList, useDocDates, loadDocInfo, saveDocInfo, downloadDoc, downloadDocV3, evrakGirdisi, evrakEksikleri, EMPTY_INFO } from '../../teacher/docs';
+import { CATEGORIES, kategoriOf, useDocList, useDocDates, loadDocInfo, saveDocInfo, downloadDoc, downloadDocV3, evrakGirdisi, evrakEksikleri, EMPTY_INFO } from '../../teacher/docs';
 import { trTarih } from '../../teacher/evrak/takvim';
 import { adListesi } from '../../teacher/evrak/baglam';
 import EvrakSecim from '../../teacher/EvrakSecim';
@@ -52,7 +52,7 @@ export default function DocsScreen({ navigation }) {
 
   const groups = useMemo(() => {
     const mine = (docs.list || []).filter((d) => !d.brans || d.brans === branchId);
-    return CATEGORIES.map((c) => ({ ...c, items: mine.filter((d) => d.kategori === c.id).sort((a, b) => (b.brans ? 1 : 0) - (a.brans ? 1 : 0)) })).filter((g) => g.items.length);
+    return CATEGORIES.map((c) => ({ ...c, items: mine.filter((d) => kategoriOf(d) === c.id).sort((a, b) => (b.brans ? 1 : 0) - (a.brans ? 1 : 0)) })).filter((g) => g.items.length);
   }, [docs.list, branchId]);
 
   const kaydet = (next) => {

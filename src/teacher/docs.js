@@ -17,18 +17,19 @@ import { evrakVerisi, eksikler } from './evrak/baglam';
 import { ETIKETLER } from './evrak/sozluk';
 import { varsayilanTarih, egitimYili } from './evrak/takvim';
 
+// Ekrandaki başlıklar (sıra tools/evrak/yayinla.mjs → KATEGORILER ile aynı).
 export const CATEGORIES = [
-  { id: 'zumre', icon: '👥', name: 'Zümre tutanakları' },
-  { id: 'sok', icon: '🏫', name: 'ŞÖK tutanakları' },
-  { id: 'yillik-plan', icon: '📅', name: 'Yıllık planlar' },
+  { id: 'zumre', icon: '👥', name: 'Zümre tutanakları (okul ve ilçe)' },
+  { id: 'sok', icon: '🏫', name: 'ŞÖK tutanakları ve yıllık plan' },
   { id: 'sinav', icon: '📝', name: 'Sınav evrakları' },
   { id: 'olcme', icon: '📊', name: 'Ölçme ve değerlendirme araçları' },
   { id: 'kulup', icon: '🎭', name: 'Kulüp dosyaları' },
-  { id: 'veli', icon: '👪', name: 'Veli toplantısı' },
-  { id: 'rehberlik', icon: '🧭', name: 'Sınıf rehberlik planı' },
   { id: 'sinif', icon: '🧑‍🏫', name: 'Sınıf ve danışman evrakları' },
   { id: 'bep', icon: '🧩', name: 'BEP (bireyselleştirilmiş eğitim programı)' },
 ];
+// Eski listedeki (liste.json) ayrı başlıklar yeni başlığa düşer.
+const ESKI_KATEGORI = { 'yillik-plan': 'sok', veli: 'sinif', rehberlik: 'sinif' };
+export const kategoriOf = (doc) => ESKI_KATEGORI[doc.kategori] || doc.kategori;
 
 const BASE = TAHTA_URL ? `${TAHTA_URL.replace(/\/?$/, '/')}evrak/` : '';
 const LIST_KEY = '@ingapp/evrak/liste';

@@ -256,6 +256,106 @@ const ZUMRE_SONU = {
     }),
 };
 
+// ---------- İlçe zümre ----------
+// İlçe zümre öğretmenler kurulu: ilçedeki okulların zümre başkanları, okul zümrelerinden sonra ilçe millî eğitim müdürlüğünün
+// belirlediği tarihte toplanır (yıl başı, gerekirse yıl sonu). Tarih ilçeden ilçeye değişir: varsayılan günler yaklaşık.
+const headIlce = (title) =>
+  p('T.C.', { center: true, b: true, after: 0 }) +
+  p('{ilce} KAYMAKAMLIĞI', { center: true, b: true, after: 0 }) +
+  p('{ilce} İLÇE MİLLÎ EĞİTİM MÜDÜRLÜĞÜ', { center: true, b: true, after: 240 }) +
+  p(title, { center: true, b: true, size: 12, after: 240 });
+const ILCE_INFO = [['Toplantı tarihi', '{tarih}'], ['Toplantı saati', '……'], ['Toplantı yeri', '……'], ['Toplantı başkanı', '……'], ['Yazman', '……']];
+const ilceImza = () =>
+  p('') +
+  section('İLÇE ZÜMRE ÖĞRETMENLERİ (OKUL ZÜMRE BAŞKANLARI)') +
+  table(
+    [
+      ['Okulu', 'Adı Soyadı', 'Branşı', 'İmza'],
+      ['{okul}', '{zumre_baskani}', '{brans}', ''],
+      ...Array.from({ length: 11 }, () => ['', '', '{brans}', '']),
+    ],
+    [3300, 3100, 1900, 1300]
+  ) +
+  p('') +
+  table(
+    [
+      ['Yazman', 'Toplantı Başkanı'],
+      ['……', '……'],
+    ],
+    [4800, 4800]
+  );
+const ilceToplanti = ({ title, items, kararlar }) =>
+  headIlce(title) +
+  infoTable(ILCE_INFO) +
+  p('') +
+  p('Toplantıya katılanlar imza bölümünde gösterilmiştir.', { i: true }) +
+  section('GÜNDEM') +
+  numbered(items.map((x) => x[0])) +
+  p('') +
+  section('GÜNDEM MADDELERİNİN GÖRÜŞÜLMESİ') +
+  items.map((x, i) => pLead(`${i + 1}. ${x[0]}: `, x[1])).join('') +
+  section('ALINAN KARARLAR') +
+  numbered(kararlar) +
+  ilceImza();
+
+const ILCE_ZUMRE_BASI = {
+  id: 'ilce-zumre-yil-basi',
+  kategori: 'zumre',
+  ad: 'İlçe zümre öğretmenler kurulu tutanağı — yıl başı',
+  donem: 'Eylül · okul zümrelerinden sonra (tarihi ilçe belirler)',
+  gun: '09-10',
+  body: () =>
+    ilceToplanti({
+      title: '{egitim_yili} EĞİTİM-ÖĞRETİM YILI {brans} DERSİ İLÇE ZÜMRE ÖĞRETMENLER KURULU YIL BAŞI TOPLANTI TUTANAĞI',
+      items: [
+        ['Açılış, yoklama ve yazmanın seçimi', 'Toplantı saygı duruşu ve İstiklal Marşı ile açıldı, yoklama yapıldı. İlçedeki okulların zümre başkanlarının katılımıyla toplantı yazmanı belirlendi.'],
+        ['Okul zümre kararlarının görüşülmesi', 'Okul zümre öğretmenler kurulu tutanakları gözden geçirildi; okulların yıllık plan, ölçme-değerlendirme ve öğretim süreçlerine ilişkin kararları karşılaştırılarak ilçe genelinde ortak uygulamalar belirlendi.'],
+        ['Mevzuat ve öğretim programları', `${PROGRAM} Yönetmelik değişiklikleri ve Bakanlığın yayımladığı çerçeve yıllık planlar üzerinde durularak öğrenme çıktılarının ilçe genelinde aynı sıra ve sürede ele alınması görüşüldü.`],
+        ['Ortak sınavlar ve ölçme-değerlendirme', 'Her dönemde yapılacak yazılı sınavlar, Bakanlıkça yapılacak ortak yazılı sınavların takvimi ve kılavuzu ile süreç değerlendirme araçlarının (gözlem formu, kontrol listesi, dereceli puanlama anahtarı) okullarda benzer biçimde kullanılması görüşüldü. Proje ödevlerinin ders yılı içinde verilip hazırlandığı dönemde değerlendirileceği hatırlatıldı.'],
+        ['Geçen yılın başarı durumu', 'Geçen eğitim-öğretim yılının ders başarı durumu ile 8. sınıflarda merkezî sınav sonuçları değerlendirildi; başarının düşük kaldığı öğrenme çıktıları için ilçe genelinde ortak tekrar ve destek çalışmaları önerildi.'],
+        ['Materyal ve iyi örneklerin paylaşılması', 'Okulların hazırladığı çalışma kâğıtları, dijital içerikler ve etkinliklerin zümre başkanları aracılığıyla ilçedeki okullarla paylaşılması kararlaştırıldı.'],
+        ['Özel eğitim ve destekleme-yetiştirme', 'Kaynaştırma/bütünleştirme yoluyla eğitim alan öğrenciler için BEP uygulamaları ve destekleme-yetiştirme kurslarının planlanması konusunda görüş alışverişinde bulunuldu.'],
+        ['Belirli gün ve haftalar, okullar arası etkinlikler', 'Belirli gün ve haftalarda yapılacak etkinlikler ile okullar arası yarışma ve ortak etkinliklerin planlanması görüşüldü.'],
+        ['İl zümresine iletilecek öneriler', 'İlçe genelinde ortaya çıkan ihtiyaç ve öneriler il zümre öğretmenler kuruluna iletilmek üzere belirlendi.'],
+        ['Dilek ve temenniler', 'Yeni eğitim-öğretim yılının başarılı geçmesi dileğiyle toplantı sona erdi.'],
+      ],
+      kararlar: [
+        'Yıllık planlar Bakanlığın çerçeve planları esas alınarak hazırlanacak; öğrenme çıktıları ilçe genelinde aynı sıra ve sürede işlenecektir.',
+        'Yazılı ve ortak sınavlarda Bakanlığın takvim ve kılavuzuna uyulacak; süreç değerlendirme araçları ortak kullanılacaktır.',
+        'Başarının düşük kaldığı öğrenme çıktıları için okullarda ek tekrar ve destek çalışmaları yapılacaktır.',
+        'Hazırlanan materyal ve iyi örnekler zümre başkanları aracılığıyla ilçedeki okullarla paylaşılacaktır.',
+        'İlçe zümre kararları okul zümre başkanlarınca okullardaki zümre öğretmenlerine duyurulacaktır.',
+        'Belirlenen öneriler il zümre öğretmenler kuruluna iletilecektir.',
+      ],
+    }),
+};
+
+const ILCE_ZUMRE_SONU = {
+  id: 'ilce-zumre-yil-sonu',
+  kategori: 'zumre',
+  ad: 'İlçe zümre öğretmenler kurulu tutanağı — yıl sonu',
+  donem: 'Haziran · mesleki çalışma (ilçe toplarsa)',
+  gun: '06-29',
+  body: () =>
+    ilceToplanti({
+      title: '{egitim_yili} EĞİTİM-ÖĞRETİM YILI {brans} DERSİ İLÇE ZÜMRE ÖĞRETMENLER KURULU YIL SONU TOPLANTI TUTANAĞI',
+      items: [
+        ['Açılış ve yoklama', 'Toplantı saygı duruşu ve İstiklal Marşı ile açıldı, yoklama yapıldı.'],
+        ['Yıl başı ilçe zümre kararlarının değerlendirilmesi', 'Yıl başında alınan ilçe zümre kararlarının okullarda uygulanma durumu zümre başkanlarınca değerlendirildi; uygulanamayan kararların nedenleri görüşüldü.'],
+        ['Öğretim programlarının uygulanması', 'Türkiye Yüzyılı Maarif Modeli öğretim programlarının uygulanmasında yaşanan güçlükler ve iyi örnekler paylaşıldı; yıllık planlarda yetiştirilemeyen öğrenme çıktıları belirlendi.'],
+        ['Başarı durumu ve ortak sınavlar', 'Ders başarı durumu, ortak yazılı sınav sonuçları ve 8. sınıflarda merkezî sınava hazırlık çalışmaları değerlendirildi.'],
+        ['Gelecek yıl için öneriler', 'Gelecek eğitim-öğretim yılında hazırbulunuşluk çalışmaları, materyal ihtiyaçları ve okullar arası ortak etkinlikler için öneriler belirlendi.'],
+        ['Dilek ve temenniler', 'Toplantı iyi tatil dilekleriyle sona erdi.'],
+      ],
+      kararlar: [
+        'Yetiştirilemeyen öğrenme çıktıları gelecek yıl başındaki hazırbulunuşluk çalışmalarında ele alınacaktır.',
+        'Ortak sınav sonuçlarına göre zorlanılan konular için gelecek yıl ilçe genelinde ortak destek çalışmaları planlanacaktır.',
+        'Materyal ve donanım ihtiyaçları ilçe millî eğitim müdürlüğüne bildirilecektir.',
+        'Belirlenen öneriler il zümre öğretmenler kuruluna iletilecektir.',
+      ],
+    }),
+};
+
 // ---------- ŞÖK ----------
 const SOK_INFO = MEETING_INFO([['Sınıf / Şube', '{sinif}'], ['Sınıf rehber öğretmeni', '{danisman}'], ['Öğrenci sayısı', '{ogrenci_sayisi}']]);
 const SOK_BASI = {
@@ -332,7 +432,7 @@ const veliSign = () =>
 const VELI_1 = {
   id: 'veli-1-donem',
   gun: '10-09',
-  kategori: 'veli',
+  kategori: 'sinif',
   ad: 'Veli toplantısı tutanağı — 1. dönem',
   donem: 'Birinci dönem',
   body: () =>
@@ -365,7 +465,7 @@ const VELI_1 = {
 const VELI_2 = {
   id: 'veli-2-donem',
   gun: '02-19',
-  kategori: 'veli',
+  kategori: 'sinif',
   ad: 'Veli toplantısı tutanağı — 2. dönem',
   donem: 'İkinci dönem',
   body: () =>
@@ -692,7 +792,7 @@ const KULUP = [KULUP_PLAN, KULUP_ILK, KULUP_ORTA, KULUP_SONU, KULUP_DONEM, KULUP
 const REHBERLIK = {
   id: 'rehberlik-yillik-plan',
   gun: '10-02',
-  kategori: 'rehberlik',
+  kategori: 'sinif',
   ad: 'Sınıf rehberlik yıllık çalışma planı',
   donem: 'Eğitim-öğretim yılı',
   body: () =>
@@ -960,7 +1060,7 @@ const BEP = [BEP_TUTANAK, BEP_PERFORMANS, BEP_FORMU, BEP_VELI, BEP_SINAV, BEP_DE
 // Haftalar uygulamadan gelir: öğretmenin o düzeye yüklediği plan, yoksa MEB çerçeve planı (PlanContext → planForGrade).
 const YILLIK_PLAN = {
   id: 'yillik-plan',
-  kategori: 'yillik-plan',
+  kategori: 'sok',
   ad: 'Yıllık plan',
   donem: 'Ders yılı başı · sınıf düzeyi seçilir',
   gun: '@ders_basi',
@@ -996,7 +1096,7 @@ const doc = (body, landscape) => `<?xml version="1.0" encoding="UTF-8" standalon
 // Üretilen şablonlar: [{ meta: { id, kategori, ad, kisa?, grup?, donem, gun }, bytes: Buffer }]
 export async function uret() {
   const out = [];
-  for (const s of [ZUMRE_BASI, ZUMRE_ORTA, ZUMRE_SONU, SOK_BASI, SOK_SONU, VELI_1, VELI_2, REHBERLIK, YILLIK_PLAN, ...KULUP, ...BEP]) {
+  for (const s of [ZUMRE_BASI, ZUMRE_ORTA, ZUMRE_SONU, ILCE_ZUMRE_BASI, ILCE_ZUMRE_SONU, SOK_BASI, SOK_SONU, YILLIK_PLAN, VELI_1, VELI_2, REHBERLIK, ...KULUP, ...BEP]) {
     const zip = new JSZip();
     zip.file('[Content_Types].xml', CT);
     zip.file('_rels/.rels', RELS);

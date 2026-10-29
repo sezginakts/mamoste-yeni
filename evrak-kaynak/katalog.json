@@ -163,7 +163,7 @@
     },
     {
       "id": "rehberlik-donem-raporu",
-      "kategori": "rehberlik",
+      "kategori": "sinif",
       "ad": "Sınıf rehberlik dönem raporu",
       "donem": "Dönem sonu",
       "dosya": "sablonlar/rehberlik-donem-raporu.docx",

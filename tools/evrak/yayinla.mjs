@@ -25,7 +25,8 @@ const YAYIN = path.join(ROOT, 'tahta-site/evrak');
 const KLASOR = 'v3';
 const LISTE = 'liste3.json';
 const KONTROL = process.argv.includes('--kontrol');
-const KATEGORILER = ['zumre', 'sok', 'yillik-plan', 'sinav', 'olcme', 'kulup', 'veli', 'rehberlik', 'sinif', 'bep'];
+// Ekrandaki başlıklar (docs.js → CATEGORIES ile aynı sıra): sok = ŞÖK ve yıllık plan; sinif = veli toplantısı, sınıf rehberlik dahil
+const KATEGORILER = ['zumre', 'sok', 'sinav', 'olcme', 'kulup', 'sinif', 'bep'];
 
 // ---------- örnek veri ----------
 const ADLAR = ['Ali Yılmaz', 'Ayşe Kaya', 'Mehmet Demir', 'Zeynep Çelik', 'Emre Şahin', 'Elif Öztürk', 'Can Aydın', 'Ece Arslan', 'Burak Doğan', 'İrem Koç'];
