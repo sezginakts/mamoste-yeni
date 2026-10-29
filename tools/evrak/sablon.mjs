@@ -1062,7 +1062,7 @@ const YILLIK_PLAN = {
   id: 'yillik-plan',
   kategori: 'sok',
   ad: 'Yıllık plan',
-  donem: 'Ders yılı başı · sınıf düzeyi seçilir',
+  donem: 'Ders yılı başı',
   gun: '@ders_basi',
   yatay: true,
   body: () =>
