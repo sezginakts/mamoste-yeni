@@ -211,7 +211,21 @@ export function attentionItems(classes, today = dayKey()) {
   return items;
 }
 
-export const POINT_TAGS = ['Katılım', 'Ödev', 'Doğru cevap', 'Yardımlaşma', 'Hazırlıksız', 'Ödev yok', 'Dikkat'];
+// Performans kategorileri (öğrenci paneli). Eski kayıtlar aşağıdaki haritayla yeni kategoriye taşınır.
+export const POINT_TAGS = ['Katılım', 'Ödev', 'Hazırlıklı', 'Sosyal ve Saygı'];
+const ESKI_ETIKET = {
+  'Doğru cevap': 'Katılım',
+  'Yardımlaşma': 'Sosyal ve Saygı',
+  'Hazırlıksız': 'Hazırlıklı',
+  'Ödev yok': 'Ödev',
+  'Dikkat': 'Sosyal ve Saygı',
+};
+export function pointTag(tag) {
+  const t = String(tag || '').trim();
+  if (POINT_TAGS.includes(t)) return t;
+  if (ESKI_ETIKET[t]) return ESKI_ETIKET[t];
+  return 'Katılım'; // tanınmayan eski etiketler katılıma sayılır
+}
 
 // Bir günün puan dökümü: { toplam, etiketler: { 'Katılım': 3, ... } }
 // Aynı gün + aynı etiket tek kayıtta biriktiği için burada da tek satır olur.
@@ -221,11 +235,39 @@ export function pointsOnDay(student, zaman) {
   let toplam = 0;
   (student.points || []).forEach((p) => {
     if (!p || !p.at || new Date(p.at).toDateString() !== gun) return;
-    const k = p.tag || 'Puan';
+    const k = pointTag(p.tag);
     etiketler[k] = (etiketler[k] || 0) + p.d;
     toplam += p.d;
   });
   return { toplam, etiketler };
+}
+
+// Kategoriye göre toplam puan: { 'Katılım': 5, ... }
+export function pointsByTag(student) {
+  const out = {};
+  POINT_TAGS.forEach((t) => (out[t] = 0));
+  (student.points || []).forEach((p) => {
+    if (!p || !p.at) return;
+    const k = pointTag(p.tag);
+    out[k] = (out[k] || 0) + p.d;
+  });
+  return out;
+}
+
+// Yıl içinde gelişim: eylülden hazirana aylık net puan ve kümülatif toplam.
+// Eğitim yılı = içinde bulunulan yılın eylülü (ocak–ağustos ise bir önceki eylül).
+const AY_KISA = ['Eyl', 'Eki', 'Kas', 'Ara', 'Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz'];
+export function studentYearSeries(student, bugun = new Date()) {
+  const y = bugun.getMonth() >= 8 ? bugun.getFullYear() : bugun.getFullYear() - 1;
+  const aylar = AY_KISA.map((ad, i) => {
+    const ay = (8 + i) % 12; // 8 = Eylül
+    const yil = 8 + i < 12 ? y : y + 1;
+    return { ad, ay, yil, baslangic: new Date(yil, ay, 1).getTime(), bitis: new Date(yil, ay + 1, 1).getTime() };
+  });
+  const net = aylar.map((m) => (student.points || []).reduce((s, p) => (p && p.at >= m.baslangic && p.at < m.bitis ? s + (p.d || 0) : s), 0));
+  let k = 0;
+  const kum = net.map((n) => (k += n));
+  return { aylar, net, kum };
 }
 
 export { ALL_SENTENCES };

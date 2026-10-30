@@ -8,6 +8,7 @@ import { PATTERNS, SENTENCE_BY_ID } from '../../data/patterns';
 import { studentPatternStats, studentTotals, accColor, addDays, POINT_TAGS } from '../../teacher/analytics';
 import { Header, Card, SectionTitle, Field, SmallButton, Chip, Stat, Empty, formatDate, formatTime, confirmAction, notify } from '../../teacher/ui';
 import PointsPanel from '../../teacher/PointsPanel';
+import StudentProgressChart from '../../teacher/StudentProgressChart';
 import { dayKey } from '../../utils/helpers';
 import { useRole } from '../../context/RoleContext';
 
@@ -130,9 +131,13 @@ export default function TeacherStudentScreen({ route, navigation }) {
           </Card>
         ) : null}
 
-        {/* --- Puan: gün seç + etiket satırlarında biriken puan --- */}
+        {/* --- Puan: gün seç + kategori satırlarında biriken puan --- */}
         <SectionTitle>PUAN</SectionTitle>
         <PointsPanel student={s} colors={colors} onAdd={(d, tg, at) => t.addPoint(classId, studentId, d, tg, at)} onRemove={(pid) => t.removePoint(classId, studentId, pid)} />
+
+        {/* --- Yıl içinde gelişim grafiği --- */}
+        <SectionTitle>YIL İÇİNDE GELİŞİM</SectionTitle>
+        <StudentProgressChart student={s} colors={colors} />
 
         {/* --- Notlar --- */}
         <SectionTitle>NOTLAR & HATIRLATICI</SectionTitle>
