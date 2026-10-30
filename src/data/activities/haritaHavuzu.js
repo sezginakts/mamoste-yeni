@@ -18,12 +18,25 @@ export default function haritaHavuzu(grade) {
   });
   // Seçeneklerde çeldirici olarak üst düzeyin yerleri de gerekebilir (az yer olan kategoriler).
   const celdirici = FEATURES.filter((f) => f.tier > level.tier).map((f) => ({ id: f.id, cat: f.cat, tier: f.tier, name: f.name, a: pt(anchorOf(f)) }));
+  // İl kategorisi: düzeyin illeri önce gelir; tur uzatıldığında 81 ilin tamamı kullanılabilsin.
+  const ilHavuzu = FEATURES.filter((f) => f.cat === 'il').map((f) => ({
+    id: f.id,
+    cat: 'il',
+    tier: f.tier,
+    name: f.name,
+    info: f.info,
+    kind: 'il',
+    ref: f.name,
+    plate: f.plate,
+    a: pt(anchorOf(f)),
+  }));
   return {
     sinif: grade,
     seviye: level,
     kategoriler: CATEGORIES,
     yerler,
     celdirici,
+    ilHavuzu,
     harita: {
       W: MAP_W,
       H: MAP_H,

@@ -124,8 +124,9 @@ h1{margin:0;font-size:calc(var(--f)*2.1);font-weight:900;line-height:1;backgroun
 #konfeti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:40}
 #konfeti i{position:absolute;top:-4vmin;width:1.4vmin;height:2.2vmin;border-radius:.3vmin;animation:dus linear forwards}
 @keyframes dus{to{transform:translateY(110vh) rotate(720deg)}}
-/* SVG harita */
-.il{stroke:#fff;stroke-width:1.1;transition:fill .25s}
+/* SVG harita: il sınırları belirgin olsun (krem zeminde beyaz çizgi kayboluyordu) */
+.il{stroke:#8FA3B8;stroke-width:1.9;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke;transition:fill .25s}
+.il:hover{stroke:#0D9488}
 .vurgu{animation:parla 1.1s ease-in-out infinite}
 @keyframes parla{0%,100%{opacity:1}50%{opacity:.55}}
 .yazi{font-family:"Segoe UI","Helvetica Neue",Arial,sans-serif;font-weight:800;paint-order:stroke;stroke:#fff;stroke-linejoin:round}
@@ -150,7 +151,7 @@ h1{margin:0;font-size:calc(var(--f)*2.1);font-weight:900;line-height:1;backgroun
       <div class="ayar genis"><span>Kategori</span><div class="sec" id="katSec" data-k="kat"></div><div class="ipucu-not" id="katNot"></div></div>
       <div class="ayar genis"><span>Kip</span><div class="sec" data-k="kip"><button data-v="kesfet">🔎 Keşfet (öğren)</button><button data-v="hangisi">❓ Hangisi?</button><button data-v="bul">📍 Haritada bul</button></div></div>
       <div class="ayar"><span>Oyuncu</span><div class="sec" data-k="mod"><button data-v="tek">👤 Tek</button><button data-v="takim">👥 İki takım</button></div></div>
-      <div class="ayar"><span>Soru sayısı</span><div class="sec" data-k="tur"><button data-v="5">5</button><button data-v="8">8</button><button data-v="10">10</button><button data-v="15">15</button></div></div>
+      <div class="ayar"><span>Soru sayısı</span><div class="sec" data-k="tur"><button data-v="5">5</button><button data-v="8">8</button><button data-v="10">10</button><button data-v="15">15</button><button data-v="20">20</button><button data-v="25">25</button><button data-v="30">30</button></div></div>
       <div class="ayar genis"><span>Süre (her soru)</span><div class="sec" data-k="sure"><button data-v="0">Yok</button><button data-v="20">20 sn</button><button data-v="40">40 sn</button></div></div>
     </div>
     <button id="basla" class="buyuk">Başla ▶</button>
@@ -256,7 +257,10 @@ function ilBul(p){for(const n in IL)if(IL[n].some(pts=>icinde(p,pts)))return n;r
 const KATLAR=H?H.kategoriler.filter(c=>H.yerler.some(y=>y.cat===c.id)):[];
 const AYAR=Object.assign({kat:'il',kip:'kesfet',mod:'tek',tur:'8',sure:'0',etiket:'ad'},oku('mamoste-harita-ayar:'+(H?H.sinif:0),{}));
 if(!KATLAR.some(c=>c.id===AYAR.kat))AYAR.kat=KATLAR[0]?KATLAR[0].id:'il';
-(function(){const k=$('katSec');KATLAR.forEach(c=>{const b=document.createElement('button');b.dataset.v=c.id;b.textContent=`${c.emoji} ${c.name} (${H.yerler.filter(y=>y.cat===c.id).length})`;k.appendChild(b)})})();
+(function(){const k=$('katSec');KATLAR.forEach(c=>{const b=document.createElement('button');b.dataset.v=c.id;
+  // İl kategorisinde 81 ilin tamamı sorulabileceği için sayı tüm illeri gösterir.
+  const adet=c.id==='il'&&H.ilHavuzu?H.ilHavuzu.length:H.yerler.filter(y=>y.cat===c.id).length;
+  b.textContent=`${c.emoji} ${c.name} (${adet})`;k.appendChild(b)})})();
 function girisCiz(){
   document.querySelectorAll('.sec').forEach(sec=>sec.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===AYAR[sec.dataset.k])));
   $('katNot').textContent=AYAR.kat!=='il'?'💡 Önce “İller”i öğrenmek bu kategoriyi kolaylaştırır.':'';
@@ -309,7 +313,20 @@ function sekilCiz(f,renk,ust,kalin){
 function yaziCiz(f,metin,renk,boy,orta){const u=birim();const fs=(boy||15)*u;
   const t=el('text',{x:f.a[0]+(orta?0:14*u),y:f.a[1]+fs*.35,'font-size':fs,'text-anchor':orta?'middle':'start',fill:renk||'#0F172A',class:'yazi','stroke-width':3.5*u},KATMAN.yazi);t.textContent=metin;return t}
 function kategori(){return KATLAR.find(c=>c.id===AYAR.kat)||KATLAR[0]}
-function havuz(){return H.yerler.filter(y=>y.cat===AYAR.kat)}
+// İl kategorisinde düzeyin illeri + (istenirse) 81 ilin tamamı; diğer kategorilerde düzey havuzu.
+function havuz(){
+  const temel=H.yerler.filter(y=>y.cat===AYAR.kat);
+  if(AYAR.kat!=='il'||!H.ilHavuzu)return temel;
+  const ek=H.ilHavuzu.filter(y=>!temel.some(t=>t.id===y.id));
+  return temel.concat(ek);
+}
+// Düzeyin illeri havuzun BAŞINDA: kısa turda kolay iller, uzun turda yeni iller gelir.
+function havuzSirali(){
+  const temel=H.yerler.filter(y=>y.cat===AYAR.kat);
+  if(AYAR.kat!=='il'||!H.ilHavuzu)return temel;
+  const ek=H.ilHavuzu.filter(y=>!temel.some(t=>t.id===y.id));
+  return temel.concat(ek);
+}
 
 // --- Keşfet ---
 let KESFET=false,secili=null;
@@ -330,8 +347,16 @@ function bilgiGoster(f){const b=$('bilgi');if(!f){b.classList.remove('var');retu
 // --- oyun ---
 let liste=[],tur=0,puan=[0,0],sira=0,sonuclar=[],R=null,zaman=null,kalan=0,sonSaniye=-1;
 function ekran(id){document.querySelectorAll('.ekran').forEach(e=>e.classList.toggle('aktif',e.id===id))}
-function soruSec(n){const h=havuz();const k=ANAHTAR+':'+AYAR.kat;let gor=oku(k,[]);let aday=h.filter(y=>gor.indexOf(y.id)<0);
-  if(aday.length<n){gor=[];aday=h.slice()}const s=karistir(aday).slice(0,n);yaz(k,gor.concat(s.map(y=>y.id)));return s}
+function soruSec(n){
+  const h=havuzSirali(),k=ANAHTAR+':'+AYAR.kat,gor=oku(k,[]);
+  const tier=(H&&H.seviye&&H.seviye.tier)||3;
+  // Önce bu düzeyin yerleri (karışık), sonra üst düzeydekiler: kısa turda kolay, uzun turda yeni yerler.
+  const aday=karistir(h.filter(y=>(y.tier||1)<=tier)).concat(karistir(h.filter(y=>(y.tier||1)>tier)));
+  const yeni=aday.filter(y=>gor.indexOf(y.id)<0),eski=aday.filter(y=>gor.indexOf(y.id)>=0);
+  const secim=yeni.concat(eski).slice(0,n);
+  yaz(k,gor.concat(secim.map(y=>y.id)));
+  return secim;
+}
 function basla(){
   ac();ekran('oyun');haritaKur();ilBoya();$('etiket').textContent=document.title;
   KESFET=AYAR.kip==='kesfet';secili=null;R=null;zamanDur();bilgiGoster(null);$('sonuc').classList.remove('acik');
