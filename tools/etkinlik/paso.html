@@ -171,10 +171,11 @@ body.perdeli .panel{visibility:hidden}
       <div class="ayar"><span>Oyuncu</span><div class="sec" data-k="mod"><button data-v="tek">👤 Tek / sınıf</button><button data-v="takim">👥 İki takım</button></div></div>
       <div class="ayar"><span>Cevap</span><div class="sec" data-k="cevap"><button data-v="secmeli">🔘 4 seçenek</button><button data-v="sozlu">🗣️ Sözlü</button></div></div>
       <div class="ayar"><span>Süre (her oyuncu)</span><div class="sec" data-k="sure"><button data-v="120">2 dk</button><button data-v="180">3 dk</button><button data-v="240">4 dk</button><button data-v="0">Süresiz</button></div></div>
+      <div class="ayar"><span>Zorluk</span><div class="sec" data-k="zorluk"><button data-v="1">Kolay</button><button data-v="2">Orta</button><button data-v="3">Zor</button><button data-v="0">Karışık</button></div></div>
       <div class="ayar"><span>Harf</span><div class="sec" data-k="harf"><button data-v="hepsi" id="harfHepsi">Bütün harfler</button><button data-v="20">20</button><button data-v="12">12</button></div></div>
     </div>
     <button id="basla" class="buyuk">Başla ▶</button>
-    <div class="nasil">Her harf için bir ipucu var: cevap o harfle <b>başlar</b> ya da <b>içinde</b> o harf geçer. Bilirsen cevapla; bilmiyorsan <b>PASAPAROLA</b> de, o harf turun sonunda yeniden gelir. Süre yalnız sırası gelen oyuncuda işler. İki takımda yanlış cevap ya da pas sırayı karşı takıma geçirir; iki takımın soruları farklıdır. En çok doğruyu yapan kazanır, eşitlikte az yanlış yapan. <b>Sözlü</b>de öğrenci cevabı söyler, öğretmen ✓ / ✗ ile işaretler.</div>
+    <div class="nasil">Her harf için bir ipucu var: cevap o harfle <b>başlar</b> ya da <b>içinde</b> o harf geçer. Bilirsen cevapla; bilmiyorsan <b>PASAPAROLA</b> de, o harf turun sonunda yeniden gelir. Süre yalnız sırası gelen oyuncuda işler. İki takımda yanlış cevap ya da pas sırayı karşı takıma geçirir; iki takımın soruları farklıdır. En çok doğruyu yapan kazanır, eşitlikte az yanlış yapan. Her harfte birçok soru var; oynananlar hatırlanır, sonraki oyunda yenileri gelir. <b>Sözlü</b>de öğrenci cevabı söyler, öğretmen ✓ / ✗ ile işaretler.</div>
   </div>
 </section>
 
@@ -286,7 +287,7 @@ $('logo').innerHTML=HARFLER.slice(0,3).concat('?').map(h=>`<i>${esc(h)}</i>`).jo
   harf.forEach((w,i)=>{const s=document.createElement('span');s.textContent=w;s.style.left=(4+(i*83)%88)+'%';s.style.top=(4+(i*47)%86)+'%';
     s.style.borderColor=RENK[i%4];s.style.color=RENK[i%4];s.style.setProperty('--r',((i%2?1:-1)*(3+i%5))+'deg');s.style.animationDelay=(-i*1.3)+'s';u.appendChild(s)})})();
 $('harfHepsi').textContent=`Bütün harfler (${HARFLER.length})`;
-const VARSAYILAN={mod:'tek',cevap:'secmeli',sure:'180',harf:'hepsi'};
+const VARSAYILAN={mod:'tek',cevap:'secmeli',sure:'180',harf:'hepsi',zorluk:'0'};
 const AYAR=Object.assign({},VARSAYILAN,oku(AYAR_KEY,{}));
 document.querySelectorAll('.sec').forEach(sec=>{const k=sec.dataset.k;if(![...sec.querySelectorAll('button')].some(b=>b.dataset.v===AYAR[k]))AYAR[k]=VARSAYILAN[k]});
 function boyaHepsi(){document.querySelectorAll('.sec').forEach(sec=>sec.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===AYAR[sec.dataset.k])))}
@@ -297,8 +298,12 @@ function ekran(id){document.querySelectorAll('.ekran').forEach(e=>e.classList.to
 // --- soru seçimi: önce görülmemişler; iki takımda aynı harfe farklı soru ---
 const GOR_KEY=ANAHTAR+':gorulen';
 const GOR=new Set(oku(GOR_KEY,[]));
+// Zorluk (z: 1 kolay, 2 orta, 3 zor; yazılmamışsa 2): seçilen düzeyde soru yoksa en yakın düzeyden alınır.
 function soruSec(h,haric){
-  const hepsi=GRUP[h];
+  const hedef=+AYAR.zorluk||0,zz=q=>+q.z||2;
+  let hepsi=GRUP[h];
+  const digeri=hepsi.filter(q=>q!==haric);
+  if(hedef&&digeri.length){const fark=Math.min(...digeri.map(q=>Math.abs(zz(q)-hedef)));hepsi=digeri.filter(q=>Math.abs(zz(q)-hedef)===fark)}
   let aday=hepsi.filter(q=>q!==haric&&!GOR.has(q.d));
   if(!aday.length){hepsi.forEach(q=>{if(q!==haric)GOR.delete(q.d)});aday=hepsi.filter(q=>q!==haric)}
   if(!aday.length)aday=hepsi;
