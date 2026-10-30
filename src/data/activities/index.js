@@ -168,10 +168,11 @@ export const ACTIVITY_TYPES = {
   },
 };
 
-// Zaman Şeridi havuzu: düzeyin olay setleri + zorluk ayarı.
+// Zaman Şeridi havuzu: TÜM olay setleri gönderilir (her setin "grades" alanı var).
+// Oyun içindeki Zorluk ayarı sınıfı seçer: Kolay 5, Orta 6, Zor 7, Karışık hepsi.
 const zamanHavuzu = (g) => {
-  const { setsForGrade, GRADE_LEVELS } = require('../timelines');
-  return { sinif: g, seviye: GRADE_LEVELS[g], setler: setsForGrade(g) };
+  const { TIMELINE_SETS, GRADE_LEVELS } = require('../timelines');
+  return { sinif: g, seviye: GRADE_LEVELS[g], setler: TIMELINE_SETS };
 };
 
 const DKAB_IMZA = 'Hazırlayan: <b>Ejder AKÇİÇEK</b> · Din Kültürü ve Ahlak Bilgisi Öğretmeni';

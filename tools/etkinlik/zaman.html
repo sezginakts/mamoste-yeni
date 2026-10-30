@@ -175,6 +175,7 @@ h1{margin:0;font-size:calc(var(--f)*2.1);font-weight:900;line-height:1;backgroun
       <div class="ayar"><span>Tur sayısı</span><div class="sec" data-k="tur"><button data-v="5">5</button><button data-v="8">8</button><button data-v="10">10</button></div></div>
       <div class="ayar"><span>Kart sayısı</span><div class="sec" data-k="kart"><button data-v="4">4</button><button data-v="5">5</button><button data-v="6">6</button><button data-v="7">7</button></div></div>
       <div class="ayar"><span>Süre (her tur)</span><div class="sec" data-k="sure"><button data-v="0">Yok</button><button data-v="60">60 sn</button><button data-v="90">90 sn</button></div></div>
+      <div class="ayar"><span>Zorluk</span><div class="sec" data-k="zorluk"><button data-v="1">Kolay</button><button data-v="2">Orta</button><button data-v="3">Zor</button><button data-v="0">Karışık</button></div></div>
       <div class="ayar genis"><span>Konu</span><div class="sec konu" id="konuSec" data-k="konu"></div>
         <button class="kendi-ac" id="kendiAc">✏️ Kendi olaylarımı yaz</button>
         <div class="kendi" id="kendi">
@@ -185,7 +186,7 @@ h1{margin:0;font-size:calc(var(--f)*2.1);font-weight:900;line-height:1;backgroun
       </div>
     </div>
     <button id="basla" class="buyuk">Başla ▶</button>
-    <div class="nasil">👆 Kartlara dokun, şeritteki ilk boşluğa gitsin; istersen sürükleyip istediğin yere bırak. Soldan sağa <b>eskiden yeniye</b> diz ve <b>Kontrol et</b>'e bas: doğru yerdekilerin tarihi açılır, yanlışlar geri gelir. Tarihler sıralanmadan görünmez!</div>
+    <div class="nasil">👆 Kartlara dokun, şeritteki ilk boşluğa gitsin; istersen sürükleyip istediğin yere bırak. Soldan sağa <b>eskiden yeniye</b> diz ve <b>Kontrol et</b>'e bas: doğru yerdekilerin tarihi açılır, yanlışlar geri gelir. Tarihler sıralanmadan görünmez! <b>Zorluk</b>: Kolay = 5. sınıf konuları, Orta = 6. sınıf, Zor = 7. sınıf, Karışık = hepsi.</div>
   </div>
 </section>
 
@@ -290,10 +291,24 @@ function kendiOku(text){
   return {id:'kendi',title:'Kendi olaylarım',emoji:'✏️',kind:tarihli?'date':'year',note:'',items};
 }
 let KENDI=kendiOku(oku('mamoste-zaman-kendi',''));
-function setler(){return H.setler.concat(KENDI.items.length>=3?[KENDI]:[])}
+// Zorluk = sınıf: 1 → 5. sınıf, 2 → 6. sınıf, 3 → 7. sınıf, 0 → karışık (tüm sınıflar).
+function zlSinif(){const z=zl();return z===1?5:z===2?6:z===3?7:0}
+function setler(){
+  const hepsi=TUM_SETLER().concat(KENDI.items.length>=3?[KENDI]:[]);
+  const s=zlSinif();
+  if(!s)return hepsi;
+  const secim=hepsi.filter(x=>!x.grades||x.grades.indexOf(s)>=0);
+  return secim.length?secim:hepsi;
+}
+function TUM_SETLER(){return H.setler||[]}
 
 // --- ayarlar ---
-const AYAR=Object.assign({mod:'tek',tur:'8',kart:String(Math.min(7,Math.max(4,SEV.count))),sure:'0',konu:'karisik'},oku('mamoste-zaman-ayar:'+H.sinif,{}));
+const AYAR=Object.assign({mod:'tek',tur:'8',kart:String(Math.min(7,Math.max(4,SEV.count))),sure:'0',konu:'karisik',zorluk:'2'},oku('mamoste-zaman-ayar:'+H.sinif,{}));
+// Zorluk = sınıf içeriği: Kolay 5. sınıf · Orta 6. sınıf · Zor 7. sınıf · Karışık tüm sınıflar
+function zl(){return +AYAR.zorluk||0}
+function etkinPick(){return SEV.pick}
+function etkinKart(){return Math.max(3,Math.min(8,+AYAR.kart))}
+function ipucuVar(){return !!SEV.hint}
 function konuCiz(){
   const k=$('konuSec');k.innerHTML='';
   [{id:'karisik',emoji:'🔀',title:'Karışık'}].concat(setler()).forEach(s=>{const b=document.createElement('button');b.dataset.v=s.id;b.textContent=`${s.emoji} ${s.title}`;k.appendChild(b)});
@@ -321,7 +336,7 @@ function sec(set,n){
   let gor=gorulen(set.id);let aday=set.items.filter(x=>gor.indexOf(x.e)<0);
   if(aday.length<n){gor=[];aday=set.items.slice()}
   const s=aday.slice().sort((a,b)=>a.v-b.v);n=Math.min(n,s.length);let out;
-  const pick=set.id==='kendi'?'random':SEV.pick;
+  const pick=set.id==='kendi'?'random':etkinPick();
   if(n>=s.length)out=s;
   else if(pick==='spread'){const st=(s.length-1)/(n-1);const idx=Array.from({length:n},(_,i)=>Math.round(i*st));
     for(let i=1;i<n-1;i++){const j=idx[i]+(Math.random()<.5?-1:1);if(Math.random()<.5&&j>idx[i-1]&&j<idx[i+1])idx[i]=j}out=idx.map(i=>s[i])}
@@ -344,7 +359,7 @@ function ekran(id){document.querySelectorAll('.ekran').forEach(e=>e.classList.to
 function basla(){ac();turSay=+AYAR.tur;tur=0;puan=[0,0];sira=0;sonuclar=[];$('etiket').textContent=document.title;ekran('oyun');yeniTur()}
 
 function yeniTur(){
-  const set=turSeti();const items=sec(set,+AYAR.kart);
+  const set=turSeti();const items=sec(set,etkinKart());
   let kartlar=items.map((x,i)=>({id:i,x,renk:RENK[(i*3+tur)%4]}));
   if(kartlar.length>1){let g=0;do{karistir(kartlar);g++}while(g<20&&kartlar.every((k,i)=>k.id===i))}
   R={set,items,kartlar,slot:items.map(()=>null),kilit:items.map(()=>false),hata:0,ipucu:0,bitti:false,yeni:-1,goster:false};
@@ -352,7 +367,7 @@ function yeniTur(){
   $('resim').textContent=set.emoji||'🕰️';$('konuAd').textContent=set.title;
   const mo=set.kind==='year'&&items.some(x=>x.v<0)&&H.sinif<=6;
   $('not').textContent=mo?'💡 MÖ’de sayı büyüdükçe olay daha eskidir; MÖ’den sonra MS gelir.':'';
-  $('ipucuBtn').style.display=SEV.hint?'':'none';
+  $('ipucuBtn').style.display=ipucuVar()?'':'none';
   $('sonuc').classList.remove('acik');
   ilerlemeCiz();skorCiz();ciz();zamanBaslat();
 }
@@ -410,7 +425,7 @@ function kontrol(){
   setTimeout(()=>{if(R.bitti)return;yanlis.forEach(i=>R.slot[i]=null);ciz()},800);
 }
 function ipucu(){
-  if(R.bitti||!SEV.hint)return;
+  if(R.bitti||!ipucuVar())return;
   const i=R.slot.findIndex((id,j)=>!R.kilit[j]);if(i<0)return;
   const n=R.slot.indexOf(i);if(n>=0)R.slot[n]=null;
   R.slot[i]=i;R.kilit[i]=true;R.ipucu++;R.yeni=i;ses.tik();
