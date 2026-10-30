@@ -18,6 +18,16 @@ export const ACTIVITY_TYPES = {
     desc: 'Harf çemberi: her harfte bir ipucu, iki seçenek. Doğru, yanlış ve pas hakkıyla süreli yarışma.',
     engine: () => require('./pasaparolaEngine.js').default,
   },
+  // Kaynağı tools/etkinlik/paso.html; değişince `node tools/etkinlik/derle.js`.
+  // Havuz: [{ h:'A', s:'ipucu', d:'doğru', y:['çeldirici', …] }, …] — sınıf düzeyine göre ayrı dosya.
+  // Tema renkleriyle çalışan sürüm: İngilizce kelime ve Sosyal Bilgiler kavramları, 5–8. sınıf.
+  paso: {
+    icon: '🅰️',
+    name: 'Pasaparola · Kelime',
+    desc: 'Sırayla harf seç, ipucunu oku, doğru kelimeyi bul. 4 seçenek, takım puanı, isteğe bağlı süre. Sınıf düzeyine göre kelime/kavram havuzu.',
+    branches: ['ingilizce', 'sosyal', 'inkilap'],
+    engine: () => require('./pasoEngine.js').default,
+  },
   // Kaynağı tools/etkinlik/cumle.html; değişince `node tools/etkinlik/derle.js`.
   // Havuz: [["cümle.", "emoji", "Türkçe anlamı", seviye, "fazladan kelime (isteğe bağlı)"], …]
   cumle: {
@@ -184,6 +194,10 @@ const LIST = {
   ],
   // Diğer branşların içeriği eklenecek (yukarıdaki açıklamaya bak).
   ingilizce: [
+    { type: 'paso', grade: 5, unit: null, unitName: 'Pasaparola · Okul ve günlük kelimeler', pool: () => require('./ingilizce/paso5.js').default },
+    { type: 'paso', grade: 6, unit: null, unitName: 'Pasaparola · Dostluk, meslekler, hava', pool: () => require('./ingilizce/paso6.js').default },
+    { type: 'paso', grade: 7, unit: null, unitName: 'Pasaparola · Görünüş, spor, doğa', pool: () => require('./ingilizce/paso7.js').default },
+    { type: 'paso', grade: 8, unit: null, unitName: 'Pasaparola · Dostluk, mutfak, internet, gezi', pool: () => require('./ingilizce/paso8.js').default },
     { type: 'kalip', grade: null, unit: null, unitName: 'Kalıp cümleleri', pool: () => require('./ingilizce/kalip.js').default, sesler: () => require('./ingilizce/ses/kalip.js').default },
     { type: 'cumle', grade: 5, unit: 1, unitName: 'School Life', pool: () => require('./ingilizce/cumle5_u1.js').default, sesler: () => require('./ingilizce/ses/cumle5_u1.js').default },
     { type: 'cumle', grade: 6, unit: 1, unitName: 'School Life', pool: () => require('./ingilizce/cumle6_u1.js').default, sesler: () => require('./ingilizce/ses/cumle6_u1.js').default },
@@ -216,6 +230,9 @@ const LIST = {
     { type: 'degisken', grade: 7, unit: null, unitName: 'Bilimsel Yöntem · Değişkenler', pool: () => require('./fen/degisken7.js').default },
   ],
   sosyal: [
+    { type: 'paso', grade: 5, unit: null, unitName: 'Pasaparola · Anadolu uygarlıkları, kültür, demokrasi', pool: () => require('./sosyal/paso5.js').default },
+    { type: 'paso', grade: 6, unit: null, unitName: 'Pasaparola · Mezopotamya, Türk-İslam, bilginler', pool: () => require('./sosyal/paso6.js').default },
+    { type: 'paso', grade: 7, unit: null, unitName: 'Pasaparola · Osmanlı, Avrupa’da değişim', pool: () => require('./sosyal/paso7.js').default },
     { type: 'zaman', grade: 5, unit: null, unitName: 'Kültürel miras · demokrasi · ulaşım · icatlar · Anadolu', pool: () => zamanHavuzu(5) },
     { type: 'zaman', grade: 6, unit: null, unitName: 'Türk-İslam tarihi · bilginler · miras · ulaşım · icatlar', pool: () => zamanHavuzu(6) },
     { type: 'zaman', grade: 7, unit: null, unitName: 'Osmanlı · Avrupa · bilginler · miras · Türk-İslam tarihi', pool: () => zamanHavuzu(7) },
@@ -224,7 +241,10 @@ const LIST = {
     { type: 'harita', grade: 7, unit: null, unitName: '81 il ve tüm yerler', pool: () => require('./haritaHavuzu').default(7) },
     { type: 'hava', grade: 6, unit: null, unitName: 'Türkiye’de İklim · Rakım ve Yağış', pool: () => require('./fen/hava8.js').default },
   ],
-  inkilap: [{ type: 'zaman', grade: 8, unit: null, unitName: 'Millî Mücadele · inkılaplar · Atatürk’ün hayatı · demokrasi', pool: () => zamanHavuzu(8) }],
+  inkilap: [
+    { type: 'paso', grade: 8, unit: null, unitName: 'Pasaparola · Millî Mücadele ve inkılaplar', pool: () => require('./sosyal/paso8.js').default },
+    { type: 'zaman', grade: 8, unit: null, unitName: 'Millî Mücadele · inkılaplar · Atatürk’ün hayatı · demokrasi', pool: () => zamanHavuzu(8) },
+  ],
   gorsel: [],
   muzik: [
     { type: 'nota', grade: 5, unit: null, unitName: 'Porte ve Nota Okuma', pool: () => require('./muzik/nota.js').default },
