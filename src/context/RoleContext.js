@@ -111,6 +111,15 @@ export function RoleProvider({ children }) {
     AsyncStorage.setItem(BRANCH_KEY, id).catch(() => {});
   };
 
+  // Dersi "ana ders" yap: listede birinci sıraya alır ve aktif ders yapar.
+  // Dersin kendi verisi (sınıflar, plan, notlar) branşa bağlı olduğu için korunur; sıra yalnız görüntü/öncelik.
+  const makePrimary = (id) => {
+    if (!myBranches.includes(id)) return;
+    kaydetListe([id, ...myBranches.filter((x) => x !== id)]);
+    setBranchState(id);
+    AsyncStorage.setItem(BRANCH_KEY, id).catch(() => {});
+  };
+
   // Branş seçimine dön (her öğretmen). Kayıtlı branş, yenisi seçilene kadar silinmez: uygulama kapanırsa eskisiyle açılır.
   const resetBranch = () => {
     if (branchId) setPrevBranch(branchId);
@@ -144,6 +153,7 @@ export function RoleProvider({ children }) {
       setMyBranches,
       toggleMyBranch,
       switchBranch,
+      makePrimary,
       resetBranch,
       prevBranch,
       cancelBranchChange,

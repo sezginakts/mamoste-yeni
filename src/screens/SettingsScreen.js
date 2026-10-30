@@ -22,7 +22,7 @@ export default function SettingsScreen({ navigation }) {
   const { colors, mode, setThemeMode, accent, setAccent } = useTheme();
   const styles = useThemedStyles(makeStyles);
   // Rol kalıcıdır (yalnız yönetici sıfırlar); branş her öğretmen için değiştirilebilir, her branşın verisi ayrıdır.
-  const { role, branch, branchId, myBranchObjects, switchBranch, resetRole, resetBranch, fixedRole } = useRole();
+  const { role, branch, branchId, myBranchObjects, switchBranch, makePrimary, resetRole, resetBranch, fixedRole } = useRole();
   const auth = useAuth();
   const t = useTeacher();
   const desk = useDesk();
@@ -67,28 +67,43 @@ export default function SettingsScreen({ navigation }) {
       </View>
       {role === 'teacher' ? (
         <>
-          {/* Seçili derslerden biri öne alınır: ana sayfa, sınıflar ve planlar o derse göre açılır. */}
+          {/* Seçili dersler: dokununca o ders aktif olur, "Öne al" ile listede birinci (ana ders) yapılır.
+              Dersin kendi sınıfları/planı/notları branşa bağlı olduğundan sıra değişince SİLİNMEZ. */}
           {(myBranchObjects || []).length > 1 ? (
             <View style={[styles.toggleRow, { marginTop: spacing.sm, flexDirection: 'column', alignItems: 'stretch' }]}>
-              <Text style={[styles.toggleLabel, { marginBottom: 2 }]}>Öndeki ders</Text>
-              {myBranchObjects.map((d) => {
+              <Text style={[styles.toggleLabel, { marginBottom: 2 }]}>Derslerim</Text>
+              {myBranchObjects.map((d, i) => {
                 const on = d.id === branchId;
+                const ana = i === 0;
                 return (
-                  <Pressable
-                    key={d.id}
-                    onPress={() => switchBranch(d.id)}
-                    accessibilityRole="radio"
-                    accessibilityState={{ checked: on }}
-                    style={[styles.branchRow, { borderColor: on ? d.color : colors.border, backgroundColor: on ? d.color + '1A' : 'transparent' }]}
-                  >
-                    <View style={[styles.radio, { borderColor: on ? d.color : colors.border }]}>{on ? <View style={[styles.radioDot, { backgroundColor: d.color }]} /> : null}</View>
-                    <Text style={[styles.toggleLabel, { flex: 1 }]} numberOfLines={1}>
-                      {d.short ? `${d.short} · ` : ''}
-                      {d.name}
-                    </Text>
-                  </Pressable>
+                  <View key={d.id} style={[styles.branchRow, { borderColor: on ? d.color : colors.border, backgroundColor: on ? d.color + '1A' : 'transparent' }]}>
+                    <Pressable
+                      onPress={() => switchBranch(d.id)}
+                      accessibilityRole="radio"
+                      accessibilityState={{ checked: on }}
+                      accessibilityLabel={`${d.name} dersini aç`}
+                      style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flex: 1 }}
+                    >
+                      <View style={[styles.orderBadge, { backgroundColor: on ? d.color : colors.border }]}>
+                        <Text style={styles.orderText}>{i + 1}</Text>
+                      </View>
+                      <Text style={[styles.toggleLabel, { flex: 1 }]} numberOfLines={1}>
+                        {d.short ? `${d.short} · ` : ''}
+                        {d.name}
+                        {ana ? '  (ana ders)' : ''}
+                      </Text>
+                    </Pressable>
+                    {!ana ? (
+                      <Pressable onPress={() => makePrimary(d.id)} hitSlop={8} accessibilityLabel={`${d.name} dersini öne al`}>
+                        <Text style={[styles.back, { fontSize: 13 }]}>↑ Öne al</Text>
+                      </Pressable>
+                    ) : null}
+                  </View>
                 );
               })}
+              <Text style={[styles.toggleDesc, { marginTop: spacing.xs, marginLeft: 2 }]}>
+                “Ana ders” uygulama açıldığında önce gelir. Ders değiştirmek sınıflarını, ders programını ve planlarını silmez.
+              </Text>
             </View>
           ) : null}
           <Pressable onPress={resetBranch} style={[styles.toggleRow, { marginTop: spacing.sm }]}>
@@ -103,37 +118,6 @@ export default function SettingsScreen({ navigation }) {
             <Text style={[styles.back, { textAlign: 'center' }]}>‹ Öğretmen / öğrenci seçimine dön</Text>
           </Pressable>
         </View>
-      ) : null}
-      {role === 'teacher' && auth.user ? (
-        <>
-          <View style={[styles.toggleRow, { marginTop: spacing.sm }]}>
-            <Text style={[styles.toggleLabel, { flex: 1 }]} numberOfLines={1}>☁️ {auth.user.email}</Text>
-            <Pressable onPress={auth.signOut} hitSlop={8}>
-              <Text style={[styles.back, { color: colors.danger }]}>Çıkış yap</Text>
-            </Pressable>
-          </View>
-          {/* Hesabı sil (App Store 5.1.1(v)): sunucudaki hesap ve bütün sınıf/öğrenci/ödev verisi silinir. */}
-          <Pressable onPress={hesabiSil} disabled={siliniyor} style={[styles.toggleRow, { marginTop: spacing.sm }]} accessibilityRole="button">
-            <Text style={[styles.toggleLabel, { flex: 1, color: colors.danger }]}>{siliniyor ? 'Hesap siliniyor…' : '🗑 Hesabımı sil'}</Text>
-          </Pressable>
-        </>
-      ) : role === 'teacher' && auth.cloudEnabled ? (
-        // Hesap açmadan devam edildiyse: sınıf kodu ve ödev için giriş buradan.
-        <Pressable onPress={() => auth.setGuest(false)} style={[styles.toggleRow, { marginTop: spacing.sm }]}>
-          <Text style={[styles.toggleLabel, { flex: 1 }]}>☁️ Giriş yap ya da hesap aç</Text>
-          <Text style={[styles.back, { fontSize: 13 }]}>›</Text>
-        </Pressable>
-      ) : null}
-
-      {/* Öğretmen verileri: yedek (eşitleme arka planda kendiliğinden) */}
-      {role === 'teacher' ? (
-        <>
-          <Text style={styles.sectionTitle}>Veriler</Text>
-          <Pressable onPress={() => navigation.navigate('TeacherBackup')} style={styles.toggleRow}>
-            <Text style={[styles.toggleLabel, { flex: 1 }]}>💾 Yedek</Text>
-            <Text style={[styles.back, { fontSize: 13 }]}>›</Text>
-          </Pressable>
-        </>
       ) : null}
 
       {/* Ders zili: ders saatlerinde bildirim + uygulama açıksa zil animasyonu */}
@@ -217,6 +201,37 @@ export default function SettingsScreen({ navigation }) {
         })}
       </View>
 
+      {/* En alt: Yedek → Çıkış yap → Hesabımı sil (sırasıyla) */}
+      {role === 'teacher' ? (
+        <>
+          <Text style={styles.sectionTitle}>Veriler</Text>
+          <Pressable onPress={() => navigation.navigate('TeacherBackup')} style={styles.toggleRow}>
+            <Text style={[styles.toggleLabel, { flex: 1 }]}>💾 Yedek</Text>
+            <Text style={[styles.back, { fontSize: 13 }]}>›</Text>
+          </Pressable>
+          {auth.user ? (
+            <>
+              <View style={[styles.toggleRow, { marginTop: spacing.sm }]}>
+                <Text style={[styles.toggleLabel, { flex: 1 }]} numberOfLines={1}>☁️ {auth.user.email}</Text>
+                <Pressable onPress={auth.signOut} hitSlop={8} accessibilityLabel="Çıkış yap">
+                  <Text style={[styles.back, { color: colors.danger }]}>Çıkış yap</Text>
+                </Pressable>
+              </View>
+              {/* Hesabı sil (App Store 5.1.1(v)): sunucudaki hesap ve bütün sınıf/öğrenci/ödev verisi silinir. */}
+              <Pressable onPress={hesabiSil} disabled={siliniyor} style={[styles.toggleRow, { marginTop: spacing.sm }]} accessibilityRole="button">
+                <Text style={[styles.toggleLabel, { flex: 1, color: colors.danger }]}>{siliniyor ? 'Hesap siliniyor…' : '🗑 Hesabımı sil'}</Text>
+              </Pressable>
+            </>
+          ) : auth.cloudEnabled ? (
+            // Hesap açmadan devam edildiyse: sınıf kodu ve ödev için giriş buradan.
+            <Pressable onPress={() => auth.setGuest(false)} style={[styles.toggleRow, { marginTop: spacing.sm }]}>
+              <Text style={[styles.toggleLabel, { flex: 1 }]}>☁️ Giriş yap ya da hesap aç</Text>
+              <Text style={[styles.back, { fontSize: 13 }]}>›</Text>
+            </Pressable>
+          ) : null}
+        </>
+      ) : null}
+
       <Text style={styles.version}>Okul · v1.0</Text>
       <Text style={styles.author}>Sezgin AKTAŞ</Text>
     </ScrollView>
@@ -248,6 +263,8 @@ const makeStyles = (colors, shadow) => StyleSheet.create({
   branchRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderWidth: 1.5, borderRadius: radius.sm, paddingHorizontal: spacing.md, paddingVertical: 10, marginTop: 6 },
   radio: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   radioDot: { width: 10, height: 10, borderRadius: 5 },
+  orderBadge: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  orderText: { color: '#fff', fontSize: 12, fontWeight: '900' },
   toggleDesc: { color: colors.textMuted, fontSize: font.tiny, marginTop: 2 },
   infoCard: { backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.lg, marginTop: spacing.xl, borderWidth: 1, borderColor: colors.border },
   infoTitle: { color: colors.text, fontSize: 14.5, fontWeight: '800', marginBottom: spacing.sm },
