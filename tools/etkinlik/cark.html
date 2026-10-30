@@ -154,10 +154,11 @@ h1{margin:0;font-size:calc(var(--f)*2.1);font-weight:900;line-height:1;backgroun
       <div class="ayar"><span>Takım sayısı</span><div class="sec" data-k="takim"><button data-v="2">2</button><button data-v="3">3</button><button data-v="4">4</button></div></div>
       <div class="ayar"><span>Her takıma tur</span><div class="sec" data-k="tur"><button data-v="3">3</button><button data-v="4">4</button><button data-v="5">5</button></div></div>
       <div class="ayar"><span>Cevap süresi</span><div class="sec" data-k="sure"><button data-v="0">Yok</button><button data-v="20">20 sn</button><button data-v="30">30 sn</button></div></div>
+      <div class="ayar"><span>Zorluk</span><div class="sec" data-k="zorluk"><button data-v="1">Kolay</button><button data-v="2">Orta</button><button data-v="3">Zor</button><button data-v="0">Karışık</button></div></div>
     </div>
     <div class="dilimler"><b>10–50 puan: soru</b><b>×2 çift puan</b><b>🎁 hediye +25</b><b>⏭ pas</b><b>💥 puanın yarısı gider</b></div>
     <button id="basla" class="buyuk">Başla ▶</button>
-    <div class="not"><b>ÇEVİR</b> düğmesini <b>basılı tut</b>: güç çubuğu dolup boşalır, bıraktığın anda ne kadar doluysa çark o kadar hızlı ve uzun döner. Tahtada <b>parmağınla tutup savurabilirsin</b> de: ne kadar hızlı savurursan o kadar uzun döner. Her sorunun üstünde ne istendiği yazar: soru, boşluk doldurma, seçmeli ya da görev. Seçenekli sorular kendiliğinden puanlanır; açık uçlu sorularda öğretmen <b>✓ Doğru / ✗ Yanlış</b> der. Büyük dilimlerde sorular zorlaşır!</div>
+    <div class="not"><b>ÇEVİR</b> düğmesini <b>basılı tut</b>: güç çubuğu dolup boşalır, bıraktığın anda ne kadar doluysa çark o kadar hızlı ve uzun döner. Tahtada <b>parmağınla tutup savurabilirsin</b> de: ne kadar hızlı savurursan o kadar uzun döner. <b>Her soru seçeneklidir</b> (4 cevap); doğru cevap kendiliğinden puanlanır. Başlamadan <b>Zorluk</b> seç: Kolay / Orta / Zor / Karışık. Büyük dilimlerde sorular zorlaşır!</div>
   </div>
 </section>
 
@@ -267,7 +268,7 @@ function carkSvg(mini){
 $('cark').innerHTML=carkSvg(false);$('miniCark').innerHTML=carkSvg(true);
 
 // --- ayarlar ---
-const AYAR=Object.assign({takim:'2',tur:'4',sure:'0'},oku('mamoste-cark-ayar',{}));
+const AYAR=Object.assign({takim:'2',tur:'4',sure:'0',zorluk:'2'},oku('mamoste-cark-ayar',{}));
 document.querySelectorAll('.sec').forEach(sec=>{
   const k=sec.dataset.k;const boya=()=>sec.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===AYAR[k]));
   sec.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;AYAR[k]=b.dataset.v;yaz('mamoste-cark-ayar',AYAR);boya();ses.sec()});boya();
@@ -383,14 +384,19 @@ function olay(emo,renk,baslik,yazi){
 }
 
 function soruSec(deger){
-  // büyük dilim → zor soru: 10-20 kolay/orta, 30 orta/zor, 40-50 zor
+  // Zorluk ayarı (1 kolay · 2 orta · 3 zor · 0 karışık) soruları süzer.
+  // Büyük dilimde ayrıca o seviyenin zoru tercih edilir: 10-20 kolay/orta, 30 orta/zor, 40-50 zor.
+  const zl=+AYAR.zorluk||0;
+  const seviye=q=>+q[3]||1;
   const ist=deger>=40?[3,2]:deger>=30?[2,3]:[1,2];
   const gor=oku(ANAHTAR,[]);
   const uygun=q=>sorulan.indexOf(q[0])<0;
-  let aday=SORULAR.filter(q=>uygun(q)&&gor.indexOf(q[0])<0);
-  if(!aday.length){yaz(ANAHTAR,[]);aday=SORULAR.filter(uygun)}
+  const zorlukUygun=q=>!zl||seviye(q)===zl;
+  let aday=SORULAR.filter(q=>uygun(q)&&gor.indexOf(q[0])<0&&zorlukUygun(q));
+  if(!aday.length){yaz(ANAHTAR,[]);aday=SORULAR.filter(q=>uygun(q)&&zorlukUygun(q))}
+  if(!aday.length)aday=SORULAR.filter(zorlukUygun);
   if(!aday.length){sorulan=[];aday=SORULAR.slice()}
-  const seviyeli=aday.filter(q=>ist.indexOf(q[3]||1)>=0);
+  const seviyeli=aday.filter(q=>ist.indexOf(seviye(q))>=0);
   const havuz=seviyeli.length?seviyeli:aday;const q=havuz[Math.floor(Math.random()*havuz.length)];
   sorulan.push(q[0]);yaz(ANAHTAR,oku(ANAHTAR,[]).concat([q[0]]));return q;
 }
@@ -404,8 +410,22 @@ function soruTuru(q,secenekli){const t=String(q[0]).trim();
   if(/^correct\b/i.test(t))return['🛠️','CÜMLEYİ DÜZELT','Cümlenin doğrusunu İngilizce söyle.','#D99A1E'];
   if(/\?\s*$/.test(t))return['❓','SORU','Soruyu İngilizce cevapla.','#0284C7'];
   return['🗣️','GÖREV','İngilizce söyle, anlat ya da canlandır.','#0D9488']}
+// Havuzdaki soruların çoğunda seçenek yok: doğru cevap + havuzdan 3 çeldirici üretilir.
+// Böylece "Cevabı göster" akışı hiç kullanılmaz; her soru seçenekli olur.
+function secenekUret(q){
+  if(Array.isArray(q[4])&&q[4].length)return karistir(q[4].slice());
+  const dogru=String(q[1]||'').trim();
+  if(!dogru)return null;
+  const aday=SORULAR.map(x=>String(x[1]||'').trim()).filter(a=>a&&a!==dogru);
+  const yakin=aday.filter(a=>Math.abs(a.length-dogru.length)<=Math.max(12,dogru.length*.6));
+  const havuz=karistir(yakin).concat(karistir(aday.filter(a=>yakin.indexOf(a)<0)));
+  const secim=[];
+  for(const a of havuz){if(secim.length>=3)break;if(secim.indexOf(a)<0&&a!==dogru)secim.push(a)}
+  if(secim.length<3)return null;
+  return karistir([dogru].concat(secim));
+}
 function soruAc(deger,cift){
-  const q=soruSec(deger),tk=takimlar[sira],secenek=Array.isArray(q[4])&&q[4].length?karistir(q[4].slice()):null;
+  const q=soruSec(deger),tk=takimlar[sira],secenek=secenekUret(q);
   S={q,deger,cevaplandi:false};
   const bas=`<span>${esc(tk.ad)} Takımı</span>${cift?'<span>⚡ Çift puan!</span>':''}<span class="deger">+${deger}</span>`;
   const tr=soruTuru(q,!!secenek);
