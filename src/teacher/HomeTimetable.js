@@ -58,6 +58,19 @@ export default function HomeTimetable({ buyuk = false, alan = null }) {
         headPad: buyuk ? 8 : 4,
         kutuSaat: buyuk,
       };
+  // Tam ekranda satır kısaysa (telefon yatay: ~35 px) saat + sınıf + ders alt alta SIĞMAZ ve kesiliyordu;
+  // o zaman üçü tek satıra yan yana dizilir, yazı boyu satır yüksekliğinden hesaplanır.
+  if (sigY) {
+    const ic = sigY - 12; // hücre + kutu boşlukları ve kenarlık
+    const saatSatiri = !ayniSaat || olcu.kutuSaat;
+    olcu.tekSatir = ic < ((saatSatiri ? olcu.boxSaat : 0) + olcu.boxT + olcu.boxTag) * 1.3;
+    if (olcu.tekSatir) {
+      olcu.boxT = sinirla(Math.round(ic * 0.62), 10, 18);
+      olcu.boxSaat = sinirla(Math.round(ic * 0.46), 9, 13);
+      olcu.boxTag = olcu.boxSaat;
+    }
+  }
+  const satirY = (fs) => (olcu.sabitY ? { lineHeight: Math.round(fs * 1.25), includeFontPadding: false } : null);
 
   return (
     <View>
@@ -99,12 +112,12 @@ export default function HomeTimetable({ buyuk = false, alan = null }) {
               return (
                 <View key={d} style={[st.hucre, olcu.sabitY ? { height: olcu.hucreY, overflow: 'hidden' } : { minHeight: olcu.hucreY }, isToday && { backgroundColor: colors.accent + '0D' }]}>
                   {l ? (
-                    <View style={[st.kutu, olcu.sabitY && { flex: 1, paddingVertical: 1 }, { backgroundColor: besMi ? '#FEF3C7' : col + '1F', borderColor: besMi ? '#F5B301' : col + '66' }]}>
+                    <View style={[st.kutu, olcu.sabitY && { flex: 1, paddingVertical: 1 }, olcu.tekSatir && st.kutuSatir, { backgroundColor: besMi ? '#FEF3C7' : col + '1F', borderColor: besMi ? '#F5B301' : col + '66' }]}>
                       {((!ayniSaat && l.start) || olcu.kutuSaat) && l.start ? (
-                        <Text style={[st.kutuSaat, { color: colors.textMuted, fontSize: olcu.boxSaat }]}>{l.start}</Text>
+                        <Text style={[st.kutuSaat, olcu.tekSatir && { marginBottom: 0 }, { color: colors.textMuted, fontSize: olcu.boxSaat }, satirY(olcu.boxSaat)]} numberOfLines={1}>{l.start}</Text>
                       ) : null}
-                      <Text style={[st.kutuT, { color: colors.text, fontSize: olcu.boxT }]} numberOfLines={1}>{l.label || '—'}</Text>
-                      {l.ders ? <Text style={[st.kutuTag, { color: besMi ? '#92610B' : col, fontSize: olcu.boxTag }]}>{branchOf(l.ders).short}</Text> : null}
+                      <Text style={[st.kutuT, { color: colors.text, fontSize: olcu.boxT, flexShrink: 1 }, satirY(olcu.boxT)]} numberOfLines={1}>{l.label || '—'}</Text>
+                      {l.ders ? <Text style={[st.kutuTag, { color: besMi ? '#92610B' : col, fontSize: olcu.boxTag }, satirY(olcu.boxTag)]} numberOfLines={1}>{branchOf(l.ders).short}</Text> : null}
                     </View>
                   ) : null}
                 </View>
@@ -132,6 +145,7 @@ const st = StyleSheet.create({
   saatT: { fontWeight: '700' },
   hucre: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 1, paddingVertical: 3 },
   kutu: { width: '100%', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderRadius: 7, paddingVertical: 4, paddingHorizontal: 2 },
+  kutuSatir: { flexDirection: 'row', gap: 5, paddingHorizontal: 4 },
   kutuT: { fontWeight: '900' },
   kutuSaat: { fontWeight: '700', marginBottom: 1 },
   kutuTag: { fontWeight: '900', letterSpacing: 0.3 },

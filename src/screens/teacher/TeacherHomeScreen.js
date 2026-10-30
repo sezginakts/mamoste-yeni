@@ -1,6 +1,6 @@
 // Öğretmen ana sayfası: karşılama bandı, şimdiki/sıradaki ders, kısayollar, sınıflar.
 import React, { useMemo, useState, useRef, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable, Image, Modal } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Pressable, Image, Modal, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacing, font, radius, inkOn } from '../../theme';
 import { usePlans } from '../../teacher/PlanContext';
@@ -68,21 +68,32 @@ export default function TeacherHomeScreen({ navigation }) {
   const [weekPlanId, setWeekPlanId] = useState(null); // program yokken üst kartta gösterilen düzey
   const [tamEkran, setTamEkran] = useState(false); // ders programı tam ekran (yatay) modu
   const [tamAlan, setTamAlan] = useState(null); // tam ekranda ızgaraya kalan alan (sığdırmak için)
+  // Modal kökünün boyutu: telefonda içerik ancak ekran YATAYA döndükten sonra çizilir. Önce dikeyde çizilip
+  // dönerken sıkışan / uzayan ızgara "tuhaf dönüş" olarak görünüyordu; artık dönerken yalnız boş zemin döner.
+  const [tamBoyut, setTamBoyut] = useState(null);
+  const [tamKapaniyor, setTamKapaniyor] = useState(false);
+  const tamHazir = !tamKapaniyor && (Platform.OS === 'web' || (tamBoyut && tamBoyut.w > tamBoyut.h));
   const sonDokunus = useRef(0);
   const programaDokun = () => {
     const simdi = Date.now();
     if (simdi - sonDokunus.current < 320) {
       sonDokunus.current = 0;
+      setTamKapaniyor(false);
+      setTamBoyut(null);
+      setTamAlan(null);
       setTamEkran(true);
       yatayKilitle();
     } else {
       sonDokunus.current = simdi;
     }
   };
-  const tamEkraniKapat = () => {
-    setTamEkran(false);
+  const tamEkraniKapat = async () => {
+    // Önce içerik gizlenir, ekran dikeye döner, sonra pencere kapanır (yatay ızgara dikeyde ezilmesin).
+    setTamKapaniyor(true);
     setTamAlan(null);
-    dikeyKilitle();
+    await dikeyKilitle();
+    setTamEkran(false);
+    setTamBoyut(null);
   };
   // Tam ekranda da çift dokunuşla kapanır (✕ tek dokunuş).
   const sonKapatDokunus = useRef(0);
@@ -513,8 +524,9 @@ export default function TeacherHomeScreen({ navigation }) {
     <StatusBarCover color={heroBg} />
 
       {/* Tam ekran ders programı: çift dokununca açılır, yatay kilide geçer; ✕ veya çift dokun ile kapanır. */}
-      <Modal visible={tamEkran} animationType="fade" supportedOrientations={['portrait', 'landscape']} onRequestClose={tamEkraniKapat}>
+      <Modal visible={tamEkran} animationType="none" supportedOrientations={['portrait', 'landscape']} onRequestClose={tamEkraniKapat}>
         <View
+          onLayout={(e) => setTamBoyut({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
           style={{
             flex: 1,
             backgroundColor: colors.bg,
@@ -524,6 +536,8 @@ export default function TeacherHomeScreen({ navigation }) {
             paddingRight: Math.max(insets.right, spacing.md),
           }}
         >
+          {tamHazir ? (
+          <>
           <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 4 }}>
             <Text style={{ color: colors.text, fontWeight: '900', fontSize: font.body, flex: 1 }}>🗓️ Haftalık Ders Programı</Text>
             <Pressable onPress={tamEkraniKapat} hitSlop={10} accessibilityLabel="Tam ekranı kapat" style={{ paddingHorizontal: spacing.sm }}>
@@ -540,6 +554,8 @@ export default function TeacherHomeScreen({ navigation }) {
             {tamAlan ? <HomeTimetable buyuk alan={tamAlan} /> : null}
           </Pressable>
           <Text style={{ color: colors.textFaint, fontSize: font.tiny, paddingVertical: 4, textAlign: 'center' }}>Küçültmek için çift dokun ya da ✕</Text>
+          </>
+          ) : null}
         </View>
       </Modal>
     </View>
