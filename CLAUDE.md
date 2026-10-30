@@ -46,6 +46,7 @@ Web testi: iki sekme = iki hesap — `http://localhost:8082` öğretmen, `http:/
 
 ## App Store
 - Yayın rehberi ve App Store Connect alanları: docs/APP-STORE.md. Gizlilik/destek/kullanım sayfaları tools/site → tahta-site/uygulama/ (uret.mjs kopyalar).
+- Uygulama içi gizlilik/destek bağlantısı (App Store 5.1.1(i)): Ayarlar → Hakkında, iki uygulamada da (utils/links.js; adres app.json extra.tahtaUrl + uygulama/).
 - Uyum: Ayarlar → Hesabımı sil (AuthContext.deleteAccount + migration 20261029000000_delete_account.sql); öğretmen giriş ekranında Hesap açmadan devam et (auth.guest); iPhone'da Google girişi ve Logo Avcısı (gerçek marka logoları) gizli (activities/index.js IOS_GIZLI); supportsTablet false; app.json ios.privacyManifests. SKIP_TEACHER_LOGIN asla true commit edilmez.
 
 ## Derleme

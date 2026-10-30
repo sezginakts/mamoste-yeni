@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTeacher } from '../teacher/TeacherContext';
 import { useDesk } from '../teacher/DeskContext';
 import { confirmAction, notify } from '../teacher/ui';
+import { GIZLILIK_URL, DESTEK_URL, sayfaAc } from '../utils/links';
 import { ringBell } from '../components/BellOverlay';
 import { bellsRolling, MAX_BELLS } from '../utils/bell';
 
@@ -231,6 +232,17 @@ export default function SettingsScreen({ navigation }) {
           ) : null}
         </>
       ) : null}
+
+      {/* Hakkında: gizlilik politikası ve destek her iki uygulamada da buradan açılır (App Store 5.1.1(i)). */}
+      <Text style={styles.sectionTitle}>Hakkında</Text>
+      <Pressable onPress={() => sayfaAc(GIZLILIK_URL)} style={styles.toggleRow} accessibilityRole="link" accessibilityLabel="Gizlilik politikası">
+        <Text style={[styles.toggleLabel, { flex: 1 }]}>🔒 Gizlilik politikası</Text>
+        <Text style={[styles.back, { fontSize: 13 }]}>›</Text>
+      </Pressable>
+      <Pressable onPress={() => sayfaAc(DESTEK_URL)} style={[styles.toggleRow, { marginTop: spacing.sm }]} accessibilityRole="link" accessibilityLabel="Destek">
+        <Text style={[styles.toggleLabel, { flex: 1 }]}>💬 Destek ve iletişim</Text>
+        <Text style={[styles.back, { fontSize: 13 }]}>›</Text>
+      </Pressable>
 
       <Text style={styles.version}>Okul · v1.0</Text>
       <Text style={styles.author}>Sezgin AKTAŞ</Text>

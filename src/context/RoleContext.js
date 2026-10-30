@@ -35,10 +35,10 @@ export function RoleProvider({ children }) {
     (async () => {
       try {
         const [saved, br, list] = await Promise.all([AsyncStorage.getItem(KEY), AsyncStorage.getItem(BRANCH_KEY), AsyncStorage.getItem(LIST_KEY)]);
-        if (FIXED_ROLE) {
-          setRoleState(FIXED_ROLE);
-          if (saved !== FIXED_ROLE) AsyncStorage.setItem(KEY, FIXED_ROLE).catch(() => {});
-        } else if (saved === 'student' || saved === 'teacher') setRoleState(saved);
+        // Sabit rol kayda YAZILMAZ: yalnızca bu uygulamada geçerlidir. Geliştirmede (web) Metro önbelleği
+        // başka türün ayarını taşırsa kayıtlı rol bozulmasın.
+        if (FIXED_ROLE) setRoleState(FIXED_ROLE);
+        else if (saved === 'student' || saved === 'teacher') setRoleState(saved);
         if (br && BRANCH_BY_ID[br]) {
           setBranchState(br);
           const kayitli = temizListe(list ? JSON.parse(list) : []);
