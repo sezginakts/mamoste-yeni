@@ -8,6 +8,7 @@ import { useRole } from '../context/RoleContext';
 import { useAuth } from '../context/AuthContext';
 import { useTeacher } from '../teacher/TeacherContext';
 import { useDesk } from '../teacher/DeskContext';
+import { useProgress } from '../context/ProgressContext';
 import { confirmAction, notify } from '../teacher/ui';
 import { GIZLILIK_URL, DESTEK_URL, sayfaAc } from '../utils/links';
 import { ringBell } from '../components/BellOverlay';
@@ -29,6 +30,35 @@ export default function SettingsScreen({ navigation }) {
   const desk = useDesk();
   const hasTimes = Object.values(desk.schedules || {}).some((s) => (s.periods || []).some((p) => p.start));
   const [siliniyor, setSiliniyor] = React.useState(false);
+  const progress = useProgress();
+  const ogrenciBagli = !!(progress.state.student && progress.state.student.token);
+  // Öğrenci: hesap yok ama sunucuda takma ad, avatar ve ödev sonuçları tutulur → uygulama içinden silinebilmeli (5.1.1(v)).
+  const verileriSil = () =>
+    confirmAction({
+      title: 'Verilerini sil',
+      message:
+        'Sunucudaki takma adın, avatarın ve bütün ödev sonuçların silinir; bu telefon bütün derslerinden çıkar. Öğretmenin sınıf listesindeki okul numaran kalır, istersen aynı kodla yeniden katılabilirsin. Geri alınamaz.\n\nKalıp çalışma ilerlemen bu telefonda kalır.',
+      ok: 'Verilerimi sil',
+      destructive: true,
+      onOk: async () => {
+        setSiliniyor(true);
+        try {
+          await progress.deleteStudentData();
+          notify('Verilerin silindi', 'Sunucudaki bütün verilerin silindi.');
+        } catch (e) {
+          const m = String((e && e.message) || '');
+          notify(
+            'Veriler silinemedi',
+            /fetch|network/i.test(m)
+              ? 'İnternet bağlantısı yok gibi görünüyor.'
+              : /could not find the function|schema cache/i.test(m)
+                ? 'Sunucu şu an bu işlemi yapamıyor. Biraz sonra yeniden dene.'
+                : m
+          );
+        }
+        setSiliniyor(false);
+      },
+    });
   const hesabiSil = () =>
     confirmAction({
       title: 'Hesabını sil',
@@ -230,6 +260,13 @@ export default function SettingsScreen({ navigation }) {
               <Text style={[styles.back, { fontSize: 13 }]}>›</Text>
             </Pressable>
           ) : null}
+        </>
+      ) : ogrenciBagli ? (
+        <>
+          <Text style={styles.sectionTitle}>Veriler</Text>
+          <Pressable onPress={verileriSil} disabled={siliniyor} style={styles.toggleRow} accessibilityRole="button">
+            <Text style={[styles.toggleLabel, { flex: 1, color: colors.danger }]}>{siliniyor ? 'Veriler siliniyor…' : '🗑 Verilerimi sil'}</Text>
+          </Pressable>
         </>
       ) : null}
 

@@ -106,18 +106,18 @@ sınıf (ör. 7-A), birkaç öğrenci numarası ve bir ödev koy. E-posta + şif
 **İnceleme notu (İngilizce):**
 
 ```
-Okul is a Turkish-language assistant for middle-school teachers and their students. On first launch choose a role.
+Okul is a Turkish-language assistant for middle-school teachers. Students use the separate companion app
+"Okul Öğrenci" (same developer); this app is for teachers only, so there is no role selection.
 
-Teacher: pick up to 3 subjects (e.g. "Teknoloji ve Tasarım"). Sign in with the demo account below, or tap
+On first launch pick up to 3 subjects (e.g. "Sosyal Bilgiler"). Sign in with the demo account below, or tap
 "Hesap açmadan devam et" (continue without an account) – timetable, year plans, documents (Evraklar) and classroom
 games work offline on the device. The home screen shows the learning outcome of the current lesson from the timetable.
-Account deletion: Ayarlar (Settings) → "Hesabımı sil".
+Classes (Sınıf) show an 8-character class code that students enter in Okul Öğrenci.
 
-Student: no account. Choose "Öğrenciyim" → "Derse katıl" and enter the class code shown in the demo teacher's class
-screen (8 characters) and any school number (e.g. 15).
+Account deletion: Ayarlar (Settings) → "Hesabımı sil".
+Privacy policy and support: Ayarlar (Settings) → Hakkında.
 
 Demo teacher account: <e-posta> / <şifre>
-Demo class code: <8 haneli kod>
 
 The app collects no tracking data, contains no ads and no in-app purchases. Camera/photos/microphone are used only
 when the teacher attaches a photo or video to a homework.
@@ -178,13 +178,17 @@ Demo class code: <öğretmen demo hesabındaki sınıfın 8 haneli kodu>   Schoo
 After joining, the demo teacher's homework appears under "Ödevlerim"; the demo class is an English class, so the
 English pattern practice ("Kalıplar") also appears on the home screen. The app is meant to be used together with a
 teacher; please use the demo class code above. No ads, no tracking, no in-app purchases, no photo/location collection.
+Data deletion: Ayarlar (Settings, ⚙️ on the profile screen) → "Verilerimi sil" deletes the nickname, avatar and all
+homework results from the server and removes the device from its classes.
 ```
 
 **Ekran görüntüleri:** ayrı set gerekir (derse katıl, ödevlerim, ödev, profil) — HENÜZ HAZIRLANMADI.
 
 ## Yayın sırası
 
-1. Sunucu: `supabase/migrations/20261029000000_delete_account.sql` SQL Editor'da çalıştırılır (hesap silme için ŞART).
+1. Sunucu: `supabase/migrations/20261029000000_delete_account.sql` (UYGULANDI 2026-10-29) ve
+   `supabase/migrations/20261101000000_student_delete_data.sql` (öğrenci “Verilerimi sil” için ŞART — HENÜZ UYGULANMADI)
+   SQL Editor'da çalıştırılır.
 2. Sayfalar yayında olmalı (tahta-site push) — yukarıdaki adresler açılıyor mu kontrol et.
 3. App Store Connect → Uygulamalar → ＋ Yeni Uygulama: iOS, ad, Türkçe, paket `com.ingapp.cumle`, SKU.
 4. Yukarıdaki alanlar, yaş derecelendirmesi, gizlilik yanıtları, demo hesap, ekran görüntüleri.
@@ -200,6 +204,7 @@ teacher; please use the demo class code above. No ads, no tracking, no in-app pu
 | Kural | Ne yapıldı |
 |---|---|
 | 5.1.1(v) Hesap silme | Ayarlar → “Hesabımı sil” (sunucu: `delete_my_account`, ödev dosyaları da silinir) |
+| 5.1.1(v) Öğrenci verisi | Okul Öğrenci: Ayarlar → “Verilerimi sil” (sunucu: `student_delete_my_data`; takma ad, avatar, sonuçlar, cihaz anahtarı) |
 | 5.1.1 Kayıt zorunluluğu | Öğretmen “Hesap açmadan devam et” ile hesapsız kullanabilir |
 | 5.1.1 İzin açıklamaları | Kamera, fotoğraflar, mikrofon için Türkçe ve amaca özel metinler (app.json) |
 | 5.1.2 Gizlilik bildirimi | `ios.privacyManifests` (UserDefaults, dosya zamanı, açılış süresi, disk alanı; takip yok) |
@@ -210,6 +215,10 @@ teacher; please use the demo class code above. No ads, no tracking, no in-app pu
 | iPad | `supportsTablet: false` — iPad ekran görüntüsü ve iPad incelemesi gerekmez |
 
 ## Açık kalanlar / riskler
+
+- **Sunucu uykusu**: Supabase ücretsiz planı uzun süre kullanılmayan projeyi durdurabilir; inceleme süresince sunucunun
+  açık olduğunu kontrol et (durmuşsa panelden “Restore”). Durmuş sunucuda giriş ve derse katılma çalışmaz → 2.1 reddi.
+- **Sayfalar**: gizlilik/destek sayfalarının iki uygulamayı da anlatan güncel hâli yayında olmalı (tahta-site push).
 
 - **Demo hesap ve örnek veri**: senin açman gerekiyor (ben hesap açamam).
 - **Apple ile giriş**: Google girişi sunucuda açılırsa iPhone'da da gösterilmek istenirse “Apple ile giriş” eklenmeli (kural 4.8).

@@ -190,6 +190,15 @@ export function ProgressProvider({ children }) {
       await rpc('student_set_profile', { p_token: student.token, p_nickname: student.nk || null, p_avatar: student.avatar || null });
     }
   };
+  // Verilerimi sil (App Store 5.1.1(v)): sunucudaki takma ad, avatar, ödev sonuçları ve cihaz anahtarı silinir
+  // (student_delete_my_data); cihazdaki ders üyelikleri ve ödevler de temizlenir. Kalıp çalışma ilerlemesi cihazda kalır.
+  const deleteStudentData = async () => {
+    const st = stateRef.current.student;
+    if (cloudEnabled && st.token) await rpc('student_delete_my_data', { p_token: st.token });
+    const student = { ...DEFAULT_STATE.student };
+    setState((prev) => ({ ...prev, student, homeworks: {}, hiddenHw: {} }));
+    stateRef.current = { ...stateRef.current, student, homeworks: {}, hiddenHw: {} };
+  };
   const setWeeklyGoal = (n) => setState((prev) => ({ ...prev, weeklyGoal: n }));
   const setReminder = (reminder) => setState((prev) => ({ ...prev, reminder }));
 
@@ -609,6 +618,7 @@ export function ProgressProvider({ children }) {
     setStudentProfile,
     joinClass,
     setProfile,
+    deleteStudentData,
     setWeeklyGoal,
     setReminder,
     linkDevice,

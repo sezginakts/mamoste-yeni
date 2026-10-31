@@ -82,7 +82,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Ödeve fotoğraf/video eklemek ve QR kodu okumak için kamera kullanılır.",
+          "cameraPermission": "Ödeve fotoğraf ya da video eklemek için kamera kullanılır.",
           "recordAudioAndroid": false
         }
       ],
@@ -98,7 +98,7 @@
         "expo-image-picker",
         {
           "photosPermission": "Ödeve fotoğraf ya da video eklemek için galerin kullanılır.",
-          "cameraPermission": "Ödeve fotoğraf/video eklemek ve QR kodu okumak için kamera kullanılır.",
+          "cameraPermission": "Ödeve fotoğraf ya da video eklemek için kamera kullanılır.",
           "microphonePermission": "Ödeve video çekerken ses kaydı için mikrofon kullanılır."
         }
       ],
