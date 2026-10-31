@@ -24,13 +24,22 @@ export default function HomeTimetable({ buyuk = false, alan = null }) {
   const doluSaat = (liste) => Array.isArray(liste) && liste.some((p) => p && p.start);
   const gunSaatleri = [1, 2, 3, 4, 5].map((g) => desk.periodsFor(g));
   const imza = (liste) => (liste || []).map((p) => `${(p && p.start) || ''}-${(p && p.end) || ''}`).join('|');
-  const ayniSaat = gunSaatleri.every((s) => imza(s) === imza(gunSaatleri[0]));
-  const saatler = gunSaatleri.find((s) => doluSaat(s)) || gunSaatleri[0] || [];
+  // Saatler HEP soldaki sütunda yazılır (kutuların içinde değil). Günlerin saat düzeni farklıysa (2. okul)
+  // en çok günün kullandığı düzen asıl saattir; öteki düzenin başlangıcı altında parantez içinde, küçük yazılır.
+  const gunDuzeni = [1, 2, 3, 4, 5].map((g) => (desk.daySchedule && desk.daySchedule[g]) || 'a');
+  const kullanilan = [...new Set(gunDuzeni)].filter((k) => doluSaat(gunSaatleri[gunDuzeni.indexOf(k)]));
+  const sayi = (k) => gunDuzeni.filter((x) => x === k).length;
+  const anaKey = kullanilan.sort((x, y) => sayi(y) - sayi(x))[0];
+  const saatler = (anaKey && gunSaatleri[gunDuzeni.indexOf(anaKey)]) || gunSaatleri.find((s) => doluSaat(s)) || gunSaatleri[0] || [];
+  const digerKey = kullanilan.find((k) => k !== anaKey && imza(gunSaatleri[gunDuzeni.indexOf(k)]) !== imza(saatler));
+  const digerSaatler = digerKey ? gunSaatleri[gunDuzeni.indexOf(digerKey)] : null;
+  const digerGunler = digerKey ? GUN.filter((_, i) => gunDuzeni[i] === digerKey) : [];
+  const digerAd = digerKey && desk.schedules && desk.schedules[digerKey] ? desk.schedules[digerKey].name : '';
   const saatVar = gunSaatleri.some((s) => doluSaat(s));
   const en = (day, period) => week.find((w) => w.day === day && w.period === period) || null;
 
   const sinirla = (v, a, b) => Math.max(a, Math.min(b, v));
-  const notY = (!saatVar ? 18 : 0) + (!week.length ? 20 : 0);
+  const notY = (!saatVar ? 18 : 0) + (!week.length ? 20 : 0) + (digerKey ? 18 : 0);
   // Tam ekran: başlık satırı ~28 px, kalan yükseklik ders satırlarına bölünür.
   const sigY = alan && alan.h ? Math.floor((alan.h - 30 - notY) / sonDers) : null;
   const olcu = sigY
@@ -41,11 +50,8 @@ export default function HomeTimetable({ buyuk = false, alan = null }) {
         hucreY: sigY,
         sabitY: true,
         boxT: sinirla(Math.round(sigY * 0.36), 10, 20),
-        boxSaat: sinirla(Math.round(sigY * 0.22), 8, 12),
         boxTag: sinirla(Math.round(sigY * 0.24), 8, 12),
         headPad: 4,
-        // Satır çok kısaysa kutudaki saat yazılmaz (soldaki sütunda zaten var).
-        kutuSaat: sigY >= 54,
       }
     : {
         saatKolon: buyuk ? 76 : 44,
@@ -53,23 +59,21 @@ export default function HomeTimetable({ buyuk = false, alan = null }) {
         saatT: buyuk ? 13 : 9,
         hucreY: buyuk ? 58 : 34,
         boxT: buyuk ? 17 : 10,
-        boxSaat: buyuk ? 12 : 8,
         boxTag: buyuk ? 12 : 8,
         headPad: buyuk ? 8 : 4,
-        kutuSaat: buyuk,
       };
-  // Tam ekranda satır kısaysa (telefon yatay: ~35 px) saat + sınıf + ders alt alta SIĞMAZ ve kesiliyordu;
-  // o zaman üçü tek satıra yan yana dizilir, yazı boyu satır yüksekliğinden hesaplanır.
+  // Tam ekranda satır kısaysa (telefon yatay: ~35 px) sınıf + ders alt alta SIĞMAZ ve kesiliyordu;
+  // o zaman ikisi tek satıra yan yana dizilir, yazı boyu satır yüksekliğinden hesaplanır.
   if (sigY) {
     const ic = sigY - 12; // hücre + kutu boşlukları ve kenarlık
-    const saatSatiri = !ayniSaat || olcu.kutuSaat;
-    olcu.tekSatir = ic < ((saatSatiri ? olcu.boxSaat : 0) + olcu.boxT + olcu.boxTag) * 1.3;
+    olcu.tekSatir = ic < (olcu.boxT + olcu.boxTag) * 1.3;
     if (olcu.tekSatir) {
       olcu.boxT = sinirla(Math.round(ic * 0.62), 10, 18);
-      olcu.boxSaat = sinirla(Math.round(ic * 0.46), 9, 13);
-      olcu.boxTag = olcu.boxSaat;
+      olcu.boxTag = sinirla(Math.round(ic * 0.46), 9, 13);
     }
   }
+  // Soldaki saat sütunu kısa satırda: önce bitiş saati, sonra parantezli 2. düzen saati düşer.
+  const saatSiga = (n) => !olcu.sabitY || olcu.hucreY >= n * olcu.saatT * 1.25 + 2;
   const satirY = (fs) => (olcu.sabitY ? { lineHeight: Math.round(fs * 1.25), includeFontPadding: false } : null);
 
   return (
@@ -91,13 +95,18 @@ export default function HomeTimetable({ buyuk = false, alan = null }) {
       {Array.from({ length: sonDers }, (_, i) => {
         const period = i + 1;
         const s = saatler[i] || {};
+        const d = (digerSaatler && digerSaatler[i]) || {};
+        const ikinci = d.start && d.start !== s.start ? d.start : null;
+        const bitisVar = !!s.end && saatSiga(ikinci ? 3 : 2);
+        const ikinciVar = !!ikinci && saatSiga(bitisVar ? 3 : 2);
         return (
           <View key={period} style={[st.row, { borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth }]}>
             <View style={[st.saatKolon, { width: olcu.saatKolon }, olcu.sabitY && { paddingVertical: 0, height: olcu.hucreY }]}>
-              {ayniSaat && s.start ? (
+              {s.start ? (
                 <>
-                  <Text style={[st.saatT, { color: colors.text, fontSize: olcu.saatT }]}>{s.start}</Text>
-                  {s.end ? <Text style={[st.saatT, { color: colors.textFaint, fontSize: olcu.saatT }]}>{s.end}</Text> : null}
+                  <Text style={[st.saatT, { color: colors.text, fontSize: olcu.saatT }, satirY(olcu.saatT)]}>{s.start}</Text>
+                  {bitisVar ? <Text style={[st.saatT, { color: colors.textFaint, fontSize: olcu.saatT }, satirY(olcu.saatT)]}>{s.end}</Text> : null}
+                  {ikinciVar ? <Text style={[st.saatT, { color: colors.textFaint, fontSize: Math.max(8, olcu.saatT - 1) }, satirY(olcu.saatT)]}>({ikinci})</Text> : null}
                 </>
               ) : (
                 <Text style={[st.saatT, { color: colors.textMuted, fontSize: olcu.saatT }]}>{period}.</Text>
@@ -113,9 +122,6 @@ export default function HomeTimetable({ buyuk = false, alan = null }) {
                 <View key={d} style={[st.hucre, olcu.sabitY ? { height: olcu.hucreY, overflow: 'hidden' } : { minHeight: olcu.hucreY }, isToday && { backgroundColor: colors.accent + '0D' }]}>
                   {l ? (
                     <View style={[st.kutu, olcu.sabitY && { flex: 1, paddingVertical: 1 }, olcu.tekSatir && st.kutuSatir, { backgroundColor: besMi ? '#FEF3C7' : col + '1F', borderColor: besMi ? '#F5B301' : col + '66' }]}>
-                      {((!ayniSaat && l.start) || olcu.kutuSaat) && l.start ? (
-                        <Text style={[st.kutuSaat, olcu.tekSatir && { marginBottom: 0 }, { color: colors.textMuted, fontSize: olcu.boxSaat }, satirY(olcu.boxSaat)]} numberOfLines={1}>{l.start}</Text>
-                      ) : null}
                       <Text style={[st.kutuT, { color: colors.text, fontSize: olcu.boxT, flexShrink: 1 }, satirY(olcu.boxT)]} numberOfLines={1}>{l.label || '—'}</Text>
                       {l.ders ? <Text style={[st.kutuTag, { color: besMi ? '#92610B' : col, fontSize: olcu.boxTag }, satirY(olcu.boxTag)]} numberOfLines={1}>{branchOf(l.ders).short}</Text> : null}
                     </View>
@@ -128,6 +134,11 @@ export default function HomeTimetable({ buyuk = false, alan = null }) {
       })}
       {!saatVar ? (
         <Text style={{ color: colors.textFaint, fontSize: buyuk ? 12 : 10, marginTop: 6 }}>Saatler henüz girilmemiş.</Text>
+      ) : null}
+      {digerKey ? (
+        <Text style={{ color: colors.textFaint, fontSize: buyuk ? 12 : 10, marginTop: 4 }}>
+          Parantezdeki saatler: {digerAd || '2. Okul'} ({digerGunler.join(', ')})
+        </Text>
       ) : null}
       {!week.length ? (
         <Text style={{ color: colors.textMuted, fontSize: buyuk ? 13 : 11, marginTop: 6 }}>Ders programı henüz girilmemiş — Düzenle › ile ekle.</Text>
@@ -147,6 +158,5 @@ const st = StyleSheet.create({
   kutu: { width: '100%', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderRadius: 7, paddingVertical: 4, paddingHorizontal: 2 },
   kutuSatir: { flexDirection: 'row', gap: 5, paddingHorizontal: 4 },
   kutuT: { fontWeight: '900' },
-  kutuSaat: { fontWeight: '700', marginBottom: 1 },
   kutuTag: { fontWeight: '900', letterSpacing: 0.3 },
 });
