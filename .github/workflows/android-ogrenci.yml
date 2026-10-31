@@ -1,0 +1,46 @@
+# Okul Öğrenci — Android APK (dahili dağıtım), GitHub'ın Ubuntu makinesinde.
+# APP_VARIANT=ogrenci → uygulama adı "Okul Öğrenci", paket com.ingapp.ogrenci.
+# Gerekli gizli anahtar: EXPO_TOKEN. Başlatma: Actions → "Android APK (Öğrenci)" → Run workflow.
+name: Android APK (Öğrenci)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Bağımlılıklar
+        run: npm ci
+
+      - name: EAS CLI
+        run: npm install -g eas-cli
+
+      - name: Derle (ogrenci-preview, Android APK, yerel)
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          APP_VARIANT: ogrenci
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then echo "EXPO_TOKEN gizli anahtarı eksik"; exit 1; fi
+          mkdir -p build
+          eas build --local --platform android --profile ogrenci-preview --non-interactive --output build/okul-ogrenci.apk
+
+      - name: APK'yı yükle
+        uses: actions/upload-artifact@v4
+        with:
+          name: Okul-Ogrenci-Android
+          path: build/okul-ogrenci.apk
