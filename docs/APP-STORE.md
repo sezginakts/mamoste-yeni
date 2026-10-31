@@ -187,7 +187,7 @@ homework results from the server and removes the device from its classes.
 ## Yayın sırası
 
 1. Sunucu: `supabase/migrations/20261029000000_delete_account.sql` (UYGULANDI 2026-10-29) ve
-   `supabase/migrations/20261101000000_student_delete_data.sql` (öğrenci “Verilerimi sil” için ŞART — HENÜZ UYGULANMADI)
+   `supabase/migrations/20261101000000_student_delete_data.sql` (öğrenci “Verilerimi sil” için — UYGULANDI 2026-10-31)
    SQL Editor'da çalıştırılır.
 2. Sayfalar yayında olmalı (tahta-site push) — yukarıdaki adresler açılıyor mu kontrol et.
 3. App Store Connect → Uygulamalar → ＋ Yeni Uygulama: iOS, ad, Türkçe, paket `com.ingapp.cumle`, SKU.
