@@ -17,6 +17,9 @@
       "env": { "APP_VARIANT": "ogretmen" },
       "ios": {
         "simulator": false
+      },
+      "android": {
+        "buildType": "apk"
       }
     },
     "production": {
