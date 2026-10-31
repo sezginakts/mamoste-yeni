@@ -22,7 +22,7 @@ export function classColor(label) {
 }
 
 export default function TimetableScreen({ navigation }) {
-  const { colors, shadow } = useTheme();
+  const { colors } = useTheme();
   const t = useTeacher();
   const desk = useDesk();
   const { branchId, myBranches } = useRole();
@@ -96,7 +96,9 @@ export default function TimetableScreen({ navigation }) {
         </View>
 
         {/* Tablo */}
-        <View style={[st.table, shadow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        {/* Gölge YOK: tablo köşeden kırpıldığı (overflow hidden) için gölge görünmüyordu ama iPhone kaydırırken her karede
+            ekran dışı çizim yapıyor, sayfa takılarak kayıyordu. */}
+        <View style={[st.table, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={[st.row, { backgroundColor: colors.cardSoft }]}>
             <View style={[st.timeCol, st.headCell]}>
               <Text style={[st.headT, { color: colors.textMuted }]}>SAAT</Text>
@@ -153,7 +155,8 @@ export default function TimetableScreen({ navigation }) {
                       <View
                         style={[
                           st.cellInner,
-                          l ? { backgroundColor: c + '22', borderColor: c } : { borderColor: colors.border, borderStyle: 'dashed' },
+                          // Boş hücre düz ince kenarlı: kesik çizgili + yuvarlak kenar iPhone'da ayrıca çiziliyor (30+ hücrede kaydırma takılıyordu).
+                          l ? { backgroundColor: c + '22', borderColor: c } : { borderColor: colors.border, borderWidth: 1 },
                           day === today && !l && { backgroundColor: colors.accent + '0D' },
                           live && { borderWidth: 2.5, borderColor: colors.accent },
                         ]}
