@@ -1,11 +1,23 @@
-# iPhone derlemesi (UDID'li dahili dağıtım, eas.json → preview) — GitHub'ın macOS makinesinde.
-# EAS bulut sırası beklenmez: `eas build --local` derlemeyi bu makinede yapar; imza (sertifika + UDID'li profil) EAS'ten gelir.
+# iPhone derlemesi — GitHub'ın macOS makinesinde, EAS bulut sırası beklenmez (`eas build --local`).
+# Profil (eas.json): preview / ogrenci-preview = UDID'li dahili dağıtım; production / ogrenci-production = mağaza
+# derlemesi, bitince `eas submit` ile App Store Connect'e (TestFlight) yüklenir. İmza ve App Store Connect API
+# anahtarı EAS'te kayıtlı olmalı (ilk mağaza derlemesi bilgisayarda Apple girişiyle bir kez yapıldı).
 # Gerekli gizli anahtar: EXPO_TOKEN (expo.dev → Account settings → Access tokens), depo Settings → Secrets → Actions.
-# Başlatma: GitHub → Actions → "iPhone derlemesi" → Run workflow. Çıktı: çalıştırmanın sayfasında "Okul-iPhone" (okul.ipa).
+# Başlatma: GitHub → Actions → "iPhone derlemesi" → Run workflow → profil seç. Çıktı: "Okul-iPhone-<profil>" (okul.ipa).
 name: iPhone derlemesi
 
 on:
   workflow_dispatch:
+    inputs:
+      profil:
+        description: "Derleme profili"
+        type: choice
+        default: preview
+        options:
+          - preview
+          - ogrenci-preview
+          - production
+          - ogrenci-production
 
 jobs:
   ios:
@@ -30,17 +42,23 @@ jobs:
       - name: EAS CLI
         run: npm install -g eas-cli
 
-      - name: Derle (preview, iOS, yerel)
+      - name: Derle (${{ inputs.profil }}, iOS, yerel)
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
           if [ -z "$EXPO_TOKEN" ]; then echo "EXPO_TOKEN gizli anahtarı eksik (Settings → Secrets → Actions)"; exit 1; fi
           mkdir -p build
-          eas build --local --platform ios --profile preview --non-interactive --output build/okul.ipa
+          eas build --local --platform ios --profile "${{ inputs.profil }}" --non-interactive --output build/okul.ipa
 
       - name: IPA'yı yükle
         uses: actions/upload-artifact@v4
         with:
-          name: Okul-iPhone
+          name: Okul-iPhone-${{ inputs.profil }}
           path: build/okul.ipa
           retention-days: 14
+
+      - name: App Store Connect'e gönder (yalnız mağaza profilleri)
+        if: ${{ endsWith(inputs.profil, 'production') }}
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: eas submit --platform ios --profile "${{ inputs.profil }}" --path build/okul.ipa --non-interactive

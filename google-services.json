@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "124524117531",
+    "project_id": "okul-42000",
+    "storage_bucket": "okul-42000.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:124524117531:android:63e45ffb0e3f2c3fae82be",
+        "android_client_info": {
+          "package_name": "com.ingapp.cumle"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB-TmP0_QVanc40eaYo5slb9M2nwpA4RNw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:124524117531:android:63267d9392cf5838ae82be",
+        "android_client_info": {
+          "package_name": "com.ingapp.ogrenci"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB-TmP0_QVanc40eaYo5slb9M2nwpA4RNw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

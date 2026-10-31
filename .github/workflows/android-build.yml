@@ -1,16 +1,29 @@
-# Android APK (dahili dağıtım) — GitHub'ın Ubuntu makinesinde, EAS bulut sırası beklemeden.
-# `eas build --local` derlemeyi bu makinede yapar; imza anahtarı (keystore) EAS'ten gelir/oluşturulur.
+# Android derlemesi — GitHub'ın Ubuntu makinesinde, EAS bulut sırası beklemeden (`eas build --local`).
+# Profil (eas.json): preview / ogrenci-preview = telefona kurulan APK; production / ogrenci-production = Google Play'e
+# yüklenecek AAB (ilk yükleme Play Console'da elle yapılır). İmza anahtarı (keystore) EAS'ten gelir/oluşturulur.
 # Gerekli gizli anahtar: EXPO_TOKEN (repository → Settings → Secrets and variables → Actions).
-# Başlatma: Actions → "Android APK" → Run workflow. Çıktı: "Okul-Android" (okul.apk).
-name: Android APK
+# Başlatma: Actions → "Android derlemesi" → Run workflow → profil seç. Çıktı: "Okul-Android-<profil>" (okul.apk / okul.aab).
+name: Android derlemesi
 
 on:
   workflow_dispatch:
+    inputs:
+      profil:
+        description: "Derleme profili"
+        type: choice
+        default: preview
+        options:
+          - preview
+          - ogrenci-preview
+          - production
+          - ogrenci-production
 
 jobs:
   android:
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    env:
+      UZANTI: ${{ endsWith(inputs.profil, 'production') && 'aab' || 'apk' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -31,16 +44,16 @@ jobs:
       - name: EAS CLI
         run: npm install -g eas-cli
 
-      - name: Derle (preview, Android APK, yerel)
+      - name: Derle (${{ inputs.profil }}, Android, yerel)
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
           if [ -z "$EXPO_TOKEN" ]; then echo "EXPO_TOKEN gizli anahtarı eksik (Settings → Secrets → Actions)"; exit 1; fi
           mkdir -p build
-          eas build --local --platform android --profile preview --non-interactive --output build/okul.apk
+          eas build --local --platform android --profile "${{ inputs.profil }}" --non-interactive --output "build/okul.$UZANTI"
 
-      - name: APK'yı yükle
+      - name: Dosyayı yükle
         uses: actions/upload-artifact@v4
         with:
-          name: Okul-Android
-          path: build/okul.apk
+          name: Okul-Android-${{ inputs.profil }}
+          path: build/okul.${{ env.UZANTI }}
