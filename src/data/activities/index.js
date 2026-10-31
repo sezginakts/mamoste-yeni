@@ -29,6 +29,24 @@ export const ACTIVITY_TYPES = {
     branches: ['ingilizce', 'sosyal', 'inkilap'],
     engine: () => require('./pasoEngine.js').default,
   },
+  // Kaynağı tools/etkinlik/siralama.html; değişince `node tools/etkinlik/derle.js`.
+  // Havuz: { gorevler: [{ ad, emoji, adimlar: ['1. adım', …] }, …] } — Bilişim Teknolojileri 5–6.
+  siralama: {
+    icon: '🧩',
+    name: 'Algoritma Sırası',
+    desc: 'Karışık gelen adımları doğru sıraya diz: bilgisayarı açmaktan döngülere kadar. Doğru yerdeki adımlar kilitlenir, yanlışlar geri döner.',
+    branches: ['bilisim'],
+    engine: () => require('./siralamaEngine.js').default,
+  },
+  // Kaynağı tools/etkinlik/sinifla.html; değişince `node tools/etkinlik/derle.js`.
+  // Havuz: { kategoriler: ['Donanım','Yazılım'], items: [{ e, ad, k }, …] } — Bilişim Teknolojileri 5–6.
+  sinifla: {
+    icon: '🖥️',
+    name: 'Donanım mı, Yazılım mı?',
+    desc: 'Ekrandaki öğe hangi kategoride? İki büyük düğme, hızlı turlar, takım puanı. Donanım–yazılım ayrımını pekiştirir.',
+    branches: ['bilisim'],
+    engine: () => require('./siniflaEngine.js').default,
+  },
   // Kaynağı tools/etkinlik/cumle.html; değişince `node tools/etkinlik/derle.js`.
   // Havuz: [["cümle.", "emoji", "Türkçe anlamı", seviye, "fazladan kelime (isteğe bağlı)"], …]
   cumle: {
@@ -252,7 +270,12 @@ const LIST = {
     { type: 'davul', grade: 5, unit: null, unitName: 'Ritim ve Vuruş', pool: () => require('./muzik/davul.js').default },
   ],
   beden: [],
-  bilisim: [],
+  bilisim: [
+    { type: 'siralama', grade: 5, unit: null, unitName: 'Günlük algoritmalar · bilgisayar kullanımı', pool: () => require('./bilisim/siralama5.js').default },
+    { type: 'siralama', grade: 6, unit: null, unitName: 'Algoritma · döngü · koşul · hata ayıklama', pool: () => require('./bilisim/siralama6.js').default },
+    { type: 'sinifla', grade: 5, unit: null, unitName: 'Donanım – yazılım ayrımı', pool: () => require('./bilisim/sinifla5.js').default },
+    { type: 'sinifla', grade: 6, unit: null, unitName: 'Donanım – yazılım ayrımı (ileri)', pool: () => require('./bilisim/sinifla6.js').default },
+  ],
 };
 
 // unit: null → ünite numarası yok (oyun bir konuya bağlı); listede ve dosya adında konu adı görünür.

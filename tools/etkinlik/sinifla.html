@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>__BASLIK__</title>
+<style>
+:root{--mercan:#E2574C;--turkuaz:#0D9488;--gok:#0284C7;--kehribar:#D99A1E;--yazi:#0F172A;--soluk:#64748B;--zemin:#F1F5F9;--f:clamp(15px,2.6vmin,34px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;color:var(--yazi);font-family:"Manrope","Segoe UI","Helvetica Neue",Arial,sans-serif;user-select:none;background:linear-gradient(160deg,#E0F2FE 0%,#ECFEFF 45%,#FFF1EE 100%)}
+button{font-family:inherit;cursor:pointer;border:0}
+.ekran{display:none;position:absolute;inset:0}.ekran.aktif{display:flex}
+#giris{align-items:center;justify-content:center;padding:2vmin}
+.kart{background:rgba(255,255,255,.96);border-radius:4vmin;padding:3vmin 4vmin;max-width:min(96vw,118vmin);width:100%;box-shadow:0 2.4vmin 6vmin rgba(2,132,199,.18);text-align:center;max-height:96vh;overflow:auto}
+.serit{display:flex;gap:.9vmin;justify-content:center;margin-bottom:1.2vmin}
+.serit b{width:7vmin;height:7vmin;border-radius:1.6vmin;display:flex;align-items:center;justify-content:center;color:#fff;font-size:calc(var(--f)*1.05);font-weight:900;box-shadow:0 .6vmin 1.5vmin rgba(15,23,42,.2);transform:rotate(-4deg)}
+.serit b:nth-child(even){transform:rotate(4deg)}
+.ust{font-weight:800;letter-spacing:.36em;color:var(--gok);font-size:calc(var(--f)*.56)}
+h1{margin:.5vmin 0 0;font-size:calc(var(--f)*2.05);font-weight:900;background:linear-gradient(90deg,var(--turkuaz),var(--gok));-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1.05}
+.alt{color:var(--soluk);font-size:calc(var(--f)*.64);font-weight:700;margin-top:.5vmin}
+.imza{display:inline-block;margin-top:1vmin;font-size:calc(var(--f)*.5);color:var(--turkuaz);background:#F0FDFA;border:1px solid #99F6E4;border-radius:99px;padding:.4em 1em}
+.ayarlar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.3vmin 2vmin;margin-top:2vmin;text-align:left}
+.ayar{display:flex;flex-direction:column;gap:.6vmin}
+.ayar>span{font-weight:800;font-size:calc(var(--f)*.52);color:var(--soluk);letter-spacing:.06em;text-transform:uppercase}
+.sec{display:flex;background:var(--zemin);border-radius:1.6vmin;padding:.5vmin;gap:.5vmin}
+.sec button{flex:1;background:transparent;border-radius:1.2vmin;padding:1vmin .3vmin;font-weight:800;font-size:calc(var(--f)*.56);color:var(--soluk)}
+.sec button.on{background:#fff;color:var(--yazi);box-shadow:0 .3vmin 1vmin rgba(15,23,42,.12)}
+.basla{margin-top:2vmin;background:linear-gradient(135deg,var(--turkuaz),var(--gok));color:#fff;font-weight:900;font-size:calc(var(--f)*.92);padding:1.6vmin 6vmin;border-radius:99px;box-shadow:0 1.2vmin 2.6vmin rgba(13,148,136,.32)}
+.not{margin-top:1.6vmin;font-size:calc(var(--f)*.53);color:var(--soluk);line-height:1.55;max-width:84vmin;margin-left:auto;margin-right:auto}
+/* oyun */
+#oyun{flex-direction:column;padding:1.4vmin 2vmin 1.6vmin}
+.ustbar{display:flex;align-items:center;gap:1vmin}
+.skorlar{display:flex;gap:.8vmin;flex:1}
+.tk{display:flex;align-items:center;gap:.6vmin;border-radius:99px;padding:.7vmin 1.3vmin;background:#fff;border:1.5px solid #E2E8F0;font-weight:800;font-size:calc(var(--f)*.54);color:var(--soluk)}
+.tk.aktif{color:#fff;border-color:transparent;background:var(--c)}
+.tk b{font-size:calc(var(--f)*.72)}
+.sag{display:flex;gap:.6vmin}
+.yuv{border-radius:50%;background:#fff;border:1.5px solid #E2E8F0;display:flex;align-items:center;justify-content:center;width:7.4vmin;height:7.4vmin;font-size:calc(var(--f)*.56);color:var(--soluk);font-weight:900}
+.orta{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.6vmin}
+.kartBuyuk{background:#fff;border-radius:4vmin;padding:3vmin 4vmin;min-width:min(80vw,66vmin);text-align:center;box-shadow:0 1.6vmin 4vmin rgba(15,23,42,.14);border-bottom:1.2vmin solid #E2E8F0}
+.kartBuyuk .emoji{font-size:13vmin;line-height:1}
+.kartBuyuk .ad{font-size:calc(var(--f)*1.35);font-weight:900;margin-top:1vmin}
+.kartBuyuk .etiket{display:inline-block;margin-top:.8vmin;font-size:calc(var(--f)*.55);color:var(--soluk);font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.kartBuyuk.dogru{background:#D1FAE5;border-bottom-color:#0F766E}
+.kartBuyuk.yanlis{background:#FEE2E2;border-bottom-color:var(--mercan)}
+.secimler{display:flex;gap:1.6vmin;width:100%;max-width:110vmin}
+.secim{flex:1;border-radius:2.4vmin;padding:2vmin 1vmin;font-size:calc(var(--f)*.92);font-weight:900;color:#fff;box-shadow:0 1.2vmin 2.6vmin rgba(15,23,42,.2);border-bottom:1vmin solid rgba(0,0,0,.18)}
+.secim.donanim{background:linear-gradient(135deg,#0D9488,#0F766E)}
+.secim.yazilim{background:linear-gradient(135deg,#0284C7,#0369A1)}
+.secim:disabled{opacity:.55}
+.sure{height:1vmin;border-radius:99px;background:#E2E8F0;overflow:hidden;width:100%;max-width:110vmin;display:none}
+.sure.var{display:block}
+.sure i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#FBBF24,#F59E0B);transition:width .1s linear}
+.geriBildirim{font-weight:900;font-size:calc(var(--f)*.8);min-height:3.6vmin;text-align:center}
+.serit2{display:flex;gap:.6vmin;justify-content:center}
+.serit2 i{width:2.2vmin;height:2.2vmin;border-radius:50%;background:#CBD5E1}
+.serit2 i.d{background:var(--turkuaz)}
+.serit2 i.y{background:var(--mercan)}
+/* bitiş */
+#bitis{align-items:center;justify-content:center;padding:2vmin}
+.liste{display:flex;flex-direction:column;gap:1vmin;margin-top:1.4vmin;width:100%}
+.satir{display:flex;align-items:center;gap:1.2vmin;background:var(--zemin);border-radius:1.6vmin;padding:1.2vmin 1.8vmin;font-weight:800}
+.satir b{width:5vmin;color:var(--soluk)}
+.satir .ad{flex:1;text-align:left}
+@media (orientation:portrait){.ayarlar{grid-template-columns:1fr}}
+</style></head>
+<body>
+<div class="ekran aktif" id="giris">
+  <div class="kart">
+    <div class="serit" id="seritUst"></div>
+    <div class="ust">BİLİŞİM TEKNOLOJİLERİ</div>
+    <h1>Donanım mı, Yazılım mı?</h1>
+    <div class="alt">__ALT__</div>
+    <div class="imza">__IMZA__</div>
+    <div class="ayarlar">
+      <div class="ayar"><span>Takım</span><div class="sec" data-k="takim"><button data-v="1">Tek</button><button data-v="2">2 takım</button></div></div>
+      <div class="ayar"><span>Soru sayısı</span><div class="sec" data-k="tur"><button data-v="10">10</button><button data-v="15">15</button><button data-v="20">20</button></div></div>
+      <div class="ayar"><span>Süre (her soru)</span><div class="sec" data-k="sure"><button data-v="0">Yok</button><button data-v="10">10 sn</button><button data-v="15">15 sn</button></div></div>
+      <div class="ayar"><span>Puan</span><div class="sec" data-k="puan"><button data-v="5">5</button><button data-v="10">10</button></div></div>
+    </div>
+    <button class="basla" id="basla">Başla ▶</button>
+    <div class="not">Ekranda bir öğe çıkar: donanım mı yazılım mı? Doğru düğmeye en hızlı basan puan alır. Kutunun rengi doğru/yanlışı gösterir; sonraki öğeye otomatik geçer.</div>
+  </div>
+</div>
+
+<div class="ekran" id="oyun">
+  <div class="ustbar">
+    <div class="skorlar" id="skorlar"></div>
+    <div class="sag">
+      <div class="yuv" id="sira">1</div>
+      <div class="yuv" id="tamBtn">⛶</div>
+      <div class="yuv" id="cikBtn">✕</div>
+    </div>
+  </div>
+  <div class="orta">
+    <div class="serit2" id="noktalar"></div>
+    <div class="kartBuyuk" id="kart">
+      <div class="emoji" id="emoji">🖱️</div>
+      <div class="ad" id="ad">Fare</div>
+      <div class="etiket" id="etiket">Donanım mı, yazılım mı?</div>
+    </div>
+    <div class="secimler">
+      <button class="secim donanim" id="btnDonanim">🖥️ DONANIM</button>
+      <button class="secim yazilim" id="btnYazilim">💾 YAZILIM</button>
+    </div>
+    <div class="sure" id="sure"><i id="sureBar"></i></div>
+    <div class="geriBildirim" id="geri"></div>
+  </div>
+</div>
+
+<div class="ekran" id="bitis">
+  <div class="kart">
+    <div class="serit" id="seritAlt"></div>
+    <h1 id="bitisBaslik">Bitti!</h1>
+    <div class="liste" id="sonucListe"></div>
+    <button class="basla" id="tekrar">↻ Tekrar oyna</button>
+  </div>
+</div>
+
+<script>
+/* Havuz: { kategoriler: ['Donanım','Yazılım'], items: [{ e:'🖱️', ad:'Fare', k:'Donanım' }, …] } */
+/*__HAVUZ__*/
+const ITEMS=(typeof HAVUZ!=='undefined'&&HAVUZ&&Array.isArray(HAVUZ.items))?HAVUZ.items:[];
+const KAT=(typeof HAVUZ!=='undefined'&&HAVUZ&&Array.isArray(HAVUZ.kategoriler)&&HAVUZ.kategoriler.length===2)?HAVUZ.kategoriler:['Donanım','Yazılım'];
+const $=(id)=>document.getElementById(id);
+const esc=(t)=>String(t==null?'':t).replace(/[&<>"]/g,(c)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const karistir=(a)=>{const b=a.slice();for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b};
+const RENK=['#0D9488','#E2574C','#0284C7','#D99A1E'];
+const TAKIM_AD=['Turkuaz','Mercan'];
+const TAKIM_RENK=['#0D9488','#E2574C'];
+const SES={dogru:()=>ton(880,.12),yanlis:()=>ton(220,.2),tik:()=>ton(520,.05),son:()=>{ton(660,.12);setTimeout(()=>ton(990,.18),130)}};
+let ac=null;
+function ton(f,s){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator(),g=ac.createGain();o.type='sine';o.frequency.value=f;g.gain.value=.12;o.connect(g).connect(ac.destination);const t=ac.currentTime;g.gain.exponentialRampToValueAtTime(.0001,t+s);o.start(t);o.stop(t+s)}catch(e){}}
+
+const AYAR=Object.assign({takim:'2',tur:'15',sure:'0',puan:'10'},oku('mamoste-sinifla-ayar',{}));
+function oku(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
+function yaz(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+document.querySelectorAll('.sec').forEach(sec=>{
+  const k=sec.dataset.k;
+  const boya=()=>sec.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===AYAR[k]));
+  sec.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;AYAR[k]=b.dataset.v;yaz('mamoste-sinifla-ayar',AYAR);boya();SES.tik()});
+  boya();
+});
+function ekran(id){document.querySelectorAll('.ekran').forEach(e=>e.classList.toggle('aktif',e.id===id))}
+$('seritUst').innerHTML=['🖥️','💾','⌨️','🖱️'].map((h,i)=>`<b style="background:${RENK[i%4]}">${h}</b>`).join('');
+$('seritAlt').innerHTML=['🖥️','💾','⌨️','🖱️'].map((h,i)=>`<b style="background:${RENK[i%4]}">${h}</b>`).join('');
+
+let takimlar=[],sira=0,sorular=[],qi=0,S=null,zaman=null;
+
+// buttons: category index 0 → "donanim" class, 1 → "yazilim"
+function butonlar(){
+  const b0=$('btnDonanim'),b1=$('btnYazilim');
+  b0.textContent=(KAT[0]==='Donanım'?'🖥️ ':'💾 ')+KAT[0].toUpperCase();
+  b1.textContent=(KAT[1]==='Yazılım'?'💾 ':'🖥️ ')+KAT[1].toUpperCase();
+  b0.onclick=()=>cevap(KAT[0]);b1.onclick=()=>cevap(KAT[1]);
+}
+function basla(){
+  takimlar=Array.from({length:+AYAR.takim},(_,i)=>({ad:TAKIM_AD[i],renk:TAKIM_RENK[i],puan:0,dogru:0}));
+  const havuz=karistir(ITEMS.slice());
+  sorular=[];let i=0;
+  while(sorular.length<+AYAR.tur&&havuz.length){sorular.push(havuz[i%havuz.length]);i++;if(i>300)break}
+  sira=0;qi=0;ekran('oyun');butonlar();soruCiz();
+}
+function soruCiz(){
+  if(qi>=sorular.length){bitis();return}
+  const s=sorular[qi];
+  S={s,cevaplandi:false};
+  $('emoji').textContent=s.e||'❓';
+  $('ad').textContent=s.ad;
+  $('etiket').textContent=`${qi+1} / ${sorular.length} · hangi kategoride?`;
+  $('kart').className='kartBuyuk';
+  $('geri').textContent='';
+  $('sira').textContent=`${qi+1}/${sorular.length}`;
+  $('noktalar').innerHTML=sorular.map((_,i)=>`<i class="${i<qi?'d':''}"></i>`).join('');
+  cizSkor();
+  zamanBaslat();
+}
+function cevap(kat){
+  if(!S||S.cevaplandi)return;
+  S.cevaplandi=true;zamanDur();
+  const dogru=kat===S.s.k;
+  const t=takimlar[sira];
+  if(dogru){t.puan+=+AYAR.puan;t.dogru++;SES.dogru();$('kart').classList.add('dogru');$('geri').style.color='var(--turkuaz)';$('geri').textContent='✓ Doğru! +'+AYAR.puan}
+  else{SES.yanlis();$('kart').classList.add('yanlis');$('geri').style.color='var(--mercan)';$('geri').textContent=`✗ Bu ${S.s.k} · doğru cevap: ${S.s.k}`}
+  $('etiket').textContent=S.s.k;
+  cizSkor();
+  setTimeout(()=>{
+    qi++;sira=(sira+1)%takimlar.length;
+    if(qi>=sorular.length){bitis();return}
+    soruCiz();
+  },900);
+}
+function cizSkor(){
+  $('skorlar').innerHTML=takimlar.map((t,i)=>`<div class="tk ${i===sira&&takimlar.length>1?'aktif':''}" style="--c:${t.renk}">${esc(t.ad)} <b>${t.puan}</b></div>`).join('');
+}
+function zamanBaslat(){
+  zamanDur();const sn=+AYAR.sure;if(!sn){$('sure').classList.remove('var');return}
+  $('sure').classList.add('var');const bit=Date.now()+sn*1000;
+  zaman=setInterval(()=>{const k=Math.max(0,bit-Date.now());$('sureBar').style.width=(k/(sn*10))+'%';
+    if(!k){zamanDur();if(S&&!S.cevaplandi){S.cevaplandi=true;SES.yanlis();$('geri').style.color='var(--mercan)';$('geri').textContent='⏰ Süre doldu';setTimeout(()=>{qi++;sira=(sira+1)%takimlar.length;if(qi>=sorular.length){bitis();return}soruCiz()},700)}}},100);
+}
+function zamanDur(){if(zaman){clearInterval(zaman);zaman=null}}
+function bitis(){
+  zamanDur();SES.son();ekran('bitis');
+  const s=takimlar.slice().sort((a,b)=>b.puan-a.puan);
+  $('bitisBaslik').textContent=s.length>1?(s[0].puan===s[1].puan?'Berabere!':`${s[0].ad} kazandı!`):'Tur bitti!';
+  $('sonucListe').innerHTML=s.map((t,i)=>`<div class="satir"><b>${i+1}.</b><span class="ad" style="color:${t.renk}">${esc(t.ad)}</span><span>${t.puan} puan · ${t.dogru} doğru</span></div>`).join('');
+}
+$('basla').onclick=basla;$('tekrar').onclick=basla;
+$('cikBtn').onclick=()=>{zamanDur();ekran('giris')};
+$('tamBtn').onclick=()=>{const d=document.documentElement;if(document.fullscreenElement)document.exitFullscreen();else (d.requestFullscreen||d.webkitRequestFullscreen||(()=>{})).call(d)};
+if(!ITEMS.length){document.querySelector('.not').textContent='Bu etkinliğin soru havuzu boş.'}
+</script>
+</body></html>
