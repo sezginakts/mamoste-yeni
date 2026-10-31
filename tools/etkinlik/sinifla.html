@@ -72,6 +72,7 @@ h1{margin:.5vmin 0 0;font-size:calc(var(--f)*2.05);font-weight:900;background:li
     <div class="ayarlar">
       <div class="ayar"><span>Takım</span><div class="sec" data-k="takim"><button data-v="1">Tek</button><button data-v="2">2 takım</button></div></div>
       <div class="ayar"><span>Soru sayısı</span><div class="sec" data-k="tur"><button data-v="10">10</button><button data-v="15">15</button><button data-v="20">20</button></div></div>
+      <div class="ayar"><span>Zorluk</span><div class="sec" data-k="zorluk"><button data-v="1">Kolay</button><button data-v="2">Orta</button><button data-v="3">Zor</button><button data-v="0">Karışık</button></div></div>
       <div class="ayar"><span>Süre (her soru)</span><div class="sec" data-k="sure"><button data-v="0">Yok</button><button data-v="10">10 sn</button><button data-v="15">15 sn</button></div></div>
       <div class="ayar"><span>Puan</span><div class="sec" data-k="puan"><button data-v="5">5</button><button data-v="10">10</button></div></div>
     </div>
@@ -129,7 +130,17 @@ const SES={dogru:()=>ton(880,.12),yanlis:()=>ton(220,.2),tik:()=>ton(520,.05),so
 let ac=null;
 function ton(f,s){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator(),g=ac.createGain();o.type='sine';o.frequency.value=f;g.gain.value=.12;o.connect(g).connect(ac.destination);const t=ac.currentTime;g.gain.exponentialRampToValueAtTime(.0001,t+s);o.start(t);o.stop(t+s)}catch(e){}}
 
-const AYAR=Object.assign({takim:'2',tur:'15',sure:'0',puan:'10'},oku('mamoste-sinifla-ayar',{}));
+const AYAR=Object.assign({takim:'2',tur:'15',sure:'0',puan:'10',zorluk:'2'},oku('mamoste-sinifla-ayar',{}));
+// Zorluk: 1 kolay (herkesin bildiği öğeler), 2 orta (z<=2), 3 zor (z=3, teknik öğeler), 0 karışık.
+function zl(){return +AYAR.zorluk||0}
+function uygunItems(){
+  const z=zl();if(!z)return ITEMS.slice();
+  if(z===3){const zor=ITEMS.filter(x=>(x.z||2)===3);if(zor.length>=6)return zor}
+  const esik=z===1?1:2;
+  let f=ITEMS.filter(x=>(x.z||2)<=esik);
+  if(f.length<6)f=ITEMS.filter(x=>(x.z||2)<=2); // kolayda havuz çok küçülmesin
+  return f.length?f:ITEMS.slice();
+}
 function oku(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
 function yaz(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 document.querySelectorAll('.sec').forEach(sec=>{
@@ -153,7 +164,7 @@ function butonlar(){
 }
 function basla(){
   takimlar=Array.from({length:+AYAR.takim},(_,i)=>({ad:TAKIM_AD[i],renk:TAKIM_RENK[i],puan:0,dogru:0}));
-  const havuz=karistir(ITEMS.slice());
+  const havuz=karistir(uygunItems());
   sorular=[];let i=0;
   while(sorular.length<+AYAR.tur&&havuz.length){sorular.push(havuz[i%havuz.length]);i++;if(i>300)break}
   sira=0;qi=0;ekran('oyun');butonlar();soruCiz();

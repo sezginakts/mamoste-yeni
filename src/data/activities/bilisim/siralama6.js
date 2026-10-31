@@ -4,7 +4,7 @@ export default {
     {
       ad: 'Scratch’te kare çiz',
       emoji: '🟦',
-      adimlar: ['Kalemi indir', '100 adım git', '90 derece dön', '4 kez tekrarla'],
+      adimlar: ['Yeşil bayrağa tıkla', 'Kalemi indir', '100 adım git', '90 derece dön', '4 kez tekrarla', 'Kalemi kaldır'],
     },
     {
       ad: 'Değişkenle say',
@@ -24,7 +24,7 @@ export default {
     {
       ad: 'İnternette güvenilir arama',
       emoji: '🔎',
-      adimlar: ['Anahtar kelimeleri belirle', 'Arama motoruna yaz', 'Sonuçları karşılaştır', 'Güvenilir kaynağı seç'],
+      adimlar: ['Anahtar kelimeleri belirle', 'Arama motoruna yaz', 'Sonuçları karşılaştır', 'Kaynağın tarihini kontrol et', 'Güvenilir kaynağı seç', 'Bilgiyi not al'],
     },
     {
       ad: 'Blok dizisi: zıplama',
