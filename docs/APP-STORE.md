@@ -10,6 +10,7 @@ yapıldı (aşağıda “Uygulamada yapılanlar”).
 | Telefonda görünen ad | Okul | Okul Öğrenci |
 | Paket kimliği | `com.ingapp.cumle` | `com.ingapp.ogrenci` |
 | EAS profili (deneme / mağaza) | `preview` / `production` | `ogrenci-preview` / `ogrenci-production` |
+| App Store Connect kaydı (Apple ID, `eas.json → submit.ascAppId`) | 6829294277 “Okul – Öğretmen Asistanı” | 6829294611 “Okul Öğrenci” |
 | Açılış | Doğrudan öğretmen (rol seçimi yok) | Doğrudan öğrenci (rol seçimi yok) |
 
 `npm start` / `npm run web` (değişken yok): ikisi bir arada, rol seçilir — yalnız geliştirme ve web testi için.

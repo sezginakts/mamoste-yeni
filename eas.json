@@ -42,7 +42,11 @@
     }
   },
   "submit": {
-    "production": {},
-    "ogrenci-production": {}
+    "production": {
+      "ios": { "ascAppId": "6829294277" }
+    },
+    "ogrenci-production": {
+      "ios": { "ascAppId": "6829294611" }
+    }
   }
 }
