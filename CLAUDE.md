@@ -64,6 +64,7 @@ Web testi: iki sekme = iki hesap — `http://localhost:8082` öğretmen, `http:/
 
 ## Kurallar
 - Kullanıcıyla Türkçe konuş. Kısa, doğrudan, abartısız.
+- **EKSTRA İŞ KURALI (kullanıcı talimatı, 31.10.2026):** İstenen işin dışında bir şey yapmak istersen (yayınlama, QR, e-posta, dosya taşıma, ekran/özellik değiştirme, makine kapatma vb.) **önce sor**; kullanıcı onaylarsa yap, onay yoksa yapma. "Yapabilirim" demek onay değildir.
 - Uydurma rakam verme; bilmiyorsan söyle.
 - **Yazı tipi (font):** uygulama genelinde **Manrope** (`@expo-google-fonts/manrope` + `expo-font`), başka font yok. Global uygulama `src/utils/fontYamasi.js`: `StyleSheet.create` yamalanır, `fontSize`/`fontWeight` içeren her stile `fontFamily` eklenir ve `fontWeight` kaldırılır (400/500/600/800 ailelerine eşlenir) — yüzlerce dosyaya dokunmadan tüm ekranlar Manrope olur. `App.js` ilk import bu yama olmalı; fontlar `useFonts` ile yüklenene kadar uygulama bekletilir. Yeni font istenirse `src/theme/fontAilesi.js` → `AİLE`, `FONT_YUKLEME`, `agirligaGoreAile` güncellenir.
 - **Katlanır bölümler (`components/Collapsible.js`):** durum HATIRLANMAZ, cihaza yazılmaz. Varsayılan **kapalı**; ekrandan çıkınca varsayılana döner (odak kaybında sıfırlanır), ekrana dönünce kapalı başlar. Tek istisna: yıllık plandaki "BU DERSİN ÖĞRENME ÇIKTISI" `defaultOpen` ile açık başlar ve ders sekmesi değişince yeniden açılır. Yükseklik ölçülen içerikten hesaplanır; ölçüm gelmeden açılırsa doğal yükseklik kullanılır (0'a takılıp "bazen açılmıyor" olmasın). Yeni ekranlarda `storageKey` kullanma.
