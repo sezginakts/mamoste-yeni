@@ -28,6 +28,7 @@ const S_SCHED = '@ingapp/teacher/shared/schedules';
 const S_DAY = '@ingapp/teacher/shared/day-schedule';
 const S_NOTES = '@ingapp/teacher/shared/notes';
 const S_BELL = '@ingapp/teacher/shared/bell';
+const S_ACTIVE = '@ingapp/teacher/shared/active-schedule'; // seçili saat düzeni ('a' | 'b')
 const DEFAULT_BELL = { mode: 'off', end: true };
 const Ctx = createContext(null);
 
@@ -102,7 +103,21 @@ export function DeskProvider({ children }) {
   const [lessons, setLessons] = useState({});
   const [schedules, setSchedulesState] = useState(DEFAULT_SCHEDULES);
   const [daySchedule, setDayScheduleState] = useState(DEFAULT_DAY);
-  const [activeSchedule, setActiveSchedule] = useState('a'); // düzenlenen düzen (yalnız ekran durumu)
+  // Seçili saat düzeni (1. / 2. okul): Ders Programı ekranında seçilir, KALICIDIR; ana sayfadaki programın saat
+  // sütunu da bu düzenin saatlerini gösterir. Öğretmen değiştirene kadar aynı kalır.
+  const [activeSchedule, setActiveScheduleState] = useState('a');
+  useEffect(() => {
+    AsyncStorage.getItem(S_ACTIVE)
+      .then((v) => {
+        if (SCHED_IDS.includes(v)) setActiveScheduleState(v);
+      })
+      .catch(() => {});
+  }, []);
+  const setActiveSchedule = (k) => {
+    if (!SCHED_IDS.includes(k)) return;
+    setActiveScheduleState(k);
+    AsyncStorage.setItem(S_ACTIVE, k).catch(() => {});
+  };
   const [notes, setNotes] = useState([]);
   const [bell, setBellState] = useState(DEFAULT_BELL);
   const { branchId } = useRole();

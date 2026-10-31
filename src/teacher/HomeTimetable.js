@@ -22,24 +22,18 @@ export default function HomeTimetable({ buyuk = false, alan = null }) {
   const sonDers = week.length ? Math.max(enSonDers, 1) : 4;
 
   const doluSaat = (liste) => Array.isArray(liste) && liste.some((p) => p && p.start);
-  const gunSaatleri = [1, 2, 3, 4, 5].map((g) => desk.periodsFor(g));
-  const imza = (liste) => (liste || []).map((p) => `${(p && p.start) || ''}-${(p && p.end) || ''}`).join('|');
-  // Saatler HEP soldaki sütunda yazılır (kutuların içinde değil). Günlerin saat düzeni farklıysa (2. okul)
-  // en çok günün kullandığı düzen asıl saattir; öteki düzenin başlangıcı altında parantez içinde, küçük yazılır.
-  const gunDuzeni = [1, 2, 3, 4, 5].map((g) => (desk.daySchedule && desk.daySchedule[g]) || 'a');
-  const kullanilan = [...new Set(gunDuzeni)].filter((k) => doluSaat(gunSaatleri[gunDuzeni.indexOf(k)]));
-  const sayi = (k) => gunDuzeni.filter((x) => x === k).length;
-  const anaKey = kullanilan.sort((x, y) => sayi(y) - sayi(x))[0];
-  const saatler = (anaKey && gunSaatleri[gunDuzeni.indexOf(anaKey)]) || gunSaatleri.find((s) => doluSaat(s)) || gunSaatleri[0] || [];
-  const digerKey = kullanilan.find((k) => k !== anaKey && imza(gunSaatleri[gunDuzeni.indexOf(k)]) !== imza(saatler));
-  const digerSaatler = digerKey ? gunSaatleri[gunDuzeni.indexOf(digerKey)] : null;
-  const digerGunler = digerKey ? GUN.filter((_, i) => gunDuzeni[i] === digerKey) : [];
-  const digerAd = digerKey && desk.schedules && desk.schedules[digerKey] ? desk.schedules[digerKey].name : '';
-  const saatVar = gunSaatleri.some((s) => doluSaat(s));
+  // Saatler soldaki sütunda, kutuların içinde değil. Sütun SEÇİLİ okulun (1. / 2. okul) saatlerini gösterir;
+  // seçim Ders Programı ekranındaki "Saat düzeni"nden yapılır ve öğretmen değiştirene kadar kalır (desk.activeSchedule).
+  const duzenler = desk.schedules || {};
+  const seciliSaatler = (duzenler[desk.activeSchedule] || {}).periods || [];
+  const saatler = doluSaat(seciliSaatler)
+    ? seciliSaatler
+    : Object.values(duzenler).map((d) => d.periods || []).find((s) => doluSaat(s)) || [];
+  const saatVar = Object.values(duzenler).some((d) => doluSaat(d.periods));
   const en = (day, period) => week.find((w) => w.day === day && w.period === period) || null;
 
   const sinirla = (v, a, b) => Math.max(a, Math.min(b, v));
-  const notY = (!saatVar ? 18 : 0) + (!week.length ? 20 : 0) + (digerKey ? 18 : 0);
+  const notY = (!saatVar ? 18 : 0) + (!week.length ? 20 : 0);
   // Tam ekran: başlık satırı ~28 px, kalan yükseklik ders satırlarına bölünür.
   const sigY = alan && alan.h ? Math.floor((alan.h - 30 - notY) / sonDers) : null;
   const olcu = sigY
@@ -72,7 +66,7 @@ export default function HomeTimetable({ buyuk = false, alan = null }) {
       olcu.boxTag = sinirla(Math.round(ic * 0.46), 9, 13);
     }
   }
-  // Soldaki saat sütunu kısa satırda: önce bitiş saati, sonra parantezli 2. düzen saati düşer.
+  // Soldaki saat sütunu kısa satırda (telefon yatay) bitiş saati yazılmaz, yalnız başlangıç kalır.
   const saatSiga = (n) => !olcu.sabitY || olcu.hucreY >= n * olcu.saatT * 1.25 + 2;
   const satirY = (fs) => (olcu.sabitY ? { lineHeight: Math.round(fs * 1.25), includeFontPadding: false } : null);
 
@@ -95,10 +89,7 @@ export default function HomeTimetable({ buyuk = false, alan = null }) {
       {Array.from({ length: sonDers }, (_, i) => {
         const period = i + 1;
         const s = saatler[i] || {};
-        const d = (digerSaatler && digerSaatler[i]) || {};
-        const ikinci = d.start && d.start !== s.start ? d.start : null;
-        const bitisVar = !!s.end && saatSiga(ikinci ? 3 : 2);
-        const ikinciVar = !!ikinci && saatSiga(bitisVar ? 3 : 2);
+        const bitisVar = !!s.end && saatSiga(2);
         return (
           <View key={period} style={[st.row, { borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth }]}>
             <View style={[st.saatKolon, { width: olcu.saatKolon }, olcu.sabitY && { paddingVertical: 0, height: olcu.hucreY }]}>
@@ -106,7 +97,6 @@ export default function HomeTimetable({ buyuk = false, alan = null }) {
                 <>
                   <Text style={[st.saatT, { color: colors.text, fontSize: olcu.saatT }, satirY(olcu.saatT)]}>{s.start}</Text>
                   {bitisVar ? <Text style={[st.saatT, { color: colors.textFaint, fontSize: olcu.saatT }, satirY(olcu.saatT)]}>{s.end}</Text> : null}
-                  {ikinciVar ? <Text style={[st.saatT, { color: colors.textFaint, fontSize: Math.max(8, olcu.saatT - 1) }, satirY(olcu.saatT)]}>({ikinci})</Text> : null}
                 </>
               ) : (
                 <Text style={[st.saatT, { color: colors.textMuted, fontSize: olcu.saatT }]}>{period}.</Text>
@@ -134,11 +124,6 @@ export default function HomeTimetable({ buyuk = false, alan = null }) {
       })}
       {!saatVar ? (
         <Text style={{ color: colors.textFaint, fontSize: buyuk ? 12 : 10, marginTop: 6 }}>Saatler henüz girilmemiş.</Text>
-      ) : null}
-      {digerKey ? (
-        <Text style={{ color: colors.textFaint, fontSize: buyuk ? 12 : 10, marginTop: 4 }}>
-          Parantezdeki saatler: {digerAd || '2. Okul'} ({digerGunler.join(', ')})
-        </Text>
       ) : null}
       {!week.length ? (
         <Text style={{ color: colors.textMuted, fontSize: buyuk ? 13 : 11, marginTop: 6 }}>Ders programı henüz girilmemiş — Düzenle › ile ekle.</Text>

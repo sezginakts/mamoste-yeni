@@ -75,7 +75,7 @@ export default function TimetableScreen({ navigation }) {
             </Pressable>
           </View>
           <Text style={{ color: colors.textFaint, fontSize: font.tiny, marginTop: 4 }}>
-            Gün başlığındaki harfe dokun: o gün hangi okulun saatleri geçerli olsun. Saat sütunu seçili düzenindir.
+            Gün başlığındaki harfe dokun: o gün hangi okulun saatleri geçerli olsun. Saat sütunu seçili okulundur; ana sayfadaki programda da seçili okulun saatleri görünür ve sen değiştirene kadar kalır.
           </Text>
         </View>
 
