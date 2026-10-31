@@ -302,6 +302,17 @@ function ClassPicker({ cell, lesson, period, classes, dersler = [], varsayilanDe
 
   return (
     <Sheet title={`${DAYS[cell.day - 1]} · ${cell.period}. ders`} subtitle={`Bu saatte hangi derse, hangi sınıfa giriyorsun?${time}`} onClose={onClose}>
+      {/* Dolu hücrede "Dersi boşalt" EN ÜSTTE: pencere uzun olunca alttaki düğme ekran dışında kalıyordu. */}
+      {lesson ? (
+        <View style={[st.bosaltSatir, { borderColor: colors.danger + '55', backgroundColor: colors.danger + '0F' }]}>
+          <Text style={{ color: colors.text, fontWeight: '800', flex: 1 }} numberOfLines={1}>
+            Şu an: {lesson.label || '—'}
+          </Text>
+          <Pressable onPress={() => onPick(null)} style={[st.bosaltBtn, { backgroundColor: colors.danger }]} accessibilityRole="button" accessibilityLabel="Dersi boşalt">
+            <Text style={{ color: '#fff', fontWeight: '900' }}>🗑 Dersi boşalt</Text>
+          </Pressable>
+        </View>
+      ) : null}
       {dersler.length > 1 ? (
         <>
           <Text style={[st.pickLbl, { color: colors.textMuted }]}>DERS</Text>
@@ -349,11 +360,6 @@ function ClassPicker({ cell, lesson, period, classes, dersler = [], varsayilanDe
         </Text>
       </Pressable>
       <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm }}>
-        {lesson ? (
-          <Pressable onPress={() => onPick(null)} style={[st.sheetBtn, { borderColor: colors.danger }]}>
-            <Text style={{ color: colors.danger, fontWeight: '800' }}>Dersi boşalt</Text>
-          </Pressable>
-        ) : null}
         <Pressable onPress={onClose} style={[st.sheetBtn, { borderColor: colors.border, flex: 1 }]}>
           <Text style={{ color: colors.text, fontWeight: '800' }}>Vazgeç</Text>
         </Pressable>
@@ -542,7 +548,10 @@ const st = StyleSheet.create({
   cellT: { fontWeight: '900', fontSize: 13, textAlign: 'center' },
 
   backdrop: { flex: 1, backgroundColor: 'rgba(15,23,42,0.55)', justifyContent: 'flex-end' },
-  sheet: { borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: spacing.lg, paddingBottom: spacing.xl, maxWidth: 640, width: '100%', alignSelf: 'center' },
+  // maxHeight: uzun içerikte pencere ekrana sığar ve içi kayar (yoksa alttaki düğmeler ekran dışında kalıyordu).
+  sheet: { borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: spacing.lg, paddingBottom: spacing.xl, maxWidth: 640, width: '100%', alignSelf: 'center', maxHeight: '92%' },
+  bosaltSatir: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderWidth: 1, borderRadius: radius.md, padding: spacing.sm, marginBottom: spacing.md },
+  bosaltBtn: { borderRadius: radius.md, paddingVertical: 9, paddingHorizontal: spacing.md },
   grabber: { width: 44, height: 5, borderRadius: 3, alignSelf: 'center', marginBottom: spacing.md },
   pickLbl: { fontSize: font.tiny, fontWeight: '800', letterSpacing: 1, marginBottom: 6, marginTop: 4 },
   stepLbl: { fontSize: font.body, fontWeight: '900', marginTop: spacing.sm, marginBottom: 6 },
