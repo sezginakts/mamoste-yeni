@@ -128,14 +128,14 @@ export default function TimetableScreen({ navigation }) {
             return (
               <View key={period} style={[st.row, { borderTopColor: colors.border }, st.rowBorder]}>
                 <Pressable onPress={() => setTimeIdx(i)} style={[st.timeCol, st.timeCell, isNow && { backgroundColor: colors.accent + '1A' }]} accessibilityLabel={`${period}. ders saatini düzenle`}>
-                  <Text style={{ color: isNow ? colors.accent : colors.text, fontWeight: '900', fontSize: font.small }}>{period}.</Text>
+                  <Text style={{ color: isNow ? colors.accent : colors.text, fontWeight: '900', fontSize: font.small }} {...SIGDIR}>{period}.</Text>
                   {p.start ? (
                     <>
-                      <Text style={[st.timeT, { color: colors.textMuted }]}>{p.start}</Text>
-                      <Text style={[st.timeT, { color: colors.textFaint }]}>{p.end}</Text>
+                      <Text style={[st.timeT, { color: colors.textMuted }]} {...SIGDIR}>{p.start}</Text>
+                      <Text style={[st.timeT, { color: colors.textFaint }]} {...SIGDIR}>{p.end}</Text>
                     </>
                   ) : (
-                    <Text style={[st.timeT, { color: colors.accent }]}>saat ekle</Text>
+                    <Text style={[st.timeT, { color: colors.accent }]} {...SIGDIR}>saat ekle</Text>
                   )}
                 </Pressable>
                 {SHORT.map((d, di) => {
@@ -160,7 +160,7 @@ export default function TimetableScreen({ navigation }) {
                       >
                         {l ? (
                           <>
-                            <Text style={[st.cellT, { color: colors.text }]} numberOfLines={2}>{l.label}</Text>
+                            <Text style={[st.cellT, { color: colors.text }]} numberOfLines={2} maxFontSizeMultiplier={1.15}>{l.label}</Text>
                             {l.ders ? (
                               <Text style={[st.dersTag, { color: branchOf(l.ders).color, borderColor: branchOf(l.ders).color + '66' }]}>{branchOf(l.ders).short}</Text>
                             ) : null}
@@ -278,6 +278,9 @@ function Sheet({ title, subtitle, onClose, children }) {
     </Modal>
   );
 }
+
+// Dar ızgara yazıları: telefonun yazı boyutu büyükse sütundan taşmasın (Android'de sık), sığmazsa küçülsün.
+const SIGDIR = { numberOfLines: 1, adjustsFontSizeToFit: true, maxFontSizeMultiplier: 1.15 };
 
 const BRANCHES = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
 

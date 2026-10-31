@@ -69,17 +69,20 @@ export default function HomeTimetable({ buyuk = false, alan = null }) {
   // Soldaki saat sütunu kısa satırda (telefon yatay) bitiş saati yazılmaz, yalnız başlangıç kalır.
   const saatSiga = (n) => !olcu.sabitY || olcu.hucreY >= n * olcu.saatT * 1.25 + 2;
   const satirY = (fs) => (olcu.sabitY ? { lineHeight: Math.round(fs * 1.25), includeFontPadding: false } : null);
+  // Telefonun yazı boyutu büyükse (Android'de sık) dar ızgaradaki yazılar sütuna sığmayıp yandaki ders kutusunun
+  // üstüne taşıyordu: büyüme sınırlı, sığmazsa küçülür, sütun dışına çıkmaz.
+  const sigdir = { numberOfLines: 1, adjustsFontSizeToFit: true, maxFontSizeMultiplier: 1.15 };
 
   return (
     <View>
       {/* Gün başlıkları (üstte) */}
       <View style={[st.row, { borderBottomColor: colors.border }]}>
-        <Text style={[st.saatBaslik, { width: olcu.saatKolon, color: colors.textFaint, fontSize: buyuk ? 11 : 9 }]}>SAAT</Text>
+        <Text style={[st.saatBaslik, { width: olcu.saatKolon, color: colors.textFaint, fontSize: buyuk ? 11 : 9 }]} {...sigdir}>SAAT</Text>
         {GUN.map((g, i) => {
           const isToday = i + 1 === bugun;
           return (
             <View key={g} style={[st.gun, { paddingVertical: olcu.headPad }, isToday && { backgroundColor: colors.accent, borderRadius: radius.sm }]}>
-              <Text style={[st.gunT, { color: isToday ? colors.onAccent : colors.textMuted, fontSize: olcu.gunT }]}>{g}</Text>
+              <Text style={[st.gunT, { color: isToday ? colors.onAccent : colors.textMuted, fontSize: olcu.gunT }]} {...sigdir}>{g}</Text>
             </View>
           );
         })}
@@ -95,11 +98,11 @@ export default function HomeTimetable({ buyuk = false, alan = null }) {
             <View style={[st.saatKolon, { width: olcu.saatKolon }, olcu.sabitY && { paddingVertical: 0, height: olcu.hucreY }]}>
               {s.start ? (
                 <>
-                  <Text style={[st.saatT, { color: colors.text, fontSize: olcu.saatT }, satirY(olcu.saatT)]}>{s.start}</Text>
-                  {bitisVar ? <Text style={[st.saatT, { color: colors.textFaint, fontSize: olcu.saatT }, satirY(olcu.saatT)]}>{s.end}</Text> : null}
+                  <Text style={[st.saatT, { color: colors.text, fontSize: olcu.saatT }, satirY(olcu.saatT)]} {...sigdir}>{s.start}</Text>
+                  {bitisVar ? <Text style={[st.saatT, { color: colors.textFaint, fontSize: olcu.saatT }, satirY(olcu.saatT)]} {...sigdir}>{s.end}</Text> : null}
                 </>
               ) : (
-                <Text style={[st.saatT, { color: colors.textMuted, fontSize: olcu.saatT }]}>{period}.</Text>
+                <Text style={[st.saatT, { color: colors.textMuted, fontSize: olcu.saatT }]} {...sigdir}>{period}.</Text>
               )}
             </View>
             {[1, 2, 3, 4, 5].map((d) => {
@@ -112,8 +115,8 @@ export default function HomeTimetable({ buyuk = false, alan = null }) {
                 <View key={d} style={[st.hucre, olcu.sabitY ? { height: olcu.hucreY, overflow: 'hidden' } : { minHeight: olcu.hucreY }, isToday && { backgroundColor: colors.accent + '0D' }]}>
                   {l ? (
                     <View style={[st.kutu, olcu.sabitY && { flex: 1, paddingVertical: 1 }, olcu.tekSatir && st.kutuSatir, { backgroundColor: besMi ? '#FEF3C7' : col + '1F', borderColor: besMi ? '#F5B301' : col + '66' }]}>
-                      <Text style={[st.kutuT, { color: colors.text, fontSize: olcu.boxT, flexShrink: 1 }, satirY(olcu.boxT)]} numberOfLines={1}>{l.label || '—'}</Text>
-                      {l.ders ? <Text style={[st.kutuTag, { color: besMi ? '#92610B' : col, fontSize: olcu.boxTag }, satirY(olcu.boxTag)]} numberOfLines={1}>{branchOf(l.ders).short}</Text> : null}
+                      <Text style={[st.kutuT, { color: colors.text, fontSize: olcu.boxT, flexShrink: 1 }, satirY(olcu.boxT)]} {...sigdir}>{l.label || '—'}</Text>
+                      {l.ders ? <Text style={[st.kutuTag, { color: besMi ? '#92610B' : col, fontSize: olcu.boxTag }, satirY(olcu.boxTag)]} {...sigdir}>{branchOf(l.ders).short}</Text> : null}
                     </View>
                   ) : null}
                 </View>
@@ -137,7 +140,7 @@ const st = StyleSheet.create({
   saatBaslik: { fontWeight: '900', letterSpacing: 0.5, paddingVertical: 4 },
   gun: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   gunT: { fontWeight: '900' },
-  saatKolon: { justifyContent: 'center', paddingVertical: 6 },
+  saatKolon: { justifyContent: 'center', paddingVertical: 6, paddingRight: 2, overflow: 'hidden' },
   saatT: { fontWeight: '700' },
   hucre: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 1, paddingVertical: 3 },
   kutu: { width: '100%', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderRadius: 7, paddingVertical: 4, paddingHorizontal: 2 },
