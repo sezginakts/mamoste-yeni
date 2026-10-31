@@ -52,6 +52,8 @@ Web testi: iki sekme = iki hesap — `http://localhost:8082` öğretmen, `http:/
 - Uyum: Ayarlar → Hesabımı sil (AuthContext.deleteAccount + migration 20261029000000_delete_account.sql); öğretmen giriş ekranında Hesap açmadan devam et (auth.guest); iPhone'da Google girişi ve Logo Avcısı (gerçek marka logoları) gizli (activities/index.js IOS_GIZLI); supportsTablet false; app.json ios.privacyManifests. SKIP_TEACHER_LOGIN asla true commit edilmez.
 
 ## Derleme
+- **KAPSAM KURALI (kullanıcı talimatı, 31.10.2026):** Derlemede yalnızca istenen artefaktı üret. İstenmeyen hiçbir adımı yapma: yayınlama, sürüm dosyası oluşturma, QR üretme, e-posta, bilgisayarı kapatma, sayfa güncelleme. Her birini kullanıcı o an açıkça söylemedikçe yapma. İş bitince sadece run linki + artifact adı + commit hash yaz.
+- **Derlemeden önce:** `git fetch` → `HEAD == origin/main` ve itilmemiş commit 0 doğrula; derlenecek commit hash'ini ve saatini yazdır; ancak kullanıcı "derle" dediyse tetikle.
 - EAS bulutu (`npx eas-cli build -p ios --profile preview`) ücretsiz planda saatlerce sırada bekleyebilir.
 - GitHub Actions: `.github/workflows/ios-build.yml` (depo `sezginakts/mamoste-yeni`, elle "Run workflow"): macOS'ta `eas build --local`, imza EAS'ten (gizli anahtar `EXPO_TOKEN`), çıktı artifact `Okul-iPhone` (okul.ipa). IPA'yı iPhone'a kurmak için ayrı araç gerekir (EAS'in kurulum bağlantısı burada yok).
 
