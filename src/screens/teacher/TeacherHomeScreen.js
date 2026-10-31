@@ -1,7 +1,7 @@
 // Öğretmen ana sayfası: karşılama bandı, şimdiki/sıradaki ders, kısayollar, sınıflar.
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable, Image, Modal, Platform } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets, SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { spacing, font, radius, inkOn } from '../../theme';
 import { usePlans } from '../../teacher/PlanContext';
 import { weekForDay } from '../../teacher/yearPlan';
@@ -525,16 +525,13 @@ export default function TeacherHomeScreen({ navigation }) {
 
       {/* Tam ekran ders programı: çift dokununca açılır, yatay kilide geçer; ✕ veya çift dokun ile kapanır. */}
       <Modal visible={tamEkran} animationType="none" supportedOrientations={['portrait', 'landscape']} onRequestClose={tamEkraniKapat}>
+        {/* Güvenli alan PENCERENİN KENDİSİNDE ölçülür: ana ekrandan gelen insets ayrı pencerede (Modal) yatayda
+            güncellenmiyordu, saat sütunu iPhone çentiğinin arkasında kalıyordu. Çentik hangi taraftaysa o kenar boşaltılır. */}
+        <SafeAreaProvider>
+        <SafeAreaView edges={['top', 'bottom', 'left', 'right']} style={{ flex: 1, backgroundColor: colors.bg }}>
         <View
           onLayout={(e) => setTamBoyut({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
-          style={{
-            flex: 1,
-            backgroundColor: colors.bg,
-            paddingTop: Math.max(insets.top, spacing.xs),
-            paddingBottom: Math.max(insets.bottom, spacing.xs),
-            paddingLeft: Math.max(insets.left, spacing.md),
-            paddingRight: Math.max(insets.right, spacing.md),
-          }}
+          style={{ flex: 1, paddingTop: spacing.xs, paddingBottom: spacing.xs, paddingLeft: spacing.sm, paddingRight: spacing.sm }}
         >
           {tamHazir ? (
           <>
@@ -557,6 +554,8 @@ export default function TeacherHomeScreen({ navigation }) {
           </>
           ) : null}
         </View>
+        </SafeAreaView>
+        </SafeAreaProvider>
       </Modal>
     </View>
   );
