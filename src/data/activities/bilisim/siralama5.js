@@ -37,5 +37,18 @@ export default {
       emoji: '🔌',
       adimlar: ['Çalışmaları kaydet', 'Tüm programları kapat', 'Başlat menüsünden “Kapat”ı seç', 'Ekranın kapanmasını bekle'],
     },
+    {
+      ad: 'Çay demle (resimli algoritma)',
+      emoji: '🍵',
+      resimli: true,
+      adimlar: [
+        { e: '🚰', t: 'Çaydanlığa su koy' },
+        { e: '🔥', t: 'Suyu kaynat' },
+        { e: '🍃', t: 'Demliğe çay koy' },
+        { e: '💧', t: 'Kaynar suyu demliğe dök' },
+        { e: '⏳', t: '5 dakika demle' },
+        { e: '🫖', t: 'Bardaklara servis yap' },
+      ],
+    },
   ],
 };

@@ -39,14 +39,15 @@ h1{margin:.5vmin 0 0;font-size:calc(var(--f)*2.15);font-weight:900;background:li
 .gorev small{color:var(--soluk);font-size:calc(var(--f)*.54);font-weight:700}
 .ipucuSatir{text-align:center;color:var(--soluk);font-size:calc(var(--f)*.56);font-weight:700;margin-top:1vmin}
 .alan{flex:1;display:flex;flex-direction:column;justify-content:center;gap:2.6vmin;padding:1.2vmin 0;overflow:auto}
-.slotlar{display:flex;flex-wrap:wrap;gap:1vmin;justify-content:center}
-.slot{width:min(32vw,23vmin);min-height:12vmin;border:2px dashed #CBD5E1;border-radius:2vmin;background:rgba(255,255,255,.55);display:flex;align-items:center;justify-content:center;gap:.6vmin;padding:.8vmin;font-size:calc(var(--f)*.6);font-weight:800;color:var(--soluk);text-align:center;position:relative}
+.slotlar{display:flex;flex-wrap:wrap;gap:.9vmin;justify-content:center;padding:0 1vmin}
+.slot{width:min(28vw,19vmin);min-height:12vmin;border:2px dashed #CBD5E1;border-radius:2vmin;background:rgba(255,255,255,.55);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4vmin;padding:.8vmin;font-size:calc(var(--f)*.6);font-weight:800;color:var(--soluk);text-align:center;position:relative}
+.em{display:block;font-size:calc(var(--f)*1.35);line-height:1.1}
 .slot .no{position:absolute;top:-1.4vmin;left:-1vmin;width:4.2vmin;height:4.2vmin;border-radius:50%;background:var(--gok);color:#fff;display:flex;align-items:center;justify-content:center;font-size:calc(var(--f)*.5);font-weight:900}
 .slot.dolu{border-style:solid;border-color:var(--turkuaz);background:#fff;color:var(--yazi)}
 .slot.dogru{border-color:#0F766E;background:#D1FAE5}
 .slot.yanlis{border-color:var(--mercan);background:#FEE2E2}
-.kartlar{display:flex;flex-wrap:wrap;gap:1vmin;justify-content:center}
-.adim{background:#fff;border-radius:1.8vmin;padding:1.5vmin 2vmin;font-size:calc(var(--f)*.78);font-weight:800;box-shadow:0 .6vmin 1.6vmin rgba(15,23,42,.12);border-bottom:.6vmin solid #CBD5E1;max-width:min(90vw,44vmin);text-align:left}
+.kartlar{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,26vmin),1fr));gap:1vmin;padding:0 1vmin}
+.adim{background:#fff;border-radius:1.8vmin;padding:1.5vmin 2vmin;font-size:calc(var(--f)*.78);font-weight:800;box-shadow:0 .6vmin 1.6vmin rgba(15,23,42,.12);border-bottom:.6vmin solid #CBD5E1;text-align:center;display:flex;flex-direction:column;align-items:center;gap:.4vmin}
 .adim.secildi{display:none}
 .altbar{display:flex;gap:1vmin;padding-bottom:1.4vmin}
 .dgm{flex:1;border-radius:99px;padding:1.3vmin;font-weight:900;font-size:calc(var(--f)*.72)}
@@ -160,22 +161,24 @@ function basla(){
 function gorevCiz(){
   const g=gorevler[gi];
   if(!g){bitis();return}
-  const adimlar=karistir(g.adimlar.map((t,i)=>({t,i})));
+  // Adımlar düz metin ya da { t: metin, e: emoji } olabilir (resimli görevler).
+  const adimlar=karistir(g.adimlar.map((a,i)=>typeof a==='string'?{t:a,e:'',i}:{t:a.t||'',e:a.e||'',i}));
   S={g,adimlar,slot:new Array(g.adimlar.length).fill(null),kilit:new Array(g.adimlar.length).fill(false),hata:0,bitti:false};
   $('gorevSimge').textContent=g.emoji||'🧩';
   $('gorevAd').textContent=g.ad;
-  $('gorevAlt').textContent=`${g.adimlar.length} adımı doğru sıraya diz`;
+  $('gorevAlt').textContent=g.resimli?`🖼️ Resimli algoritma · ${g.adimlar.length} adımı sıraya diz`:`${g.adimlar.length} adımı doğru sıraya diz`;
   $('sira').textContent=`${gi+1}/${gorevler.length}`;
   ciz();
   zamanBaslat();
 }
 function ciz(){
   $('skorlar').innerHTML=takimlar.map((t,i)=>`<div class="tk ${i===sira&&takimlar.length>1?'aktif':''}" style="--c:${t.renk}">${esc(t.ad)} <b>${t.puan}</b></div>`).join('');
-  $('slotlar').innerHTML=S.slot.map((v,i)=>`<div class="slot ${v!=null?'dolu':''} ${S.kilit[i]?'dogru':''}" data-i="${i}"><span class="no">${i+1}</span>${v!=null?esc(S.adimlar[v].t):'boş'}</div>`).join('');
+  const emoji=(a)=>a.e?`<span class="em">${esc(a.e)}</span>`:'';
+  $('slotlar').innerHTML=S.slot.map((v,i)=>`<div class="slot ${v!=null?'dolu':''} ${S.kilit[i]?'dogru':''}" data-i="${i}"><span class="no">${i+1}</span>${v!=null?emoji(S.adimlar[v])+esc(S.adimlar[v].t):'boş'}</div>`).join('');
   $('slotlar').querySelectorAll('.slot').forEach(el=>{
     el.onclick=()=>{const i=+el.dataset.i;if(S.kilit[i]||S.slot[i]==null||S.bitti)return;S.slot[i]=null;ciz();SES.tik()};
   });
-  $('kartlar').innerHTML=S.adimlar.map((a,idx)=>S.slot.indexOf(idx)<0?`<button class="adim" data-i="${idx}">${esc(a.t)}</button>`:'').join('');
+  $('kartlar').innerHTML=S.adimlar.map((a,idx)=>S.slot.indexOf(idx)<0?`<button class="adim" data-i="${idx}">${emoji(a)}${esc(a.t)}</button>`:'').join('');
   $('kartlar').querySelectorAll('.adim').forEach(b=>b.onclick=()=>{
     const i=+b.dataset.i;if(S.bitti||S.slot.indexOf(i)>=0)return;
     const bos=S.slot.findIndex((v,k)=>v==null&&!S.kilit[k]);
