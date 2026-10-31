@@ -1,7 +1,7 @@
 // Öğretmen ana sayfası: karşılama bandı, şimdiki/sıradaki ders, kısayollar, sınıflar.
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable, Image, Modal, Platform } from 'react-native';
-import { useSafeAreaInsets, SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets, initialWindowMetrics } from 'react-native-safe-area-context';
 import { spacing, font, radius, inkOn } from '../../theme';
 import { usePlans } from '../../teacher/PlanContext';
 import { weekForDay } from '../../teacher/yearPlan';
@@ -73,6 +73,13 @@ export default function TeacherHomeScreen({ navigation }) {
   const [tamBoyut, setTamBoyut] = useState(null);
   const [tamKapaniyor, setTamKapaniyor] = useState(false);
   const tamHazir = !tamKapaniyor && (Platform.OS === 'web' || (tamBoyut && tamBoyut.w > tamBoyut.h));
+  // Çentik payı: uygulama telefonu kendisi yataya çevirince güvenli alan ölçümü (insets / SafeAreaView) iPhone'da
+  // ayrı pencerede SIFIR geliyordu, saat sütunu çentiğin arkasında kalıyordu. Çentikli iPhone'larda yataydaki çentik
+  // genişliği, dikey açılıştaki üst güvenli alanla aynıdır (Dynamic Island 59, çentik 47…): onu iki yana boşluk veririz.
+  // Çentik sağda ya da solda olabilir (yatay kilit iki yönü de kabul eder), bu yüzden iki kenar da boşaltılır.
+  const centik = Platform.OS === 'ios' ? Math.max((initialWindowMetrics && initialWindowMetrics.insets && initialWindowMetrics.insets.top) || 0, insets.top || 0) : 0;
+  const tamYan = Math.max(spacing.sm, insets.left || 0, insets.right || 0, centik);
+  const tamAlt = Math.max(spacing.xs, centik > 24 ? 21 : 0); // yatayda alttaki ev çizgisi (dikeydeki 34 burada geçersiz)
   const sonDokunus = useRef(0);
   const programaDokun = () => {
     const simdi = Date.now();
@@ -525,13 +532,9 @@ export default function TeacherHomeScreen({ navigation }) {
 
       {/* Tam ekran ders programı: çift dokununca açılır, yatay kilide geçer; ✕ veya çift dokun ile kapanır. */}
       <Modal visible={tamEkran} animationType="none" supportedOrientations={['portrait', 'landscape']} onRequestClose={tamEkraniKapat}>
-        {/* Güvenli alan PENCERENİN KENDİSİNDE ölçülür: ana ekrandan gelen insets ayrı pencerede (Modal) yatayda
-            güncellenmiyordu, saat sütunu iPhone çentiğinin arkasında kalıyordu. Çentik hangi taraftaysa o kenar boşaltılır. */}
-        <SafeAreaProvider>
-        <SafeAreaView edges={['top', 'bottom', 'left', 'right']} style={{ flex: 1, backgroundColor: colors.bg }}>
         <View
           onLayout={(e) => setTamBoyut({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
-          style={{ flex: 1, paddingTop: spacing.xs, paddingBottom: spacing.xs, paddingLeft: spacing.sm, paddingRight: spacing.sm }}
+          style={{ flex: 1, backgroundColor: colors.bg, paddingTop: spacing.xs, paddingBottom: tamAlt, paddingLeft: tamYan, paddingRight: tamYan }}
         >
           {tamHazir ? (
           <>
@@ -554,8 +557,6 @@ export default function TeacherHomeScreen({ navigation }) {
           </>
           ) : null}
         </View>
-        </SafeAreaView>
-        </SafeAreaProvider>
       </Modal>
     </View>
   );
