@@ -280,16 +280,17 @@ const LIST = {
 
 // unit: null → ünite numarası yok (oyun bir konuya bağlı); listede ve dosya adında konu adı görünür.
 const withId = (branchId) => (a) => ({ ...a, branchId, id: `${branchId}-${a.type}-${a.grade}-${a.unit ? `u${a.unit}` : 'genel'}` });
-// iPhone (App Store) sürümünde gösterilmeyen oyunlar: Logo Avcısı gerçek markaların logolarını içerir
-// (App Store 5.2.1 — başkasının markası). Web, Android ve tahta sitesinde durur.
-// Bu dosyayı node araçları da okur: react-native yoksa iOS değildir.
-let IOS = false;
+// Mağaza uygulamalarında (iPhone + Android) gösterilmeyen oyunlar: Logo Avcısı gerçek markaların logolarını içerir
+// (App Store 5.2.1, Google Play fikrî mülkiyet kuralı — başkasının markası). Web ve tahta sitesinde durur.
+// Bu dosyayı node araçları da okur: react-native yoksa mağaza uygulaması değildir.
+let MAGAZA = false;
 try {
-  IOS = require('react-native').Platform.OS === 'ios';
+  const os = require('react-native').Platform.OS;
+  MAGAZA = os === 'ios' || os === 'android';
 } catch (e) {}
-const IOS_GIZLI = new Set(['logo']);
+const MAGAZA_GIZLI = new Set(['logo']);
 export const activitiesFor = (branchId) =>
-  (LIST[branchId] || []).filter((a) => !(IOS && IOS_GIZLI.has(a.type))).map(withId(branchId));
+  (LIST[branchId] || []).filter((a) => !(MAGAZA && MAGAZA_GIZLI.has(a.type))).map(withId(branchId));
 export const activityById = (id) =>
   Object.keys(LIST)
     .flatMap((b) => activitiesFor(b))

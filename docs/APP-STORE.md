@@ -209,7 +209,7 @@ homework results from the server and removes the device from its classes.
 | 5.1.1 Kayıt zorunluluğu | Öğretmen “Hesap açmadan devam et” ile hesapsız kullanabilir |
 | 5.1.1 İzin açıklamaları | Kamera, fotoğraflar, mikrofon için Türkçe ve amaca özel metinler (app.json) |
 | 5.1.2 Gizlilik bildirimi | `ios.privacyManifests` (UserDefaults, dosya zamanı, açılış süresi, disk alanı; takip yok) |
-| 5.2.1 Başkasının markası | Gerçek marka logolu “Logo Avcısı” iPhone sürümünde gösterilmez |
+| 5.2.1 Başkasının markası | Gerçek marka logolu “Logo Avcısı” iPhone ve Android uygulamasında gösterilmez (yalnız web/tahta) |
 | 4.8 Apple ile giriş | iPhone'da Google girişi gösterilmez (sunucuda Google zaten kapalı); yalnız e-posta + şifre |
 | 2.1 Eksik içerik | “Yakında” görünen ders yok |
 | Şifreleme | `ITSAppUsesNonExemptEncryption: false` |
