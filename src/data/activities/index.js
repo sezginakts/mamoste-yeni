@@ -101,7 +101,8 @@ export const ACTIVITY_TYPES = {
     name: 'Logo Avcısı',
     desc: 'Logo parça parça açılır; takımlar markayı ne kadar erken tanırsa o kadar çok puan alır. Hazır logo paketi var, öğretmen kendi logolarını da ekleyebilir.',
     branches: ['teknoloji-tasarim'],
-    engine: () => require('./logoEngine.js').default,
+    // Uzantısız: iOS/Android'de boş logoEngine.native.js seçilir, logolar mağaza uygulamasına girmez.
+    engine: () => require('./logoEngine').default,
   },
   // Kaynağı tools/etkinlik/kronoloji.html (öğretmenin Claude'da hazırladığı oyun); değişince `node tools/etkinlik/derle.js`.
   // Havuz yok: 37 buluş kartı oyunun içinde; öğretmen kart ekleyip çıkarabilir (cihazda saklanır).
