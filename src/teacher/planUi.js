@@ -57,6 +57,12 @@ export function splitOutcome(line) {
     const sk = SKILL_BY_CODE[code[2]];
     return { icon: sk ? sk[0] : '🎯', label: sk ? sk[1] : null, code: code[1].replace(/\.$/, ''), text: line.slice(code[0].length) };
   }
+  // Türkçe: T.D.7.2. (D dinleme/izleme, K konuşma, O okuma, Y yazma).
+  const tc = line.match(/^(T\.([DKOY])\.\d{1,2}\.\d+\.?)\s+/);
+  if (tc) {
+    const sk = { D: ['👂', 'Dinleme'], K: ['🗣️', 'Konuşma'], O: ['📖', 'Okuma'], Y: ['✍️', 'Yazma'] }[tc[2]];
+    return { icon: sk[0], label: sk[1], code: tc[1].replace(/\.$/, ''), text: line.slice(tc[0].length) };
+  }
   // Diğer derslerin kodu (TT.7.3.1., M.7.1.2.3., F.7.1.1.1.): beceri yok, yalnızca kod ayrılır.
   // Bölümler rakam ya da tek büyük harf olabilir: TT.8.B.1.2.
   const tr = line.match(/^([A-ZÇĞİÖŞÜ]{1,4}\.\d{1,2}(?:\.(?:\d+|[A-ZÇĞİÖŞÜ])){1,5}\.?)\s+/);
@@ -78,6 +84,21 @@ function splitActivities(text) {
       for (const [re, icon, label] of ACT_PARTS) if (re.test(line)) return { icon, label, text: line.replace(re, '') };
       return { icon: '🎲', label: null, text: line };
     });
+}
+
+// Çıktı metni: başlık + varsa alt maddeleri (a, b, c…) ayrı ve küçük satırlar halinde.
+function OutcomeBody({ text, style, colors }) {
+  const { title, items } = outcomeParts(text);
+  return (
+    <View>
+      <Text style={style}>{title}</Text>
+      {items.map((it, i) => (
+        <Text key={i} style={{ color: colors.textMuted, fontSize: font.small, lineHeight: 19, marginTop: 4, paddingLeft: spacing.sm }}>
+          {it}
+        </Text>
+      ))}
+    </View>
+  );
 }
 
 export function WeekCard({ w, big }) {
@@ -139,7 +160,7 @@ export function WeekCard({ w, big }) {
                         ) : null}
                       </View>
                     ) : null}
-                    <Text style={{ color: colors.text, fontSize: bodySize, lineHeight: bodySize + 7 }}>{o.text}</Text>
+                    <OutcomeBody text={o.text} style={{ color: colors.text, fontSize: bodySize, lineHeight: bodySize + 7 }} colors={colors} />
                   </View>
                 </View>
               ))}
@@ -255,7 +276,7 @@ export function WeekDaysCard({ w, today, lessons }) {
                     <View key={k} style={s.dayOut}>
                       <Text style={{ fontSize: 14 }}>{o.icon}</Text>
                       {o.code ? <Text style={[s.codeText, { color: c }]}>{o.code}</Text> : null}
-                      <Text style={{ flex: 1, color: colors.text, fontSize: font.small, lineHeight: 20 }}>{o.text}</Text>
+                      <Text style={{ flex: 1, color: colors.text, fontSize: font.small, lineHeight: 20 }} numberOfLines={3}>{outcomeParts(o.text).title}</Text>
                     </View>
                   );
                 })}
@@ -284,15 +305,47 @@ export function lessonSlot(w, lesson) {
 // Kazanım metnini tek tek kazanımlara ayırır.
 // Bazı planlarda (ör. 5/6. sınıf) kazanımlar yeni satır yerine boşlukla ayrılmış geliyor:
 // "… carefully. ENG.5.1.L2. Students can …". Kodun önünden bölerek her kazanımı ayrı satır yaparız.
-const CODE_BEFORE = /\s+(?=(?:ENG|[A-ZÇĞİÖŞÜ]{1,4})\.\d{1,2}\.\d+\.[A-ZÇĞİÖŞÜ]*\d+\.)/g;
+// Bütün derslerin kod biçimleri: ENG.5.1.L2. · ENG5.7.L3. · E7.3.L1. (eski İngilizce) · T.D.7.2. (Türkçe: D/K/O/Y = beceri) ·
+// TT.7.1.1. · TT.8.B.1.2. · MAT.5.3.4. · BTY6.6.3. · Mü.7.D.3. · İTA.8.1.4. …
+const KOD = String.raw`[A-ZÇĞİÖŞÜ][A-Za-zÇĞİÖŞÜçğıöşü]{0,3}\.?(?:[A-ZÇĞİÖŞÜ]\.)?\d{1,2}(?:\.(?:\d+|[A-ZÇĞİÖŞÜ]{1,3}\d*)){1,4}\.?`;
+const CODE_BEFORE = new RegExp(String.raw`\s+(?=${KOD}\s)`, 'g');
+const CODE_START = new RegExp(String.raw`^(?:${KOD}\s|[-•–]\s)`); // kod ya da madde işaretiyle başlayan satır yeni çıktıdır
+// Haftanın metni → her öğrenme çıktısı tek satır.
+// PDF'ten gelen planlarda (ör. Türkçe) bir çıktı birkaç satıra kırılır ve alt maddeleri (a, b, c) vardır; çıktılar
+// yalnız KODDAN ayrılır, koddan başlamayan satır bir önceki çıktının devamıdır ("…yönetebilme a)" + "Dinleme/izleme
+// şekli…" tek çıktı — yoksa "Dinleme" beceri başlığı sanılıyordu). Hiç kod yoksa (öğretmenin kendi planı) her satır ayrı.
 export function outcomeLines(w) {
   const raw = String((w && w.outcomes) || '');
   if (!raw.trim()) return [];
-  return raw
+  const satirlar = raw
     .split(/\n+/)
     .flatMap((chunk) => chunk.replace(CODE_BEFORE, '\n').split('\n'))
     .map((s) => s.trim())
-    .filter((s) => s && !bosBeceriBasligi(s));
+    .filter(Boolean);
+  const kodlu = (s) => CODE_START.test(s + ' ') || !!splitOutcome(s).code;
+  if (!satirlar.some(kodlu)) return satirlar.filter((s) => !bosBeceriBasligi(s));
+  const out = [];
+  let acik = false; // son öğe koddan başlayan bir çıktı mı (devam satırı ona eklenir)
+  satirlar.forEach((s) => {
+    if (bosBeceriBasligi(s)) {
+      acik = false;
+      return;
+    }
+    if (kodlu(s) || !acik) {
+      out.push(s);
+      acik = kodlu(s);
+    } else out[out.length - 1] += ' ' + s;
+  });
+  return out;
+}
+
+// Çıktının başlığı ve alt maddeleri: "T.D.7.1. … yönetebilme a) … b) …" → { title: '… yönetebilme', items: ['a) …', 'b) …'] }.
+// Ana kart yalnız başlığı gösterir (uzun alt maddeler ekranı kaplamasın); plan ekranı maddeleri de gösterir.
+export function outcomeParts(text) {
+  const t = String(text || '').trim();
+  const parca = t.split(/\s+(?=[a-zçğıöşü]\)\s)/);
+  if (parca.length < 2) return { title: t, items: [] };
+  return { title: parca[0].trim(), items: parca.slice(1).map((p) => p.trim()).filter(Boolean) }; // madde harfi korunur (Türkçe: a, b, c, ç)
 }
 // Planlarda beceri adı çoğu zaman tek başına bir satırda başlık olarak durur ("Listening", "Spoken Interaction"):
 // kendisi bir öğrenme çıktısı değildir; ayrı satır sayılırsa kartta içi boş "Dinleme" görünür ve dersler arası
@@ -483,7 +536,7 @@ export function LessonCard({ w, lesson, onShowWeek, onPickSlot }) {
                         ) : null}
                       </View>
                     ) : null}
-                    <Text style={[s.focusText, { color: colors.text }]}>{o.text}</Text>
+                    <OutcomeBody text={o.text} style={[s.focusText, { color: colors.text }]} colors={colors} />
                   </View>
                 ))}
               </View>

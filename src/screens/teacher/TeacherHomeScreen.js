@@ -6,7 +6,7 @@ import { spacing, font, radius, inkOn } from '../../theme';
 import { usePlans } from '../../teacher/PlanContext';
 import { weekForDay } from '../../teacher/yearPlan';
 import { useDesk, weekdayOf, sortNotes, gradeOfName } from '../../teacher/DeskContext';
-import { outcomesForLesson, splitOutcome, unitColor, lessonSlot } from '../../teacher/planUi';
+import { outcomesForLesson, splitOutcome, outcomeParts, unitColor, lessonSlot } from '../../teacher/planUi';
 import { usePruneStaleLessons } from '../../teacher/pruneLessons';
 import { classColor } from './TimetableScreen';
 import { branchOf } from '../../data/branches';
@@ -320,7 +320,8 @@ export default function TeacherHomeScreen({ navigation }) {
                                 {o.code || ''}{o.code && o.label ? '  ·  ' : ''}{o.label ? `${o.icon} ${o.label}` : ''}
                               </Text>
                             ) : null}
-                            <Text style={[st.outText, { color: colors.text }]}>{o.text}</Text>
+                            {/* Ana kartta yalnız çıktının başlığı, en çok 3 satır: alt maddeler (a, b, c…) planda. */}
+                            <Text style={[st.outText, { color: colors.text }]} numberOfLines={3}>{outcomeParts(o.text).title}</Text>
                           </View>
                         ))}
                         {skills.length > 2 ? (
