@@ -6,7 +6,8 @@ import { useTheme } from '../../context/ThemeContext';
 import { usePlans } from '../../teacher/PlanContext';
 import { parseYearPlan, weekForDay, guessGrade, assignDates, parseStartDate } from '../../teacher/yearPlan';
 import { pickTableFile, RosterFileError } from '../../teacher/rosterFile';
-import { WeekCard, WeekDaysCard, LessonCard, PlanCalendar, unitColor } from '../../teacher/planUi';
+import { WeekCard, WeekDaysCard, LessonCard, PlanCalendar, unitColor, TatilSeridi } from '../../teacher/planUi';
+import { tatilBilgisi } from '../../teacher/evrak/takvim';
 import { useDesk, weekdayOf, periodAt } from '../../teacher/DeskContext';
 import { Header, Card, SectionTitle, Field, SmallButton, Chip, formatDate, formatDateLong, confirmAction } from '../../teacher/ui';
 import { dayKey } from '../../utils/helpers';
@@ -296,6 +297,20 @@ export default function YearPlanScreen({ route, navigation }) {
               </Pressable>
             ) : null}
 
+            {/* Tatil ATLANMAZ, belirtilir (takvimden): bugün tatilse ya da gösterilen haftada tatil günü varsa.
+                Planında tatil haftası yazmayan derslerde (ör. Teknoloji Tasarım) tatil haftasında sıradaki hafta gösterilir; bu şerit nedenini söyler. */}
+            {(() => {
+              if (!shown) return null;
+              const bugun = offset === 0 && tatilBilgisi(today);
+              if (bugun) {
+                return <TatilSeridi text={`🏖️ ${bugun.etiket}`} colors={colors} />;
+              }
+              if (shown.holiday) return null;
+              const gunler = [0, 1, 2, 3, 4].map((i) => tatilBilgisi(addDays(shown.start, i))).filter(Boolean);
+              const tekil = gunler.filter((t, i) => gunler.findIndex((x) => x.bas === t.bas) === i);
+              return tekil.length ? <TatilSeridi text={`🏖️ ${tekil.map((t) => t.etiket).join(' · ')}`} colors={colors} /> : null;
+            })()}
+
             {/* Aynı gün bu düzeyde birden çok ders varsa (7-A, 7-B) hangisi? */}
             {/* Bu sınıf düzeyinin haftadaki dersleri — hangisinin planını görmek istiyorsun? */}
             {gradeLessons.length > 1 ? (
@@ -331,6 +346,7 @@ export default function YearPlanScreen({ route, navigation }) {
                   lesson={slotIdx != null ? { idx: slotIdx, count: lesson ? lesson.count : null, label: lesson ? lesson.label : plan.name } : lesson}
                   onShowWeek={() => setFull(true)}
                   onPickSlot={(i) => setSlotIdx(i)}
+                  tatil={slotIdx == null && lesson && lesson.date ? tatilBilgisi(lesson.date) : null}
                 />
               )
             ) : null}

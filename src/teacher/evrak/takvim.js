@@ -137,6 +137,26 @@ export function gunDurumu(d) {
   };
 }
 
+// Ders yapılmayan tatil (ara tatil, yarıyıl, resmî/dinî bayram; arife yarım günü sayılmaz): { ad, bas, bit, etiket } | null.
+// Öğretmen ekranları tatili ATLAMAZ, bununla belirtir: "1. dönem ara tatili · 16–20 Kasım".
+const AYLAR = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+export function tatilBilgisi(d) {
+  if (!d) return null;
+  const x = typeof d === 'string' ? fromIso(d) : d;
+  const s = isoDay(x);
+  const t = yilVerisi(ilkYil(x)).tatiller.find(([a, b, tur]) => s >= a && s <= b && tur !== 'yarim');
+  if (!t) return null;
+  const a = fromIso(t[0]);
+  const b = fromIso(t[1]);
+  const aralik =
+    t[0] === t[1]
+      ? `${a.getDate()} ${AYLAR[a.getMonth()]}`
+      : a.getMonth() === b.getMonth()
+        ? `${a.getDate()}–${b.getDate()} ${AYLAR[b.getMonth()]}`
+        : `${a.getDate()} ${AYLAR[a.getMonth()]} – ${b.getDate()} ${AYLAR[b.getMonth()]}`;
+  return { ad: t[3] || 'Tatil', bas: t[0], bit: t[1], etiket: `${t[3] || 'Tatil'} · ${aralik}` };
+}
+
 // Tarihin dönemi: '1. dönem' / '2. dönem'.
 export const donemOf = (d) => (isoDay(d) < yilVerisi(ilkYil(d)).tarihler.donem2_basi ? '1. dönem' : '2. dönem');
 export const takvimYaklasikMi = (d = new Date()) => yilVerisi(ilkYil(d)).yaklasik;

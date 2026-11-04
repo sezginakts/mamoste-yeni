@@ -12,6 +12,8 @@ import { hwSummary } from '../../utils/homework';
 import { dayKey } from '../../utils/helpers';
 import { usePlans } from '../../teacher/PlanContext';
 import { weekForDay } from '../../teacher/yearPlan';
+import { outcomeLines, splitOutcome, outcomeParts } from '../../teacher/planUi';
+import { tatilBilgisi } from '../../teacher/evrak/takvim';
 import { useRole } from '../../context/RoleContext';
 
 const CELL = 34;
@@ -66,6 +68,7 @@ export default function TeacherClassScreen({ route, navigation }) {
   const gradeMatch = cls ? String(cls.name).match(/^\s*(\d{1,2})/) : null;
   const gradePlan = gradeMatch ? planForGrade(+gradeMatch[1]) : null;
   const planWeek = gradePlan ? weekForDay(gradePlan.weeks, dayKey()) : null;
+  const bugunTatil = tatilBilgisi(new Date());
 
   if (!cls) return <View style={{ flex: 1, backgroundColor: colors.bg }}><Header title="Sınıf bulunamadı" onBack={() => navigation.goBack()} /></View>;
 
@@ -108,9 +111,20 @@ export default function TeacherClassScreen({ route, navigation }) {
                 <Text style={{ color: colors.text, fontWeight: '800', marginTop: 4 }} numberOfLines={1}>
                   {planWeek.week.holiday ? '🏖️ Tatil / özel gün' : planWeek.week.unit || planWeek.week.topic || '—'}
                 </Text>
-                {planWeek.week.outcomes ? (
-                  <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: 2 }} numberOfLines={3}>{planWeek.week.outcomes}</Text>
+                {bugunTatil ? (
+                  <Text style={{ color: colors.text, fontSize: font.small, fontWeight: '800', marginTop: 2 }}>🏖️ {bugunTatil.etiket}</Text>
                 ) : null}
+                {(() => {
+                  // Haftanın ham metni yerine ilk çıktının başlığı (Türkçe planında hafta metni binlerce karakter).
+                  const ilk = planWeek.week.holiday ? null : outcomeLines(planWeek.week)[0];
+                  if (!ilk) return null;
+                  const o = splitOutcome(ilk);
+                  return (
+                    <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: 2 }} numberOfLines={3}>
+                      {o.code ? `${o.code} · ` : ''}{outcomeParts(o.text).title}
+                    </Text>
+                  );
+                })()}
               </Card>
             ) : null}
             {drills && weak.patterns.length ? (

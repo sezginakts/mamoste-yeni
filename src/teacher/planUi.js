@@ -6,6 +6,7 @@ import { useTheme } from '../context/ThemeContext';
 import { formatDate } from './ui';
 import Collapsible from '../components/Collapsible';
 import { dayKey } from '../utils/helpers';
+import { tatilBilgisi } from './evrak/takvim';
 
 // Ünite rengi: üniteler sırayla uygulama rengi / ikinci renk (aynı ünite her yerde aynı renk); tatil haftası gri.
 const HOLIDAY_COLOR = '#94A3B8';
@@ -84,6 +85,15 @@ function splitActivities(text) {
       for (const [re, icon, label] of ACT_PARTS) if (re.test(line)) return { icon, label, text: line.replace(re, '') };
       return { icon: '🎲', label: null, text: line };
     });
+}
+
+// Tatil şeridi (ana kart, plan ekranı): "🏖️ 1. dönem ara tatili · 16–20 Kasım". Tatil atlanmaz, belirtilir.
+export function TatilSeridi({ text, colors }) {
+  return (
+    <View style={{ backgroundColor: '#F59E0B22', borderColor: '#F59E0B66', borderWidth: 1, borderRadius: radius.md, paddingHorizontal: spacing.sm, paddingVertical: 6, marginBottom: spacing.sm }}>
+      <Text style={{ color: colors.text, fontSize: font.small, fontWeight: '800' }}>{text}</Text>
+    </View>
+  );
 }
 
 // Çıktı metni: başlık + varsa alt maddeleri (a, b, c…) ayrı ve küçük satırlar halinde.
@@ -254,7 +264,8 @@ export function WeekDaysCard({ w, today, lessons }) {
         {days.map((d, i) => {
           const date = addDays(w.start, d.day - 1);
           const isToday = date === today;
-          const title = `${DAY_NAMES[d.day - 1]} · ${formatDate(date)}${d.period ? ` · ${d.period}. ders` : ''}`;
+          const tatil = tatilBilgisi(date); // tatil günü atlanmaz, belirtilir
+          const title = `${DAY_NAMES[d.day - 1]} · ${formatDate(date)}${d.period ? ` · ${d.period}. ders` : ''}${tatil ? ` · 🏖️ ${tatil.ad}` : ''}`;
           return (
             <Collapsible
               key={i}
@@ -456,7 +467,8 @@ function Fold({ icon, label, text, color, lines = 3 }) {
 
 // Bugünkü ders kartı: o derse düşen öğrenme çıktıları + o derste yapılacaklar (içerik, işlev, etkinlik, değerlendirme).
 // lesson: { label, period, idx, count, dayName, upcoming } — ders programından; yoksa haftanın 1. dersi.
-export function LessonCard({ w, lesson, onShowWeek, onPickSlot }) {
+// tatil: dersin günü tatile denk geliyorsa (takvim) { etiket } — kartta belirtilir, çıktılar yine görünür.
+export function LessonCard({ w, lesson, onShowWeek, onPickSlot, tatil }) {
   const { colors, shadow, mode } = useTheme();
   const [open, setOpen] = useState(false); // "Bu derste neler yapılacak" açık mı
   const c = unitColor(w);
@@ -501,6 +513,7 @@ export function LessonCard({ w, lesson, onShowWeek, onPickSlot }) {
       </View>
 
       <View style={{ padding: spacing.md, gap: spacing.md }}>
+        {tatil ? <TatilSeridi text={`🏖️ ${tatil.etiket}`} colors={colors} /> : null}
         {outs.length ? (
           <View style={[s.focus, { borderColor: c, backgroundColor: c + (mode === 'dark' ? '22' : '12') }]}>
             {/* Başlık katlanır: kazanımlar uzun, ekranı kaplamasın. Kapalıyken sadece başlık + sayı görünür. */}

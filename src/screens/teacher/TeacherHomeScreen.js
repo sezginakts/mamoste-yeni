@@ -6,7 +6,8 @@ import { spacing, font, radius, inkOn } from '../../theme';
 import { usePlans } from '../../teacher/PlanContext';
 import { weekForDay } from '../../teacher/yearPlan';
 import { useDesk, weekdayOf, sortNotes, gradeOfName } from '../../teacher/DeskContext';
-import { outcomesForLesson, splitOutcome, outcomeParts, unitColor, lessonSlot } from '../../teacher/planUi';
+import { outcomesForLesson, splitOutcome, outcomeParts, unitColor, lessonSlot, TatilSeridi } from '../../teacher/planUi';
+import { tatilBilgisi } from '../../teacher/evrak/takvim';
 import { usePruneStaleLessons } from '../../teacher/pruneLessons';
 import { classColor } from './TimetableScreen';
 import { branchOf } from '../../data/branches';
@@ -163,7 +164,12 @@ export default function TeacherHomeScreen({ navigation }) {
   let focus = null;
   let focusLabel = '';
   let focusDay = today;
-  if (todayLessons.length) {
+  // Tatil (ara tatil, yarıyıl, bayram) ATLANMAZ, belirtilir: bugün tatilse bugünün dersi gösterilmez, kartın üstünde
+  // tatilin adı + tarihi yazar ("🏖️ 1. dönem ara tatili · 16–20 Kasım"); sıradaki derse giderken araya tatil giriyorsa da.
+  // Planında tatil haftası yazmayan derslerde (ör. Teknoloji Tasarım) tatil, takvimden (egitimTakvimi) bilinir.
+  const bugunTatil = now.getDay() !== 0 && now.getDay() !== 6 ? tatilBilgisi(now) : null;
+  let aradaTatil = null;
+  if (todayLessons.length && !bugunTatil) {
     if (!hasTimes) {
       focus = todayLessons[0];
       focusLabel = 'BUGÜN';
@@ -188,16 +194,22 @@ export default function TeacherHomeScreen({ navigation }) {
   }
   const dayOver = todayLessons.length > 0 && hasTimes && !focus;
   if (!focus && desk.hasTimetable) {
-    for (let i = 1; i <= 7 && !focus; i++) {
+    // Yarıyıl tatili 2 hafta + hafta sonları: 24 gün ileriye kadar bakılır; tatil günündeki ders sıradaki ders sayılmaz.
+    for (let i = 1; i <= 24 && !focus; i++) {
       const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
       const ls = desk.lessonsOnDay(weekdayOf(d), branchId);
-      if (ls.length) {
-        focus = ls[0];
-        focusDay = dayKey(d);
-        focusLabel = i === 1 ? 'YARIN' : 'SONRAKİ DERS';
+      if (!ls.length) continue;
+      const t = tatilBilgisi(d);
+      if (t) {
+        if (!aradaTatil && !bugunTatil) aradaTatil = t;
+        continue;
       }
+      focus = ls[0];
+      focusDay = dayKey(d);
+      focusLabel = bugunTatil || aradaTatil ? 'TATİLDEN SONRA' : i === 1 ? 'YARIN' : 'SONRAKİ DERS';
     }
   }
+  const tatilNotu = bugunTatil || aradaTatil ? `🏖️ ${(bugunTatil || aradaTatil).etiket}` : null;
   const live = focusLabel === 'ŞİMDİ';
   // Ders programı yoksa üst kart bu haftanın öğrenme çıktılarını düzey düzey gösterir.
   // Varsayılan: öğretmenin ilk sınıfının düzeyi (sınıf yoksa ilk plan).
@@ -274,6 +286,7 @@ export default function TeacherHomeScreen({ navigation }) {
             const c = classColor(focus.label);
             return (
               <Pressable onPress={() => openLesson(focus)} style={({ pressed }) => [st.focus, shadow, { backgroundColor: colors.card, borderColor: colors.border }, pressed && { opacity: 0.94 }]}>
+                {tatilNotu ? <TatilSeridi text={tatilNotu} colors={colors} /> : null}
                 {/* Tarih satırı ile sınıf rozeti aynı hizada (üstte fazladan satır yok) */}
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
                   <Text style={[st.when, { color: colors.text, fontSize: font.small, flex: 1 }]}>
@@ -357,15 +370,17 @@ export default function TeacherHomeScreen({ navigation }) {
             onPress={() => navigation.navigate(desk.hasTimetable ? 'YearPlan' : 'Timetable')}
             style={[st.focus, shadow, { backgroundColor: colors.card, borderColor: colors.border, padding: spacing.lg, flexDirection: 'row', alignItems: 'center', gap: spacing.md }]}
           >
-            <Text style={{ fontSize: 34 }}>{!desk.hasTimetable ? '🗓️' : dayOver ? '🌇' : '☕'}</Text>
+            <Text style={{ fontSize: 34 }}>{!desk.hasTimetable ? '🗓️' : bugunTatil ? '🏖️' : dayOver ? '🌇' : '☕'}</Text>
             <View style={{ flex: 1 }}>
               <Text style={{ color: colors.text, fontWeight: '900', fontSize: font.body }}>
-                {!desk.hasTimetable ? 'Ders programını gir' : dayOver ? 'Bugünkü derslerin bitti' : 'Bugün dersin yok'}
+                {!desk.hasTimetable ? 'Ders programını gir' : bugunTatil ? bugunTatil.ad : dayOver ? 'Bugünkü derslerin bitti' : 'Bugün dersin yok'}
               </Text>
               <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: 2 }}>
                 {!desk.hasTimetable
                   ? 'Öğrenme çıktısını görebilmek için ders programını gir: hangi gün, kaçıncı derste hangi sınıfa girdiğini bir kez yaz.'
-                  : dayOver
+                  : bugunTatil
+                    ? bugunTatil.etiket
+                    : dayOver
                     ? 'Emeğine sağlık! Yarının planına göz atabilirsin.'
                     : 'İyi dinlenmeler. Yıllık planına göz atabilirsin.'}
               </Text>
