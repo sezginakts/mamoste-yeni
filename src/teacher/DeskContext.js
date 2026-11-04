@@ -13,7 +13,7 @@ import { shortId } from '../utils/codec';
 import { useRole } from '../context/RoleContext';
 import { getBranchItem } from '../utils/branchStore';
 import { AppState } from 'react-native';
-import { bellTimes, scheduleBells, bellsRolling } from '../utils/bell';
+import { bellTimes, scheduleBells, bellsDated, clearBellNotifications } from '../utils/bell';
 import { scheduleReminder, cancelReminder } from '../utils/notify';
 
 const TT_KEY = '@ingapp/teacher/v1/timetable'; // ESKİ (branşa özel): yalnız migration için okunur
@@ -320,18 +320,30 @@ export function DeskProvider({ children }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [bell, schedules, daySchedule, shown]
   );
+  const tarihliKurulu = useRef(false); // son kurulum tarihli miydi (tatil bitince haftalığa dönmek için)
+  const zilKur = () => {
+    tarihliKurulu.current = bellsDated(bells);
+    scheduleBells(bells);
+  };
   useEffect(() => {
     if (!branchId || !sharedLoaded) return undefined;
     clearTimeout(bellTimer.current);
-    bellTimer.current = setTimeout(() => scheduleBells(bells), 800);
+    bellTimer.current = setTimeout(zilKur, 800);
     return () => clearTimeout(bellTimer.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bells, branchId, sharedLoaded]);
-  // Tarihli kurulumda (haftalık zil iPhone sınırını aşınca) önümüzdeki günlerin zilleri uygulama her öne geldiğinde yenilenir.
+  // Uygulama açılınca / öne gelince: listede birikmiş zil bildirimleri silinir. Tarihli kurulumda (zil iPhone sınırını
+  // aşınca ya da yakında tatil varsa) önümüzdeki günlerin zilleri yenilenir; tatil bitince yeniden haftalık kurulur.
   useEffect(() => {
-    if (!bellsRolling(bells)) return undefined;
-    const sub = AppState.addEventListener('change', (s) => s === 'active' && scheduleBells(bells));
+    clearBellNotifications();
+    const sub = AppState.addEventListener('change', (s) => {
+      if (s !== 'active') return;
+      clearBellNotifications();
+      if (branchId && sharedLoaded && (tarihliKurulu.current || bellsDated(bells))) zilKur();
+    });
     return () => sub.remove();
-  }, [bells]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bells, branchId, sharedLoaded]);
 
   const saveNotes = (fn) =>
     setNotes((prev) => {

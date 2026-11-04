@@ -8,6 +8,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useDesk, weekdayOf } from '../teacher/DeskContext';
 import { bellText, playBell } from '../utils/bell';
 import { dayKey } from '../utils/helpers';
+import { tatilMi } from '../teacher/evrak/takvim';
 import { font, radius, spacing } from '../theme';
 
 let openBell = null;
@@ -62,6 +63,7 @@ export default function BellOverlay() {
     if (!desk.bells.length) return undefined;
     const check = () => {
       const now = new Date();
+      if (tatilMi(now, true)) return; // ara tatil, yarıyıl, resmî tatil: zil çalmaz (telefondaki bildirimler de öyle kurulur)
       const day = weekdayOf(now);
       const t = hhmm(now);
       const b = desk.bells.find((x) => x.day === day && x.time === t);

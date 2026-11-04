@@ -4,8 +4,13 @@
 // iOS aynı anda en fazla 64 bildirim bekletir (zil için MAX_BELLS). Haftalık zil sayısı buna sığıyorsa her hafta tekrarlayan
 // bildirim; sığmıyorsa (ör. haftada 30 ders × başlangıç + bitiş = 60) zillerin HEPSİ korunur, önümüzdeki günlerinki tarihleriyle
 // kurulur (tatil günleri atlanır) ve uygulama her öne geldiğinde yenilenir (DeskContext → AppState).
+// Haftalık tekrar tatil günlerini atlayamaz: önümüzdeki ILERI_GUN içinde tatil varsa o dönem de tarihli kurulur (bellsDated).
+// Zil bir uyarıdır, bildirim listesinde birikmez: uygulama açıkken listeye düşmez (notify.foregroundHandling), uygulama her
+// açıldığında / öne geldiğinde önceki zil bildirimleri listeden silinir (clearBellNotifications). Uygulama kapalıyken gelen
+// zilin kendiliğinden kaybolması telefonun elinde değil (zaman aşımı seçeneği yok); uygulama açılınca temizlenir.
 import { Platform } from 'react-native';
 import { tatilMi } from '../teacher/evrak/takvim';
+import { foregroundHandling } from './notify';
 
 export const MAX_BELLS = 56;
 const ILERI_GUN = 14; // tarihli kurulumda en fazla kaç gün ilerisi
@@ -34,6 +39,16 @@ export function bellTimes({ periods = [], dayPeriods = null, lessons = {}, mode 
 }
 // Haftalık tekrar sığmıyorsa tarihli (yuvarlanan) kurulum.
 export const bellsRolling = (bells) => bells.length > MAX_BELLS;
+// Önümüzdeki günlerde ders olmayan bir tatil (ara tatil, yarıyıl, resmî tatil) var mı? Hafta sonu sayılmaz.
+export function tatilYaklasiyor(now = new Date()) {
+  for (let g = 0; g < ILERI_GUN; g++) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + g, 12);
+    if (d.getDay() !== 0 && d.getDay() !== 6 && tatilMi(d, true)) return true;
+  }
+  return false;
+}
+// Tarihli kurulum gerekiyor mu: zil sayısı sınırı aşıyor ya da yakında tatil var (tatilde çalmasın).
+export const bellsDated = (bells, now = new Date()) => bells.length > 0 && (bellsRolling(bells) || tatilYaklasiyor(now));
 
 // Önümüzdeki zil anları (tarihli): şimdiden sonrası, tatil (ara tatil, yarıyıl dahil) ve hafta sonu hariç, en fazla MAX_BELLS.
 export function upcomingBells(bells, now = new Date()) {
@@ -66,11 +81,26 @@ function mod() {
   if (!N) {
     try {
       N = require('expo-notifications');
+      // Uygulama açıkken bildirim nasıl gösterilsin: bu ayar yoksa açık uygulamada zil SESSİZ kalıyordu
+      // (ayar yalnız not hatırlatıcısı kurulunca yapılıyordu; ekrandaki zil telefonda ses çalmaz, sesi bildirim çalar).
+      N.setNotificationHandler({ handleNotification: foregroundHandling });
     } catch (e) {
       N = null;
     }
   }
   return N;
+}
+
+// Bildirim listesindeki önceki zilleri sil (uygulama açılınca / öne gelince). Zil çalıp geçti, listede durmasına gerek yok.
+export async function clearBellNotifications() {
+  const n = mod();
+  if (!n) return;
+  try {
+    const list = await n.getPresentedNotificationsAsync();
+    await Promise.all(
+      list.filter((x) => x.request && x.request.content && x.request.content.data && x.request.content.data.type === 'zil').map((x) => n.dismissNotificationAsync(x.request.identifier))
+    );
+  } catch (e) {}
 }
 
 // Eski zilleri sil, yenilerini kur. bells boşsa yalnız siler. Döner: kurulan zil sayısı (izin yoksa null).
@@ -86,7 +116,7 @@ export async function scheduleBells(bells) {
     if (Platform.OS === 'android') {
       await n.setNotificationChannelAsync(CHANNEL, { name: 'Ders zili', importance: n.AndroidImportance.HIGH, sound: BELL_SOUND, vibrationPattern: [0, 250] });
     }
-    if (bellsRolling(bells)) {
+    if (bellsDated(bells)) {
       const yakin = upcomingBells(bells);
       for (const b of yakin) {
         await n.scheduleNotificationAsync({

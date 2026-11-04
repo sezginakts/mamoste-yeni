@@ -2,11 +2,11 @@
 // hatırlatma yine de Öğretmen Paneli'ndeki "Dikkat" şeridinde görünür.
 import { Platform } from 'react-native';
 
-// Uygulama öndeyken: ders zili banner göstermez (uygulamada zil animasyonu çıkar), yalnız sesi çalar.
-// Ödev bildirimi sesli banner, not hatırlatıcısı sessiz banner.
+// Uygulama öndeyken: ders zili banner göstermez (uygulamada zil animasyonu çıkar), yalnız sesi çalar ve bildirim
+// listesine de düşmez (zil bir uyarı, listede birikmesin). Ödev bildirimi sesli banner, not hatırlatıcısı sessiz banner.
 export async function foregroundHandling(notification) {
   const data = (notification && notification.request && notification.request.content.data) || {};
-  if (data.type === 'zil') return { shouldShowBanner: false, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: false };
+  if (data.type === 'zil') return { shouldShowBanner: false, shouldShowList: false, shouldPlaySound: true, shouldSetBadge: false };
   return { shouldShowBanner: true, shouldShowList: true, shouldPlaySound: !!data.homeworkId, shouldSetBadge: false };
 }
 
