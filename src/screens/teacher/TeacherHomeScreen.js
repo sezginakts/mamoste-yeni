@@ -404,6 +404,13 @@ export default function TeacherHomeScreen({ navigation }) {
             <HomeTimetable />
           </Pressable>
           {desk.hasTimetable ? <Text style={{ color: colors.textFaint, fontSize: font.tiny, marginTop: spacing.xs }}>çift tıkla</Text> : null}
+          {desk.conflicts.length ? (
+            <Pressable onPress={() => navigation.navigate('Timetable')} hitSlop={6} accessibilityRole="button" accessibilityLabel="Çakışan dersleri gör">
+              <Text style={{ color: colors.danger, fontWeight: '800', fontSize: font.tiny, marginTop: spacing.xs }}>
+                ⚠️ {desk.conflicts.length} çakışan ders — bak ›
+              </Text>
+            </Pressable>
+          ) : null}
         </View>
 
         {/* ---- Kısayollar ---- */}

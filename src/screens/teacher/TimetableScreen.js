@@ -95,6 +95,37 @@ export default function TimetableScreen({ navigation }) {
           </View>
         </View>
 
+        {/* Çakışan dersler: listeye geri eklenen dersin, saatinde artık başka ders olan hücreleri. Saatteki ders kalır
+            (öğretmenin son ayarı); öğretmen isterse geri gelen dersi koyar ya da siler. O saati elle değiştirmek de çakışmayı kapatır. */}
+        {desk.conflicts.length ? (
+          <View style={[st.cakisma, { borderColor: colors.danger + '66', backgroundColor: colors.danger + '0F' }]}>
+            <Text style={{ color: colors.text, fontWeight: '900', fontSize: font.body }}>⚠️ Çakışan dersler ({desk.conflicts.length})</Text>
+            <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: 2, marginBottom: spacing.xs }}>
+              Geri eklediğin dersin bu saatlerine başka ders koymuşsun. Şimdiki ders kalıyor; istersen eskisini geri koy.
+            </Text>
+            {desk.conflicts.map((p) => {
+              const [g, s] = p.key.split('-').map(Number);
+              const simdi = desk.lessons[p.key];
+              const ad = (l) => (l ? `${l.ders ? branchOf(l.ders).short + ' ' : ''}${l.label || ''}`.trim() : '');
+              return (
+                <View key={p.id} style={[st.cakismaSatir, { borderTopColor: colors.border }]}>
+                  <Text style={{ color: colors.text, fontSize: font.small, flex: 1 }}>
+                    <Text style={{ fontWeight: '900' }}>{SHORT[g - 1]} {s}. ders: </Text>
+                    {ad(p.lesson)}
+                    <Text style={{ color: colors.textMuted }}>{simdi ? `  (şu an ${ad(simdi)})` : ''}</Text>
+                  </Text>
+                  <Pressable onPress={() => desk.applyConflict(p.id)} hitSlop={6} style={[st.cakismaBtn, { backgroundColor: colors.accent }]} accessibilityRole="button" accessibilityLabel={`${ad(p.lesson)} dersini geri koy`}>
+                    <Text style={{ color: colors.onAccent, fontWeight: '900', fontSize: font.small }}>Bunu koy</Text>
+                  </Pressable>
+                  <Pressable onPress={() => desk.dropConflict(p.id)} hitSlop={6} style={[st.cakismaBtn, { borderWidth: 1, borderColor: colors.border }]} accessibilityRole="button" accessibilityLabel={`${ad(p.lesson)} dersini sil`}>
+                    <Text style={{ color: colors.text, fontWeight: '800', fontSize: font.small }}>Sil</Text>
+                  </Pressable>
+                </View>
+              );
+            })}
+          </View>
+        ) : null}
+
         {/* Tablo */}
         {/* Gölge YOK: tablo köşeden kırpıldığı (overflow hidden) için gölge görünmüyordu ama iPhone kaydırırken her karede
             ekran dışı çizim yapıyor, sayfa takılarak kayıyordu. */}
@@ -186,24 +217,26 @@ export default function TimetableScreen({ navigation }) {
           cell={cell}
           lesson={desk.lessons[`${cell.day}-${cell.period}`]}
           period={desk.periodsFor(cell.day)[cell.period - 1]}
-          classes={t.classes}
+          classes={t.allClasses}
           dersler={dersler}
           varsayilanDers={branchId}
           onPick={(pick) => {
             if (!pick) desk.setLesson(cell.day, cell.period, null);
             else {
-              // Sınıf Sınıflarım'da yoksa oluştur — program ile sınıf listesi aynı kalsın.
+              // Sınıf o dersin Sınıflarım'ında yoksa o derse aç — program ile sınıf listesi aynı kalsın.
+              // Aranan ders seçilen derstir (aktif ders değil): TVT'ye 7-A girilince İngilizce'nin 7-A'sı alınmasın.
+              const ders = pick.ders || branchId;
               const label = `${pick.grade}-${pick.branch}`;
-              const existing = t.classes.find((c) => {
+              const existing = t.allClasses.find((c) => {
                 const p = parseClassName(c.name);
-                return p.grade === pick.grade && p.branch === pick.branch;
+                return (c.branch || branchId) === ders && p.grade === pick.grade && p.branch === pick.branch;
               });
-              const classId = existing ? existing.id : t.addClass(label);
+              const classId = existing ? existing.id : t.addClass(label, ders);
               desk.setLesson(cell.day, cell.period, {
                 classId,
                 grade: pick.grade,
                 label: existing ? existing.name : label,
-                ders: pick.ders || branchId,
+                ders,
               });
             }
             setCell(null);
@@ -304,7 +337,7 @@ function ClassPicker({ cell, lesson, period, classes, dersler = [], varsayilanDe
   const [grade, setGrade] = useState(cur.grade);
   const [branch, setBranch] = useState(cur.branch);
   const name = grade && branch ? `${grade}-${branch}` : null;
-  const known = classes.filter((c) => parseClassName(c.name).branch && (!ders || !c.branch || c.branch === ders));
+  const known = (classes || []).filter((c) => parseClassName(c.name).branch && (!ders || (c.branch || varsayilanDers) === ders));
 
   return (
     <Sheet title={`${DAYS[cell.day - 1]} · ${cell.period}. ders`} subtitle={`Bu saatte hangi derse, hangi sınıfa giriyorsun?${time}`} onClose={onClose}>
@@ -534,6 +567,9 @@ const st = StyleSheet.create({
   schedBadge: { fontSize: 10, fontWeight: '900', borderWidth: 1, borderRadius: 6, paddingHorizontal: 5, marginTop: 3, overflow: 'hidden' },
   dersTag: { fontSize: 9, fontWeight: '900', borderWidth: 1, borderRadius: 5, paddingHorizontal: 4, marginTop: 2, overflow: 'hidden' },
   tools: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.md },
+  cakisma: { borderWidth: 1, borderRadius: radius.lg, padding: spacing.md, marginBottom: spacing.md },
+  cakismaSatir: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, paddingTop: spacing.xs, marginTop: spacing.xs, borderTopWidth: StyleSheet.hairlineWidth },
+  cakismaBtn: { borderRadius: radius.pill, paddingHorizontal: spacing.sm, paddingVertical: 6 },
   toolBtn: { flex: 1, borderRadius: radius.md, paddingVertical: 11, alignItems: 'center' },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderRadius: radius.md, paddingHorizontal: 4 },
   stepBtn: { width: 34, height: 40, alignItems: 'center', justifyContent: 'center' },

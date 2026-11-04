@@ -29,6 +29,9 @@ const S_DAY = '@ingapp/teacher/shared/day-schedule';
 const S_NOTES = '@ingapp/teacher/shared/notes';
 const S_BELL = '@ingapp/teacher/shared/bell';
 const S_ACTIVE = '@ingapp/teacher/shared/active-schedule'; // seçili saat düzeni ('a' | 'b')
+// Saklanan hücreler: listeden çıkarılmış bir dersin hücresinin yerine başka ders konunca eski hücre buraya alınır
+// (silinmez). [{ id, key: '<gün>-<ders>', lesson, at }] — bkz. "Ders listesi ve saklanan hücreler" aşağıda.
+const S_PARKED = '@ingapp/teacher/shared/parked';
 const DEFAULT_BELL = { mode: 'off', end: true };
 const Ctx = createContext(null);
 
@@ -90,6 +93,32 @@ function duzenle(sched) {
   });
   return out;
 }
+// Ders listesi ve saklanan hücreler (öğretmenin SON ayarı geçerli, hiçbir şey kendiliğinden silinmez):
+// - Ekranda yalnız listedeki derslerin hücreleri görünür; listeden çıkan dersin hücresi yerinde saklı durur.
+// - Saklı hücrenin saatine yeni ders konursa saklı hücre "parked"a alınır.
+// - Ders listeye geri gelince: saati boşsa (ya da orada yine saklı bir ders varsa) hücre kendiliğinden yerine döner;
+//   saatte görünen bir ders varsa o kalır (son ayar), geri gelen hücre "çakışan ders" olarak bekler —
+//   öğretmen "Bunu koy" / "Sil" der ya da o saati elle değiştirir (o zaman çakışma düşer).
+export const dersGorunur = (l, liste) => !l || !l.ders || !liste || !liste.length || liste.includes(l.ders);
+
+export function yerlestir(lessons, parked, liste) {
+  if (!liste || !liste.length || !parked.length) return null;
+  const L = { ...lessons };
+  let P = [...parked];
+  let degisti = false;
+  // En yeni saklanan önce: aynı saate birden çok hücre düşerse sonuncusu yerleşir.
+  [...parked].sort((a, b) => (b.at || 0) - (a.at || 0)).forEach((p) => {
+    if (!dersGorunur(p.lesson, liste) || !P.includes(p)) return;
+    const occ = L[p.key];
+    if (occ && dersGorunur(occ, liste)) return; // saatte görünen ders var: çakışma, bekler
+    L[p.key] = p.lesson;
+    P = P.filter((x) => x !== p);
+    if (occ) P.push({ id: shortId(), key: p.key, lesson: occ, at: Date.now() }); // oradaki saklı ders yer değiştirir
+    degisti = true;
+  });
+  return degisti ? { lessons: L, parked: P } : null;
+}
+
 function gunDuzeni(map) {
   const out = { ...DEFAULT_DAY };
   if (map && typeof map === 'object') {
@@ -120,7 +149,8 @@ export function DeskProvider({ children }) {
   };
   const [notes, setNotes] = useState([]);
   const [bell, setBellState] = useState(DEFAULT_BELL);
-  const { branchId } = useRole();
+  const { branchId, myBranches } = useRole();
+  const [parked, setParked] = useState([]);
   const [sharedLoaded, setSharedLoaded] = useState(false);
   // Branş seçilmemişken (seçim ekranı) beklenecek bir şey yok.
   const loaded = !branchId || sharedLoaded;
@@ -129,9 +159,9 @@ export function DeskProvider({ children }) {
     if (!branchId || sharedLoaded) return undefined;
     let live = true;
     (async () => {
-      let d = { lessons: {}, schedules: DEFAULT_SCHEDULES, daySchedule: DEFAULT_DAY, notes: [], bell: DEFAULT_BELL };
+      let d = { lessons: {}, schedules: DEFAULT_SCHEDULES, daySchedule: DEFAULT_DAY, notes: [], bell: DEFAULT_BELL, parked: [] };
       try {
-        const [stt, ssc, sds, sns, sbl] = await Promise.all([S_TT, S_SCHED, S_DAY, S_NOTES, S_BELL].map((k) => AsyncStorage.getItem(k)));
+        const [stt, ssc, sds, sns, sbl, spk] = await Promise.all([S_TT, S_SCHED, S_DAY, S_NOTES, S_BELL, S_PARKED].map((k) => AsyncStorage.getItem(k)));
         let tt = stt;
         let sc = ssc;
         let ds = sds;
@@ -176,6 +206,10 @@ export function DeskProvider({ children }) {
           daySchedule: gunDuzeni(daym),
           notes: ns ? JSON.parse(ns) : [],
           bell: bl ? { ...DEFAULT_BELL, ...JSON.parse(bl) } : DEFAULT_BELL,
+          parked: (() => {
+            const p = spk ? JSON.parse(spk) : [];
+            return Array.isArray(p) ? p.filter((x) => x && x.key && x.lesson) : [];
+          })(),
         };
       } catch (e) {
         console.warn('ders programı / notlar okunamadı', e);
@@ -186,6 +220,7 @@ export function DeskProvider({ children }) {
       setDayScheduleState(d.daySchedule);
       setNotes(d.notes);
       setBellState(d.bell);
+      setParked(d.parked);
       setSharedLoaded(true);
     })();
     return () => {
@@ -198,6 +233,44 @@ export function DeskProvider({ children }) {
   const saveLessons = (next) => {
     setLessons(next);
     AsyncStorage.setItem(S_TT, JSON.stringify(next)).catch(() => {});
+  };
+  const saveParked = (next) => {
+    setParked(next);
+    AsyncStorage.setItem(S_PARKED, JSON.stringify(next)).catch(() => {});
+  };
+
+  // Ekranda görünen hücreler: yalnız listedeki dersler (zil de yalnız onlara çalar).
+  const liste = myBranches;
+  const shown = useMemo(() => {
+    if (!liste || !liste.length) return lessons;
+    return Object.fromEntries(Object.entries(lessons).filter(([, l]) => dersGorunur(l, liste)));
+  }, [lessons, liste]);
+  // Çakışan dersler: listedeki bir derse ait, saatinde başka (görünen) ders olduğu için bekleyen hücreler.
+  const conflicts = useMemo(
+    () => parked.filter((p) => dersGorunur(p.lesson, liste) && liste && liste.length && lessons[p.key] && dersGorunur(lessons[p.key], liste)),
+    [parked, lessons, liste]
+  );
+  // Ders listeye geri gelince saklı hücreleri yerine koy (açılışta da).
+  useEffect(() => {
+    if (!sharedLoaded) return;
+    const r = yerlestir(lessons, parked, liste);
+    if (!r) return;
+    saveLessons(r.lessons);
+    saveParked(r.parked);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sharedLoaded, liste]);
+
+  // Öğretmen bir saati elle değiştirdi: o saatteki saklı (listede olmayan) ders silinmez, saklanır;
+  // o saat için bekleyen çakışmalar ise düşer (son ayar geçerli).
+  const setLessonManual = (key, lesson) => {
+    const next = { ...lessons };
+    const occ = lessons[key];
+    let P = parked.filter((p) => !(p.key === key && dersGorunur(p.lesson, liste)));
+    if (occ && !dersGorunur(occ, liste)) P = [...P, { id: shortId(), key, lesson: occ, at: Date.now() }];
+    if (lesson) next[key] = lesson;
+    else delete next[key];
+    saveLessons(next);
+    if (P.length !== parked.length || P.some((p, i) => p !== parked[i])) saveParked(P);
   };
   const saveSchedules = (next) => {
     setSchedulesState(next);
@@ -243,9 +316,9 @@ export function DeskProvider({ children }) {
   const bellTimer = useRef(null);
   const dayPeriods = [1, 2, 3, 4, 5].map((g) => periodsFor(g));
   const bells = useMemo(
-    () => (bell.mode === 'off' ? [] : bellTimes({ dayPeriods, lessons, mode: bell.mode, end: bell.end })),
+    () => (bell.mode === 'off' ? [] : bellTimes({ dayPeriods, lessons: shown, mode: bell.mode, end: bell.end })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [bell, schedules, daySchedule, lessons]
+    [bell, schedules, daySchedule, shown]
   );
   useEffect(() => {
     if (!branchId || !sharedLoaded) return undefined;
@@ -270,13 +343,15 @@ export function DeskProvider({ children }) {
   // Bir sınıfın haftadaki dersleri, gün/ders sırasıyla.
   // Aynı sınıf nasıl bulunur: önce sınıf ADI (sınıf adları benzersiz; eski kayıtlarda classId yok),
   // sonra classId, en son düzey. Yalnız düzeye bakmak 7-A ile 7-B'nin derslerini tek havuz düşürüyordu.
+  // Ders (branş) de aynı olmalı: aynı sınıfa İngilizce ve Teknoloji Tasarım giriliyorsa saatleri ayrı sayılır.
   const lessonsOf = (lesson) => {
     const same = (l) => {
+      if (lesson.ders && l.ders && lesson.ders !== l.ders) return false;
       if (lesson.label && l.label) return String(lesson.label).trim() === String(l.label).trim();
       if (lesson.classId || l.classId) return lesson.classId === l.classId;
       return l.grade === lesson.grade;
     };
-    return Object.entries(lessons)
+    return Object.entries(shown)
       .map(([k, l]) => ({ ...l, day: +k.split('-')[0], period: +k.split('-')[1] }))
       .filter(same)
       .sort((a, b) => a.day - b.day || a.period - b.period);
@@ -285,7 +360,8 @@ export function DeskProvider({ children }) {
   const value = useMemo(
     () => ({
       loaded,
-      lessons,
+      lessons: shown, // ekranda görünen hücreler (yalnız listedeki dersler)
+      conflicts, // [{ id, key, lesson }] — geri gelen dersin, saatinde başka ders olduğu için bekleyen hücreleri
       // Geriye dönük: "periods" = BUGÜNÜN saatleri.
       periods: todayPeriods,
       // Yeni: iki okul düzeni ve gün eşlemesi
@@ -302,11 +378,26 @@ export function DeskProvider({ children }) {
         saveSchedules({ ...schedules, [key]: { ...schedules[key], periods: (schedules[key].periods || []).map((p, k) => (k === i ? { ...p, ...patch } : p)) } }),
       setScheduleCount: (key, n) => setScheduleCount(key, n),
 
-      setLesson: (day, period, lesson) => {
-        const next = { ...lessons };
-        if (lesson) next[`${day}-${period}`] = lesson;
-        else delete next[`${day}-${period}`];
-        saveLessons(next);
+      setLesson: (day, period, lesson) => setLessonManual(`${day}-${period}`, lesson),
+      // Çakışan ders: "Bunu koy" → saatteki dersin yerine geçer (öğretmenin kararı); "Sil" → bekleyen hücre silinir.
+      applyConflict: (id) => {
+        const p = parked.find((x) => x.id === id);
+        if (!p) return;
+        saveLessons({ ...lessons, [p.key]: p.lesson });
+        saveParked(parked.filter((x) => x !== p && !(x.key === p.key && dersGorunur(x.lesson, liste))));
+      },
+      dropConflict: (id) => saveParked(parked.filter((x) => x.id !== id)),
+      // Silinmiş sınıfların hücrelerini (saklananlar dahil) temizle. known: var olan sınıf id'leri (bütün dersler).
+      pruneClasses: (known) => {
+        const yok = (l) => l && l.classId && !known.has(l.classId); // sınıfsız (düzey bazlı) derslere dokunma
+        const stale = Object.keys(lessons).filter((k) => yok(lessons[k]));
+        const P = parked.filter((p) => !yok(p.lesson));
+        if (stale.length) {
+          const next = { ...lessons };
+          stale.forEach((k) => delete next[k]);
+          saveLessons(next);
+        }
+        if (P.length !== parked.length) saveParked(P);
       },
       // Aşağıdakiler SEÇİLİ düzeni (Timetable ekranı) düzenler.
       setPeriod: (i, patch) => saveActivePeriods(activePeriods.map((p, k) => (k === i ? { ...p, ...patch } : p))),
@@ -315,7 +406,7 @@ export function DeskProvider({ children }) {
       // Bir günün dersleri: [{ day, period, classId, grade, label, ders, start, end, idx, count }]
       // dersId verilirse yalnız o dersin (branşın) hücreleri; etiketsiz eski hücreler her derse sayılır.
       lessonsOnDay: (day, dersId) =>
-        Object.entries(lessons)
+        Object.entries(shown)
           .filter(([k, l]) => +k.split('-')[0] === day && (!dersId || !l.ders || l.ders === dersId))
           .map(([k, l]) => {
             const lesson = { ...l, day, period: +k.split('-')[1] };
@@ -328,7 +419,7 @@ export function DeskProvider({ children }) {
       weekLessons: (dersId) => {
         const out = [];
         for (let day = 1; day <= 5; day++) {
-          Object.entries(lessons)
+          Object.entries(shown)
             .filter(([k, l]) => +k.split('-')[0] === day && (!dersId || !l.ders || l.ders === dersId))
             .map(([k, l]) => {
               const lesson = { ...l, day, period: +k.split('-')[1] };
@@ -341,7 +432,7 @@ export function DeskProvider({ children }) {
         }
         return out;
       },
-      hasTimetable: Object.keys(lessons).length > 0,
+      hasTimetable: Object.keys(shown).length > 0,
 
       bell,
       bells,
@@ -368,7 +459,7 @@ export function DeskProvider({ children }) {
         }),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [lessons, schedules, daySchedule, activeSchedule, todayPeriods, notes, loaded, branchId, bell, bells]
+    [lessons, shown, parked, conflicts, liste, schedules, daySchedule, activeSchedule, todayPeriods, notes, loaded, branchId, bell, bells]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

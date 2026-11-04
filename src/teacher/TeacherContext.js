@@ -149,12 +149,13 @@ export function TeacherProvider({ children }) {
   }, [loaded, branchId]);
 
   // ---- Sınıf ----
-  const addClass = (name) => {
+  // branch: sınıfın dersi (varsayılan aktif ders). Ders programında başka bir derse sınıf açılırsa o dersin sınıfı olur.
+  const addClass = (name, branch = branchId) => {
     const used = new Set(Object.values(classes).map((c) => c.cc));
     let cc = classCode();
     while (used.has(cc)) cc = classCode();
     const id = shortId();
-    const cls = { id, branch: branchId, cc, name: name.trim() || 'Yeni sınıf', createdAt: Date.now(), students: {}, homeworks: [] };
+    const cls = { id, branch: branch || branchId, cc, name: name.trim() || 'Yeni sınıf', createdAt: Date.now(), students: {}, homeworks: [] };
     dirty.current.add(id);
     setClasses((p) => ({ ...p, [id]: cls }));
     setOrder((o) => [...o, id]);
@@ -420,6 +421,8 @@ export function TeacherProvider({ children }) {
     () => order.map((id) => classes[id]).filter((c) => c && (c.branch || branchId) === branchId),
     [order, classes, branchId]
   );
+  // Bütün derslerin sınıfları (ders programı tektir ve her dersin hücresini taşır — aktif derse göre süzülmez).
+  const allList = useMemo(() => order.map((id) => classes[id]).filter(Boolean), [order, classes]);
 
   const value = {
     loaded,
@@ -432,6 +435,7 @@ export function TeacherProvider({ children }) {
     giveFeedback,
     branchId,
     classes: list,
+    allClasses: allList,
     allClassCount: order.length,
     getClass: (id) => classes[id],
     addClass,
