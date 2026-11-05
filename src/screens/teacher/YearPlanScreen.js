@@ -333,7 +333,8 @@ export default function YearPlanScreen({ route, navigation }) {
             {shown ? (
               !lesson || full ? (
                 <>
-                  <WeekDaysCard w={shown} today={today} lessons={gradeLessons} />
+                  {/* Yalnız seçili sınıfın dersleri (ör. 8-C); düzeyin bütün şubeleri tek havuz değil. */}
+                  <WeekDaysCard w={shown} today={today} lessons={lesson ? gradeLessons.filter((l) => l.label === lesson.label) : []} />
                   {lesson ? (
                     <Pressable onPress={() => setFull(false)} style={[st.backToday, { borderColor: colors.accent, marginTop: -spacing.sm }]}>
                       <Text style={{ color: colors.accent, fontWeight: '800', fontSize: font.small }}>▴ Bugünkü derse dön</Text>

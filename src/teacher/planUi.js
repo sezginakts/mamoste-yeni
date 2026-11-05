@@ -3,7 +3,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, Pressable, Modal, StyleSheet } from 'react-native';
 import { spacing, font, radius, pairColor } from '../theme';
 import { useTheme } from '../context/ThemeContext';
-import { formatDate } from './ui';
+import { formatDate, formatDateLong } from './ui';
 import Collapsible from '../components/Collapsible';
 import { dayKey } from '../utils/helpers';
 import { tatilBilgisi } from './evrak/takvim';
@@ -238,7 +238,13 @@ export function WeekCard({ w, big }) {
 }
 
 // ---- Gün gün hafta görünümü ----
-// Hafta aralığı yazılmaz; her günün başında yalnız o günün tarihi olur, altında o güne düşen kazanımlar.
+// "Haftayı gün gün gör": SEÇİLİ SINIFIN (ör. 8-C) o haftaki dersleri sırayla, her dersin altında o derse düşen
+// öğrenme çıktıları — ders kartıyla AYNI dağıtım (outcomesForLesson; yeni çıktı düşmeyen ders "Tekrar ve
+// pekiştirme"). Eskiden çıktılar düzeyin BÜTÜN şubelerinin derslerine (8-A, 8-B, 8-C…) tek havuz olarak
+// bölünüyordu: seçili sınıfın dersleri boş kalıp görünmüyor, satırlar da kapalı geliyordu.
+// Satırlar katlanmaz: bu görünümün işi haftayı bir bakışta göstermek.
+// lessons: seçili sınıfın haftadaki dersleri ({ day, period, start, end, label, idx, count }); yoksa (ders programı
+// girilmemiş) çıktılar haftanın günlerine yayılır.
 const DAY_NAMES = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
 
 function addDays(key, n) {
@@ -251,35 +257,38 @@ export function WeekDaysCard({ w, today, lessons }) {
   const { colors, shadow, mode } = useTheme();
   if (w.holiday) return <WeekCard w={w} />;
   const c = unitColor(w);
-  // Tek kaynak: gün + ders bazlı dağıtım (ders programı varsa gerçek günlere).
-  const days = weekDays(w, lessons);
+  const sinif = lessons && lessons.length ? lessons[0].label : null;
+  const rows = sinif
+    ? lessons.map((l) => ({ ...l, ...outcomesForLesson(w, l.idx, l.count) }))
+    : weekDays(w, null).map((d) => ({ ...d, review: false }));
 
   return (
     <View style={[s.card, shadow, { backgroundColor: colors.card, borderColor: colors.border }]}>
       <View style={[s.hero, { backgroundColor: c }]}>
-        <Text style={s.heroDate}>{w.week ? `${w.week}. hafta` : 'Hafta'}</Text>
+        <Text style={s.heroDate}>{`${sinif ? `${sinif} · ` : ''}${w.week ? `${w.week}. hafta` : 'Hafta'}`}</Text>
         <Text style={[s.heroUnit, { fontSize: font.h3 }]} numberOfLines={2}>{w.unit || w.topic || 'Bu hafta'}</Text>
       </View>
       <View style={{ padding: spacing.md, gap: spacing.sm }}>
-        {days.map((d, i) => {
+        {rows.map((d, i) => {
           const date = addDays(w.start, d.day - 1);
           const isToday = date === today;
           const tatil = tatilBilgisi(date); // tatil günü atlanmaz, belirtilir
-          const title = `${DAY_NAMES[d.day - 1]} · ${formatDate(date)}${d.period ? ` · ${d.period}. ders` : ''}${tatil ? ` · 🏖️ ${tatil.ad}` : ''}`;
+          const saat = d.start ? ` (${d.start}–${d.end})` : '';
           return (
-            <Collapsible
-              key={i}
-              title={title}
-              titleStyle={[s.dayName, { color: isToday ? c : colors.text, fontSize: font.small, letterSpacing: 0 }]}
-              right={
-                isToday ? (
+            <View key={i} style={[s.dayRow, { borderColor: colors.border }, isToday && { borderColor: c + '66', backgroundColor: c + (mode === 'dark' ? '1F' : '12') }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={[s.dayName, { color: isToday ? c : colors.text, flex: 1 }]}>
+                  {formatDateLong(date)}
+                  {d.period ? ` · ${d.period}. ders${saat}` : ''}
+                </Text>
+                {isToday ? (
                   <View style={[s.dayToday, { backgroundColor: c }]}>
                     <Text style={s.dayTodayT}>BUGÜN</Text>
                   </View>
-                ) : null
-              }
-              style={[s.dayRow, { borderColor: colors.border }, isToday && { borderColor: c + '66', backgroundColor: c + (mode === 'dark' ? '1F' : '12') }]}
-            >
+                ) : null}
+              </View>
+              {tatil ? <Text style={{ color: colors.textMuted, fontSize: font.tiny, fontWeight: '800' }}>🏖️ {tatil.etiket}</Text> : null}
+              {d.review ? <Text style={{ color: c, fontSize: font.tiny, fontWeight: '900', letterSpacing: 0.5, marginTop: 2 }}>TEKRAR VE PEKİŞTİRME</Text> : null}
               <View style={{ gap: 6 }}>
                 {d.lines.map((line, k) => {
                   const o = splitOutcome(line);
@@ -292,7 +301,7 @@ export function WeekDaysCard({ w, today, lessons }) {
                   );
                 })}
               </View>
-            </Collapsible>
+            </View>
           );
         })}
       </View>
