@@ -6,7 +6,7 @@ import { View, Text, ScrollView, Pressable, Modal, StyleSheet, KeyboardAvoidingV
 import { spacing, font, radius, classColorFor, timetableColorFor, inkOn } from '../../theme';
 import { useTheme } from '../../context/ThemeContext';
 import { useTeacher } from '../../teacher/TeacherContext';
-import { useDesk, weekdayOf, buildPeriods, periodAt } from '../../teacher/DeskContext';
+import { useDesk, weekdayOf, buildPeriods, periodAt, ogleOf } from '../../teacher/DeskContext';
 import { usePruneStaleLessons } from '../../teacher/pruneLessons';
 import { Header, Chip } from '../../teacher/ui';
 import { useRole } from '../../context/RoleContext';
@@ -41,6 +41,9 @@ export default function TimetableScreen({ navigation }) {
   const activeKey = desk.activeSchedule;
   const activeSched = desk.schedules[activeKey] || desk.schedules.a;
   const activePeriods = activeSched.periods || [];
+  // Öğle arası seçili okulun ayarıdır ("Saatleri ayarla"da kaçıncı dersten sonra): o dersten sonra bütün haftaya tek ince
+  // şerit; yoksa şerit yok.
+  const ogle = ogleOf(activeSched);
   const rowCount = Math.max(2, ...[1, 2, 3, 4, 5].map((g) => desk.periodsFor(g).length));
   const hasTimes = SCHED_KEYS.some((k) => (desk.schedules[k].periods || []).some((p) => p.start));
   const gunDuzeni = (day) => desk.schedules[desk.daySchedule[day] || 'a'] || desk.schedules.a;
@@ -159,7 +162,13 @@ export default function TimetableScreen({ navigation }) {
             const p = activePeriods[i] || {};
             const isNow = now && now.period === period;
             return (
-              <View key={period} style={[st.row, { borderTopColor: colors.border }, st.rowBorder]}>
+              <React.Fragment key={period}>
+              {ogle && period === ogle + 1 ? (
+                <View style={[st.ogle, { borderTopColor: colors.border, backgroundColor: colors.cardSoft }]} accessibilityLabel={`Öğle arası, ${ogle}. dersten sonra`}>
+                  <Text style={[st.ogleT, { color: colors.textMuted }]} {...SIGDIR}>ÖĞLE ARASI</Text>
+                </View>
+              ) : null}
+              <View style={[st.row, { borderTopColor: colors.border }, st.rowBorder]}>
                 <Pressable onPress={() => setTimeIdx(i)} style={[st.timeCol, st.timeCell, isNow && { backgroundColor: colors.accent + '1A' }]} accessibilityLabel={`${period}. ders saatini düzenle`}>
                   <Text style={{ color: isNow ? colors.accent : colors.text, fontWeight: '900', fontSize: font.small }} {...SIGDIR}>{period}.</Text>
                   {p.start ? (
@@ -207,6 +216,7 @@ export default function TimetableScreen({ navigation }) {
                   );
                 })}
               </View>
+              </React.Fragment>
             );
           })}
         </View>
@@ -279,8 +289,10 @@ export default function TimetableScreen({ navigation }) {
       {quick ? (
         <QuickTimes
           count={activePeriods.length}
-          onApply={(ps) => {
-            desk.setPeriods(ps);
+          periods={activePeriods}
+          ogle={ogle}
+          onApply={(ps, ogleSonra) => {
+            desk.setPeriods(ps, { ogle: ogleSonra });
             setQuick(false);
           }}
           onClose={() => setQuick(false)}
@@ -523,14 +535,50 @@ function TimeEditor({ index, value, onSave, onClose }) {
   );
 }
 
-function QuickTimes({ count, onApply, onClose }) {
+// Pencere programdaki MEVCUT ayarla açılır (ilk ders, ders süresi, teneffüs, öğle arası yeri ve süresi). Öğle arasının
+// yeri programdaki "Öğle arası" seçimiyle aynı ayardır: burada 0'dan başlasaydı uygulayınca seçilen yer silinirdi.
+const dk = (t) => {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(t || '');
+  return m ? +m[1] * 60 + +m[2] : null;
+};
+function mevcutAyar(periods, ogle) {
+  const ps = periods || [];
+  const p0 = ps[0] || {};
+  const s0 = dk(p0.start);
+  const e0 = dk(p0.end);
+  const ara = (i) => {
+    const e = dk(ps[i] && ps[i].end);
+    const s = dk(ps[i + 1] && ps[i + 1].start);
+    return e != null && s != null && s >= e ? s - e : null;
+  };
+  // Teneffüs: öğle arası dışındaki aralıkların en sık görüleni.
+  const sayac = {};
+  ps.slice(0, -1).forEach((_, i) => {
+    const a = ara(i);
+    if (a != null && i + 1 !== ogle) sayac[a] = (sayac[a] || 0) + 1;
+  });
+  const enSik = Object.keys(sayac).sort((a, b) => sayac[b] - sayac[a])[0];
+  const rest = enSik != null ? +enSik : 10;
+  // Öğle arası süresi: o dersten sonraki gerçek ara; ara teneffüsten uzun değilse (yer yeni seçilmiş) 40 dk.
+  const ogleDk = ogle ? ara(ogle - 1) : null;
+  return {
+    first: s0 != null ? p0.start : '08:00',
+    lesson: s0 != null && e0 != null && e0 > s0 ? e0 - s0 : 40,
+    rest,
+    lunchAfter: ogle || 0,
+    lunch: ogleDk && ogleDk > rest ? ogleDk : 40,
+  };
+}
+
+function QuickTimes({ count, periods, ogle, onApply, onClose }) {
   const { colors } = useTheme();
+  const [ilk] = useState(() => mevcutAyar(periods, ogle));
   const [n, setN] = useState(count);
-  const [first, setFirst] = useState('08:00');
-  const [lesson, setLesson] = useState(40);
-  const [rest, setRest] = useState(10);
-  const [lunchAfter, setLunchAfter] = useState(0);
-  const [lunch, setLunch] = useState(40);
+  const [first, setFirst] = useState(ilk.first);
+  const [lesson, setLesson] = useState(ilk.lesson);
+  const [rest, setRest] = useState(ilk.rest);
+  const [lunchAfter, setLunchAfter] = useState(ilk.lunchAfter);
+  const [lunch, setLunch] = useState(ilk.lunch);
   const preview = validTime(first) && lesson > 0 && n > 0 ? buildPeriods({ count: Math.min(12, n), first, lesson, rest, lunchAfter, lunch }) : null;
   return (
     <Sheet title="Okulun ders saatleri" subtitle="Bir kez gir, bütün dersler dolsun. Sonra tek tek düzeltebilirsin." onClose={onClose}>
@@ -555,7 +603,7 @@ function QuickTimes({ count, onApply, onClose }) {
       ) : (
         <Text style={{ color: colors.textFaint, fontSize: font.small, marginTop: spacing.md }}>Ders süresini seç; saatler burada görünecek.</Text>
       )}
-      <Pressable onPress={() => preview && onApply(preview)} style={[st.primary, { backgroundColor: colors.accent }, !preview && { opacity: 0.4 }]}>
+      <Pressable onPress={() => preview && onApply(preview, lunchAfter < preview.length ? lunchAfter : 0)} style={[st.primary, { backgroundColor: colors.accent }, !preview && { opacity: 0.4 }]}>
         <Text style={{ color: colors.onAccent, fontWeight: '800' }}>Saatleri uygula</Text>
       </Pressable>
     </Sheet>
@@ -578,6 +626,8 @@ const st = StyleSheet.create({
   table: { borderRadius: radius.lg, borderWidth: 1, overflow: 'hidden' },
   row: { flexDirection: 'row' },
   rowBorder: { borderTopWidth: StyleSheet.hairlineWidth },
+  ogle: { borderTopWidth: StyleSheet.hairlineWidth, paddingVertical: 3, alignItems: 'center', justifyContent: 'center' },
+  ogleT: { fontSize: 10, fontWeight: '900', letterSpacing: 2 },
   timeCol: { width: 62 },
   dayCol: { flex: 1, minWidth: 52 },
   headCell: { alignItems: 'center', justifyContent: 'center', paddingVertical: 10 },

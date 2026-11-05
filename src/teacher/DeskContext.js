@@ -67,6 +67,32 @@ export function buildPeriods({ count, first, lesson, rest, lunchAfter, lunch }) 
   return out;
 }
 
+// Öğle arası öğretmenin SEÇİMİDİR: schedules[k].ogle = kaçıncı dersten sonra (0 = yok), okul başına
+// Ders Programı → "Saatleri ayarla"da girilir (pencere bu değerle açılır, uygulayınca buraya yazılır).
+// Seçim hiç yapılmamışsa (eski kayıt) bir kez saatlerden tahmin edilir: en uzun boşluk ≥ 30 dk, öbür teneffüslerden
+// ≥ 10 dk uzun ve 11:00–14:00 arasında başlıyorsa. Döner: kaçıncı dersten sonra (1…), yoksa 0.
+export function ogleOf(sched) {
+  if (!sched) return 0;
+  const n = (sched.periods || []).length;
+  const o = sched.ogle != null ? sched.ogle : ogleTahmin(sched.periods);
+  return Number.isInteger(o) && o > 0 && o < n ? o : 0;
+}
+
+function ogleTahmin(periods) {
+  const ps = Array.isArray(periods) ? periods : [];
+  const bosluklar = [];
+  for (let i = 0; i < ps.length - 1; i++) {
+    const e = toMin(ps[i] && ps[i].end);
+    const s = toMin(ps[i + 1] && ps[i + 1].start);
+    if (e != null && s != null && s >= e) bosluklar.push({ sonra: i + 1, dk: s - e, bas: e });
+  }
+  if (bosluklar.length < 2) return 0;
+  const enUzun = bosluklar.reduce((m, b) => (b.dk > m.dk ? b : m));
+  const enKisa = Math.min(...bosluklar.map((b) => b.dk));
+  const ogleSaati = enUzun.bas >= 11 * 60 && enUzun.bas <= 14 * 60;
+  return ogleSaati && enUzun.dk >= 30 && enUzun.dk - enKisa >= 10 ? enUzun.sonra : 0;
+}
+
 // Şu an hangi ders? Döner { period, status: 'now' | 'next' } ya da null (gün bitti / saat yok).
 export function periodAt(periods, date = new Date()) {
   const now = date.getHours() * 60 + date.getMinutes();
@@ -90,6 +116,7 @@ function duzenle(sched) {
       name: String(s.name || (id === 'a' ? '1. Okul' : '2. Okul')),
       periods: periods.map((p) => ({ start: (p && p.start) || '', end: (p && p.end) || '' })),
     };
+    if (Number.isInteger(s.ogle) && s.ogle >= 0) out[id].ogle = s.ogle; // öğle arası: kaçıncı dersten sonra (0 = yok)
   });
   return out;
 }
@@ -288,7 +315,9 @@ export function DeskProvider({ children }) {
   };
   const todayPeriods = periodsFor(weekdayOf());
   const activePeriods = (schedules[activeSchedule] || schedules.a).periods;
-  const saveActivePeriods = (list) => saveSchedules({ ...schedules, [activeSchedule]: { ...(schedules[activeSchedule] || {}), periods: list } });
+  // extra: aynı anda kaydedilecek başka alanlar (ör. "Saatleri ayarla"dan gelen { ogle }).
+  const saveActivePeriods = (list, extra) =>
+    saveSchedules({ ...schedules, [activeSchedule]: { ...(schedules[activeSchedule] || {}), periods: list, ...(extra || {}) } });
 
   // Bir düzenin ders sayısını değiştir: yalnız o düzeni kullanan günlerde fazla dersler silinir.
   const setScheduleCount = (key, n) => {
@@ -413,7 +442,7 @@ export function DeskProvider({ children }) {
       },
       // Aşağıdakiler SEÇİLİ düzeni (Timetable ekranı) düzenler.
       setPeriod: (i, patch) => saveActivePeriods(activePeriods.map((p, k) => (k === i ? { ...p, ...patch } : p))),
-      setPeriods: saveActivePeriods,
+      setPeriods: (list, extra) => saveActivePeriods(list, extra),
       setPeriodCount: (n) => setScheduleCount(activeSchedule, n),
       // Bir günün dersleri: [{ day, period, classId, grade, label, ders, start, end, idx, count }]
       // dersId verilirse yalnız o dersin (branşın) hücreleri; etiketsiz eski hücreler her derse sayılır.

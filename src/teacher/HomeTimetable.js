@@ -4,7 +4,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { font, radius, timetableColorFor } from '../theme';
 import { useTheme } from '../context/ThemeContext';
-import { useDesk, weekdayOf } from './DeskContext';
+import { useDesk, weekdayOf, ogleOf } from './DeskContext';
 import { classColor } from '../screens/teacher/TimetableScreen';
 import { branchOf } from '../data/branches';
 
@@ -25,20 +25,25 @@ export default function HomeTimetable({ buyuk = false, alan = null }) {
   // Saatler soldaki sütunda, kutuların içinde değil. Sütun SEÇİLİ okulun (1. / 2. okul) saatlerini gösterir;
   // seçim Ders Programı ekranındaki "Saat düzeni"nden yapılır ve öğretmen değiştirene kadar kalır (desk.activeSchedule).
   const duzenler = desk.schedules || {};
-  const seciliSaatler = (duzenler[desk.activeSchedule] || {}).periods || [];
-  const saatler = doluSaat(seciliSaatler)
-    ? seciliSaatler
-    : Object.values(duzenler).map((d) => d.periods || []).find((s) => doluSaat(s)) || [];
+  const secili = duzenler[desk.activeSchedule] || {};
+  // Saat sütununun düzeni: seçili okul; onun saati yoksa saati girilmiş öbür okul.
+  const gosterilen = doluSaat(secili.periods) ? secili : Object.values(duzenler).find((d) => doluSaat(d.periods)) || secili;
+  const saatler = gosterilen.periods || [];
   const saatVar = Object.values(duzenler).some((d) => doluSaat(d.periods));
   const en = (day, period) => week.find((w) => w.day === day && w.period === period) || null;
+  // O okulda öğle arası seçiliyse o dersten sonra bütün haftaya tek ince şerit (son dersten sonraysa gösterilmez).
+  const ogleHam = ogleOf(gosterilen);
+  const ogle = ogleHam && ogleHam < sonDers ? ogleHam : 0;
+  const ogleT = buyuk || alan ? 10 : 8;
+  const ogleY = ogle ? Math.round(ogleT * 1.25) + 4 : 0;
 
   const sinirla = (v, a, b) => Math.max(a, Math.min(b, v));
-  const notY = (!saatVar ? 18 : 0) + (!week.length ? 20 : 0);
+  const notY = (!saatVar ? 18 : 0) + (!week.length ? 20 : 0) + ogleY;
   // Tam ekran: başlık satırı ~28 px, kalan yükseklik ders satırlarına bölünür.
   const sigY = alan && alan.h ? Math.floor((alan.h - 30 - notY) / sonDers) : null;
   const olcu = sigY
     ? {
-        saatKolon: 58,
+        saatKolon: 74,
         gunT: 14,
         saatT: sinirla(Math.round(sigY * 0.26), 9, 13),
         hucreY: sigY,
@@ -48,7 +53,7 @@ export default function HomeTimetable({ buyuk = false, alan = null }) {
         headPad: 4,
       }
     : {
-        saatKolon: buyuk ? 76 : 44,
+        saatKolon: buyuk ? 94 : 56,
         gunT: buyuk ? 15 : 10,
         saatT: buyuk ? 13 : 9,
         hucreY: buyuk ? 58 : 34,
@@ -94,13 +99,23 @@ export default function HomeTimetable({ buyuk = false, alan = null }) {
         const s = saatler[i] || {};
         const bitisVar = !!s.end && saatSiga(2);
         return (
-          <View key={period} style={[st.row, { borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth }]}>
+          <React.Fragment key={period}>
+          {ogle && period === ogle + 1 ? (
+            <View style={[st.ogle, { height: ogleY, borderTopColor: colors.border, backgroundColor: colors.cardSoft }]}>
+              <Text style={[st.ogleT, { color: colors.textMuted, fontSize: ogleT, lineHeight: Math.round(ogleT * 1.25) }]} {...sigdir}>ÖĞLE ARASI</Text>
+            </View>
+          ) : null}
+          <View style={[st.row, { borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth }]}>
             <View style={[st.saatKolon, { width: olcu.saatKolon }, olcu.sabitY && { paddingVertical: 0, height: olcu.hucreY }]}>
               {s.start ? (
-                <>
-                  <Text style={[st.saatT, { color: colors.text, fontSize: olcu.saatT }, satirY(olcu.saatT)]} {...sigdir}>{s.start}</Text>
-                  {bitisVar ? <Text style={[st.saatT, { color: colors.textFaint, fontSize: olcu.saatT }, satirY(olcu.saatT)]} {...sigdir}>{s.end}</Text> : null}
-                </>
+                // Saatin solunda kaçıncı ders olduğu (1. 2. 3.); başlık/açıklama yok.
+                <View style={st.saatSatir}>
+                  <Text style={[st.no, { color: colors.textMuted, fontSize: olcu.saatT }, satirY(olcu.saatT)]} {...sigdir}>{period}.</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[st.saatT, { color: colors.text, fontSize: olcu.saatT }, satirY(olcu.saatT)]} {...sigdir}>{s.start}</Text>
+                    {bitisVar ? <Text style={[st.saatT, { color: colors.textFaint, fontSize: olcu.saatT }, satirY(olcu.saatT)]} {...sigdir}>{s.end}</Text> : null}
+                  </View>
+                </View>
               ) : (
                 <Text style={[st.saatT, { color: colors.textMuted, fontSize: olcu.saatT }]} {...sigdir}>{period}.</Text>
               )}
@@ -123,6 +138,7 @@ export default function HomeTimetable({ buyuk = false, alan = null }) {
               );
             })}
           </View>
+          </React.Fragment>
         );
       })}
       {!saatVar ? (
@@ -142,9 +158,13 @@ const st = StyleSheet.create({
   gunT: { fontWeight: '900' },
   saatKolon: { justifyContent: 'center', paddingVertical: 6, paddingRight: 2, overflow: 'hidden' },
   saatT: { fontWeight: '700' },
+  saatSatir: { flexDirection: 'row', alignItems: 'center' },
+  no: { fontWeight: '900', minWidth: 16, marginRight: 3 },
   hucre: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 1, paddingVertical: 3 },
   kutu: { width: '100%', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderRadius: 7, paddingVertical: 4, paddingHorizontal: 2 },
   kutuSatir: { flexDirection: 'row', gap: 5, paddingHorizontal: 4 },
   kutuT: { fontWeight: '900' },
   kutuTag: { fontWeight: '900', letterSpacing: 0.3 },
+  ogle: { borderTopWidth: StyleSheet.hairlineWidth, alignItems: 'center', justifyContent: 'center', borderRadius: 4 },
+  ogleT: { fontWeight: '900', letterSpacing: 2, includeFontPadding: false },
 });
