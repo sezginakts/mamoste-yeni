@@ -37,6 +37,7 @@ const TARIH = new Date(2026, 9, 29, 12);
 const tamVeri = evrakVerisi({
   tarih: TARIH,
   brans: 'İngilizce',
+  toplantiSaati: '12:10',
   profil: { ad: 'Deneme Öğretmen', okul: 'Atatürk Ortaokulu', il: 'Ankara', ilce: 'Çankaya', mudur: 'Müdür Bey', mudurYrd: 'Yardımcı Hanım', rehber: 'Rehber Bey', zumre: 'Zümre Bir, Zümre İki', zumreBaskani: 'Zümre Bir' },
   sinif: { ad: '6-A', danisman: 'Danışman Hanım', ogrenciler, haftalikSaat: 3, plan: mebPlan, secili: ogrenciler[4] },
   duzey: { duzey: 6, weeks: mebPlan, kaynak: 'MEB 2026-2027 çerçeve yıllık planı' },

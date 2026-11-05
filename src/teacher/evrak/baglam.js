@@ -132,14 +132,14 @@ export function haftaBul(weeks, tarih) {
 }
 
 // girdi: {
-//   tarih: Date, brans: 'İngilizce',
+//   tarih: Date, brans: 'İngilizce', toplantiSaati: '12:10' (öğle arası; docs.js → toplantiSaati),
 //   profil: { ad, okul, il, ilce, mudur, mudurYrd, rehber, zumre: 'ad, ad', zumreBaskani },
 //   sinif?: { ad: '6-A', danisman, ogrenciler: [{ no, ad }], haftalikSaat, plan?: weeks, secili?: { no, ad } (BEP: tek öğrenci) },
 //   duzey?: { duzey: 6, weeks, kaynak },
 //   kulup?: { ad, baskan, danisman, uyeler: [{ no, ad, sinif }] },
 // }
 export function evrakVerisi(girdi) {
-  const { tarih = new Date(), brans = '', profil = {}, sinif = null, duzey = null, kulup = null } = girdi;
+  const { tarih = new Date(), brans = '', toplantiSaati = '', profil = {}, sinif = null, duzey = null, kulup = null } = girdi;
   const ogretmen = temiz(profil.ad);
 
   const zumreAdlari = [ogretmen, ...adListesi(profil.zumre).filter((a) => a.toLocaleLowerCase('tr') !== ogretmen.toLocaleLowerCase('tr'))].filter(Boolean);
@@ -168,10 +168,13 @@ export function evrakVerisi(girdi) {
     mudur_yrd: temiz(profil.mudurYrd),
     rehber_ogretmen: temiz(profil.rehber),
     zumre,
-    zumre_baskani: temiz(profil.zumreBaskani),
+    // Zümre başkanı girilmemişse müdür yardımcısı (öğretmenin kuralı); unvanı şablonda "Müdür Yardımcısı" olur.
+    zumre_baskani: temiz(profil.zumreBaskani) || temiz(profil.mudurYrd),
+    zumre_baskani_unvan: !temiz(profil.zumreBaskani) && temiz(profil.mudurYrd) ? 'Müdür Yardımcısı' : '',
     tarih: trTarih(tarih),
     egitim_yili: egitimYili(tarih),
     donem: donemOf(tarih),
+    toplanti_saati: temiz(toplantiSaati),
     takvim: takvimSatirlari(tarih),
     takvim_notu: yilVerisi(ilkYil(tarih)).yaklasik ? 'Bu eğitim yılının resmî takvimi henüz eklenmedi; tarihler önceki yıla göre yaklaşıktır.' : yilVerisi(ilkYil(tarih)).not || '',
     takvim_kaynagi: yilVerisi(ilkYil(tarih)).kaynak || 'Millî Eğitim Bakanlığı',

@@ -82,7 +82,9 @@ const sign = {
     table(
       [
         ['Zümre Başkanı', 'UYGUNDUR'],
-        ['{zumre_baskani}\n{brans} Öğretmeni', '{tarih}\n{mudur}\nOkul Müdürü'],
+        // Zümre başkanı girilmemişse müdür yardımcısı yazılır, unvanı da "Müdür Yardımcısı" olur (baglam.js).
+        // Koşullu bölüm: unvanı tanımayan eski uygulama (1.0.0) {^…} kolunu yazar → "{brans} Öğretmeni" (eskisi gibi).
+        ['{zumre_baskani}\n{#zumre_baskani_unvan}{zumre_baskani_unvan}{/zumre_baskani_unvan}{^zumre_baskani_unvan}{brans} Öğretmeni{/zumre_baskani_unvan}', '{tarih}\n{mudur}\nOkul Müdürü'],
       ],
       [4800, 4800]
     ),
@@ -145,7 +147,8 @@ function meeting({ title, info, items, kararlar, imza, katilanlar = true }) {
   );
 }
 
-const MEETING_INFO = (extra = []) => [['Toplantı tarihi', '{tarih}'], ['Toplantı saati', '……'], ['Toplantı yeri', '……'], ...extra];
+// Toplantı saati: öğle arasının başladığı saat (ders programından, uygulama hesaplar; öğretmen Word'de değiştirebilir).
+const MEETING_INFO = (extra = []) => [['Toplantı tarihi', '{tarih}'], ['Toplantı saati', '{toplanti_saati}'], ['Toplantı yeri', '……'], ...extra];
 const PROGRAM =
   'Türkiye Yüzyılı Maarif Modeli öğretim programları 2026-2027 eğitim-öğretim yılında ortaokul 5, 6 ve 7. sınıflarda uygulanmakta, 8. sınıflarda ise mevcut öğretim programı sürdürülmektedir.';
 

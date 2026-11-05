@@ -16,6 +16,7 @@ import { doldur } from './evrak/motor';
 import { evrakVerisi, eksikler } from './evrak/baglam';
 import { ETIKETLER } from './evrak/sozluk';
 import { varsayilanTarih, egitimYili } from './evrak/takvim';
+import { ogleOf } from './DeskContext';
 
 // Ekrandaki başlıklar (sıra tools/evrak/yayinla.mjs → KATEGORILER ile aynı).
 export const CATEGORIES = [
@@ -136,12 +137,33 @@ export function useDocDates() {
   return { dateOf, setDate, isCustom };
 }
 
+// Toplantı saati (okul içi toplantı tutanakları): evrak tarihinin gününde geçerli okulun (1. / 2. okul) saatlerinden
+// öğle arasının başladığı saat = öğle arasından önceki dersin bitişi. Öğle arası seçilmemişse 12:30'a en yakın ders
+// bitişi; o günün saatleri girilmemişse öbür okulun saatleri; hiç saat yoksa 12:30. Öğretmen Word'de değiştirebilir.
+// desk: { schedules, daySchedule, activeSchedule } (DeskContext).
+const saatGecerli = (t) => /^\d{1,2}:\d{2}$/.test(t || '');
+const dakika = (t) => +t.split(':')[0] * 60 + +t.split(':')[1];
+export function toplantiSaati(desk, tarih = new Date()) {
+  const duzenler = (desk && desk.schedules) || {};
+  const gun = ((tarih.getDay() + 6) % 7) + 1; // Pzt=1
+  const gununki = gun <= 5 && desk && desk.daySchedule ? desk.daySchedule[gun] : desk && desk.activeSchedule;
+  const sirali = [gununki, desk && desk.activeSchedule, 'a', 'b'].map((k) => duzenler[k]).filter(Boolean);
+  const duzen = sirali.find((d) => (d.periods || []).some((p) => saatGecerli(p.end)));
+  if (!duzen) return '12:30';
+  const ps = duzen.periods || [];
+  const ogle = ogleOf(duzen);
+  if (ogle && ps[ogle - 1] && saatGecerli(ps[ogle - 1].end)) return ps[ogle - 1].end;
+  const bitisler = ps.map((p) => p.end).filter(saatGecerli);
+  return bitisler.reduce((en, t) => (Math.abs(dakika(t) - 750) < Math.abs(dakika(en) - 750) ? t : en));
+}
+
 // Evrak verisinin girdisi (evrak/baglam.js → evrakVerisi). sinif / duzey indirirken seçilir (DocsScreen).
-export function evrakGirdisi(doc, info, { brans, branchId, tarih, sinif = null, duzey = null }) {
+export function evrakGirdisi(doc, info, { brans, branchId, tarih, sinif = null, duzey = null, desk = null }) {
   const ister = doc.ister || [];
   return {
     tarih,
     brans,
+    toplantiSaati: toplantiSaati(desk, tarih),
     profil: {
       ad: info.ad, okul: info.okul, il: info.il, ilce: info.ilce, mudur: info.mudur, mudurYrd: info.mudurYrd, rehber: info.rehber,
       zumre: (info.zumreler || {})[branchId] || '',

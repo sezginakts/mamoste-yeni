@@ -19,11 +19,17 @@ export const ETIKETLER = {
   mudur_yrd: { bilgi: 'Müdür yardımcısı', yer: 'profil' },
   rehber_ogretmen: { bilgi: 'Okul rehber öğretmeni (PDR)', yer: 'profil' },
   zumre: { bilgi: 'Zümre öğretmenleri', yer: 'profil', dongu: ['sira', 'ad', 'brans'] },
+  // Zümre başkanı girilmemişse müdür yardımcısı yazılır (baglam.js); o zaman unvanı "Müdür Yardımcısı", yoksa boş.
   zumre_baskani: { bilgi: 'Zümre başkanı', yer: 'profil' },
+  // kosul: şablonda koşullu bölüm olarak kullanılır — {#zumre_baskani_unvan}…{/…}{^zumre_baskani_unvan}…{/…}
+  zumre_baskani_unvan: { bilgi: 'Zümre başkanının unvanı', yer: 'otomatik', kosul: true },
   // Tarih
   tarih: { bilgi: 'Evrak tarihi', yer: 'otomatik' },
   egitim_yili: { bilgi: 'Eğitim yılı', yer: 'otomatik' },
   donem: { bilgi: 'Dönem', yer: 'otomatik' },
+  // Toplantı saati: evrak tarihinin günündeki öğle arasının başladığı saat (ders programından; docs.js → toplantiSaati).
+  // Okul içi toplantılar (zümre, ŞÖK, veli, kulüp, BEP); ilçe zümresinin saatini ilçe belirler, orada yok.
+  toplanti_saati: { bilgi: 'Toplantı saati', yer: 'otomatik' },
   // Eğitim-öğretim yılı takvimi (evrak tarihinin eğitim yılı)
   takvim: { bilgi: 'Çalışma takvimi', yer: 'otomatik', dongu: ['tarih', 'tur', 'olay'] },
   takvim_notu: { bilgi: 'Takvim notu', yer: 'otomatik' },
@@ -69,7 +75,7 @@ export function etiketleriAyikla(metin) {
     const ham = m[1].trim();
     if (ham.startsWith('#') || ham.startsWith('^')) {
       const ad = ham.slice(1);
-      if (!ETIKETLER[ad] || !ETIKETLER[ad].dongu) hatalar.push(`bilinmeyen döngü {${ham}}`);
+      if (!ETIKETLER[ad] || !(ETIKETLER[ad].dongu || ETIKETLER[ad].kosul)) hatalar.push(`bilinmeyen döngü {${ham}}`);
       else etiketler.add(ad);
       yigin.push(ad);
       continue;

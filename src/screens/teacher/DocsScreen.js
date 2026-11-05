@@ -29,7 +29,8 @@ export default function DocsScreen({ navigation }) {
   const { branchId, branch } = useRole();
   const { profile } = useTeacherProfile();
   const { classes } = useTeacher();
-  const { lessons } = useDesk();
+  const desk = useDesk();
+  const { lessons } = desk;
   const { plans, planForGrade } = usePlans();
   const docs = useDocList();
   const dates = useDocDates();
@@ -100,6 +101,7 @@ export default function DocsScreen({ navigation }) {
       brans: branch ? branch.name : '',
       branchId,
       tarih: dates.dateOf(doc),
+      desk, // toplantı saati: o günün öğle arası (docs.js → toplantiSaati)
       sinif: sinifVerisi(secim.sinif, secim.danisman, secim.ogrenci),
       duzey: secim.duzey ? { duzey: secim.duzey.grade, weeks: secim.duzey.weeks, kaynak: secim.duzey.builtin ? 'Millî Eğitim Bakanlığının çerçeve yıllık planı' : 'öğretmenin yıllık planı' } : null,
     });
