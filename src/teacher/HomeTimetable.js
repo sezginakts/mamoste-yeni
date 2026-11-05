@@ -1,6 +1,6 @@
 // Ana sayfa haftalık ders programı ızgarası (salt okunur). Büyük varyantı tam ekran modalda kullanılır.
 // Günler üstte, saatler solda; günlerin saat düzeni farklıysa (iki okul) saat hücrenin içinde gösterilir.
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { font, radius, timetableColorFor } from '../theme';
 import { useTheme } from '../context/ThemeContext';
@@ -15,6 +15,7 @@ const GUN = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum'];
 export default function HomeTimetable({ buyuk = false, alan = null }) {
   const { colors } = useTheme();
   const desk = useDesk();
+  const [genis, setGenis] = useState(0); // ızgaranın ölçülen genişliği (yazı boyu buradan)
   const week = desk.weekLessons();
   const bugun = weekdayOf();
   // Program girilmemişse bile 4 satırlık boş ızgara görünür.
@@ -71,15 +72,42 @@ export default function HomeTimetable({ buyuk = false, alan = null }) {
       olcu.boxTag = sinirla(Math.round(ic * 0.46), 9, 13);
     }
   }
+  // TASARIM KURALI: aynı türdeki yazılar (sınıf adları, ders kısaltmaları, saatler, günler) HEP AYNI BOYDA.
+  // Yazı tek tek küçülmez ("sığdır" / adjustsFontSizeToFit YOK): iOS yan yana duran yazının genişliğini bazen sıfıra
+  // yakın ölçüp tek bir sınıf adını (ör. 8-A) minicik yazıyordu. Bunun yerine ızgaranın genişliği ölçülür ve en uzun
+  // yazı sığacak boy BİR KEZ hesaplanıp hepsine verilir. Telefonun yazı büyütme ayarı da ızgarayı bozmasın diye
+  // ızgara yazıları büyütülmez (maxFontSizeMultiplier 1).
+  const W = genis || (alan && alan.w) || 0;
+  if (W) {
+    const harf = 0.66; // kalın Manrope'ta bir harfin yaklaşık eni (yazı boyuna oranı)
+    const uzun = (f, en) => week.reduce((m, l) => Math.max(m, String(f(l) || '').length), en);
+    const etiketN = uzun((l) => l.label, 3);
+    const dersN = uzun((l) => l.ders && branchOf(l.ders).short, 2);
+    const hucreW = (W - olcu.saatKolon) / 5 - 2 - 2; // hücre iç boşluğu + kenarlık
+    if (olcu.tekSatir) {
+      const yer = hucreW - 8 - 5; // kutu iç boşluğu + iki yazı arası
+      const gerek = etiketN * olcu.boxT * harf + dersN * olcu.boxTag * harf;
+      if (gerek > yer) {
+        const k = yer / gerek;
+        olcu.boxT = Math.floor(olcu.boxT * k);
+        olcu.boxTag = Math.floor(olcu.boxTag * k);
+      }
+    } else {
+      const yer = hucreW - 4; // kutu iç boşluğu
+      olcu.boxT = Math.min(olcu.boxT, Math.floor(yer / (etiketN * harf)));
+      olcu.boxTag = Math.min(olcu.boxTag, Math.floor(yer / (dersN * harf)));
+    }
+    // Saat sütunu: numara (1.) + "08:10"
+    olcu.saatT = Math.min(olcu.saatT, Math.floor((olcu.saatKolon - 2 - 19) / (5 * 0.62)));
+  }
   // Soldaki saat sütunu kısa satırda (telefon yatay) bitiş saati yazılmaz, yalnız başlangıç kalır.
   const saatSiga = (n) => !olcu.sabitY || olcu.hucreY >= n * olcu.saatT * 1.25 + 2;
   const satirY = (fs) => (olcu.sabitY ? { lineHeight: Math.round(fs * 1.25), includeFontPadding: false } : null);
-  // Telefonun yazı boyutu büyükse (Android'de sık) dar ızgaradaki yazılar sütuna sığmayıp yandaki ders kutusunun
-  // üstüne taşıyordu: büyüme sınırlı, sığmazsa küçülür, sütun dışına çıkmaz.
-  const sigdir = { numberOfLines: 1, adjustsFontSizeToFit: true, maxFontSizeMultiplier: 1.15 };
+  const sigdir = { numberOfLines: 1, maxFontSizeMultiplier: 1 };
+  const kutuYazi = sigdir;
 
   return (
-    <View>
+    <View onLayout={(e) => { const w = Math.round(e.nativeEvent.layout.width); if (w && w !== genis) setGenis(w); }}>
       {/* Gün başlıkları (üstte) */}
       <View style={[st.row, { borderBottomColor: colors.border }]}>
         <Text style={[st.saatBaslik, { width: olcu.saatKolon, color: colors.textFaint, fontSize: buyuk ? 11 : 9 }]} {...sigdir}>SAAT</Text>
@@ -130,8 +158,8 @@ export default function HomeTimetable({ buyuk = false, alan = null }) {
                 <View key={d} style={[st.hucre, olcu.sabitY ? { height: olcu.hucreY, overflow: 'hidden' } : { minHeight: olcu.hucreY }, isToday && { backgroundColor: colors.accent + '0D' }]}>
                   {l ? (
                     <View style={[st.kutu, olcu.sabitY && { flex: 1, paddingVertical: 1 }, olcu.tekSatir && st.kutuSatir, { backgroundColor: besMi ? '#FEF3C7' : col + '1F', borderColor: besMi ? '#F5B301' : col + '66' }]}>
-                      <Text style={[st.kutuT, { color: colors.text, fontSize: olcu.boxT, flexShrink: 1 }, satirY(olcu.boxT)]} {...sigdir}>{l.label || '—'}</Text>
-                      {l.ders ? <Text style={[st.kutuTag, { color: besMi ? '#92610B' : col, fontSize: olcu.boxTag }, satirY(olcu.boxTag)]} {...sigdir}>{branchOf(l.ders).short}</Text> : null}
+                      <Text style={[st.kutuT, { color: colors.text, fontSize: olcu.boxT }, !olcu.tekSatir && { flexShrink: 1 }, satirY(olcu.boxT)]} {...kutuYazi}>{l.label || '—'}</Text>
+                      {l.ders ? <Text style={[st.kutuTag, { color: besMi ? '#92610B' : col, fontSize: olcu.boxTag }, satirY(olcu.boxTag)]} {...kutuYazi}>{branchOf(l.ders).short}</Text> : null}
                     </View>
                   ) : null}
                 </View>

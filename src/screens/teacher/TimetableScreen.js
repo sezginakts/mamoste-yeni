@@ -2,7 +2,7 @@
 // Hücreye dokun → sınıf seç. Saate dokun → giriş/çıkış saatini düzenle. "Saatleri ayarla" → okulun saatlerini tek seferde doldur.
 import React, { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { View, Text, ScrollView, Pressable, Modal, StyleSheet, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
+import { View, Text, ScrollView, Pressable, Modal, StyleSheet, KeyboardAvoidingView, Platform, TextInput, useWindowDimensions } from 'react-native';
 import { spacing, font, radius, classColorFor, timetableColorFor, inkOn } from '../../theme';
 import { useTheme } from '../../context/ThemeContext';
 import { useTeacher } from '../../teacher/TeacherContext';
@@ -266,7 +266,22 @@ export default function TimetableScreen({ navigation }) {
         />
       ) : null}
       {renaming ? (
-        <Sheet title="Saat düzeni adı" subtitle="Ör. Atatürk Ortaokulu / İnönü Ortaokulu" onClose={() => setRenaming(null)}>
+        <Sheet
+          title="Saat düzeni adı"
+          subtitle="Ör. Atatürk Ortaokulu / İnönü Ortaokulu"
+          onClose={() => setRenaming(null)}
+          footer={
+            <Pressable
+              onPress={() => {
+                desk.renameSchedule(renaming, yeniAd);
+                setRenaming(null);
+              }}
+              style={{ backgroundColor: colors.accent, borderRadius: radius.pill, paddingVertical: spacing.sm + 2, alignItems: 'center' }}
+            >
+              <Text style={{ color: colors.onAccent, fontWeight: '900' }}>Kaydet</Text>
+            </Pressable>
+          }
+        >
           <TextInput
             value={yeniAd}
             onChangeText={setYeniAd}
@@ -275,15 +290,6 @@ export default function TimetableScreen({ navigation }) {
             autoFocus
             style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.sm, color: colors.text, fontSize: font.body, backgroundColor: colors.card }}
           />
-          <Pressable
-            onPress={() => {
-              desk.renameSchedule(renaming, yeniAd);
-              setRenaming(null);
-            }}
-            style={{ marginTop: spacing.md, backgroundColor: colors.accent, borderRadius: radius.pill, paddingVertical: spacing.sm + 2, alignItems: 'center' }}
-          >
-            <Text style={{ color: colors.onAccent, fontWeight: '900' }}>Kaydet</Text>
-          </Pressable>
         </Sheet>
       ) : null}
       {quick ? (
@@ -303,32 +309,50 @@ export default function TimetableScreen({ navigation }) {
 }
 
 // ---- Alttan açılan pencere ----
-function Sheet({ title, subtitle, onClose, children }) {
+// Yayındaki 1.0.0'da "Saatleri ayarla"da öğle arası açılınca pencere uzuyor, "Saatleri uygula" ekranın altında
+// kalıyor ve iPhone'da pencere kaydırılamadığı için öğretmen pencerede mahsur kalıyordu. Bu yüzden:
+// - footer (asıl düğmeler) kaydırılan alanın DIŞINDA, pencerenin altında her zaman görünür;
+// - başlıkta her zaman görünen ✕ Kapat var;
+// - pencere bir Pressable değil düz View: kaydırma alanını saran Pressable dokunuşu üstlenmesin; arka plan ayrı katman;
+// - yükseklik ekrandan (üst çentik payı düşülerek) hesaplanır, içerik sığmazsa yalnız orta alan kayar.
+function Sheet({ title, subtitle, onClose, children, footer }) {
   const { colors } = useTheme();
   // Alttaki sistem çubuğu (Android gezinme tuşları, iPhone çizgisi) düğmeleri örtmesin.
   const insets = useSafeAreaInsets();
-  const bottom = spacing.xl + Math.max(insets.bottom, Platform.OS === 'android' ? 48 : 0);
+  const { height } = useWindowDimensions();
+  const bottom = spacing.md + Math.max(insets.bottom, Platform.OS === 'android' ? 48 : 0);
+  const maxHeight = Math.max(240, height - Math.max(insets.top, 24) - 12);
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent navigationBarTranslucent>
       {/* Klavye açılırsa pencere klavyenin üstüne çıkar. */}
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <Pressable style={st.backdrop} onPress={onClose} accessibilityLabel="Kapat">
-          <Pressable style={[st.sheet, { backgroundColor: colors.card, paddingBottom: bottom }]} onPress={() => {}}>
-            <ScrollView bounces={false} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-              <View style={[st.grabber, { backgroundColor: colors.border }]} />
-              <Text style={{ color: colors.text, fontSize: font.h3, fontWeight: '900' }}>{title}</Text>
-              {subtitle ? <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: 2 }}>{subtitle}</Text> : null}
-              <View style={{ marginTop: spacing.md }}>{children}</View>
+        <View style={st.backdrop}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Kapat" />
+          <View style={[st.sheet, { backgroundColor: colors.card, paddingBottom: bottom, maxHeight }]}>
+            <View style={st.sheetHead}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: colors.text, fontSize: font.h3, fontWeight: '900' }}>{title}</Text>
+                {subtitle ? <Text style={{ color: colors.textMuted, fontSize: font.small, marginTop: 2 }}>{subtitle}</Text> : null}
+              </View>
+              <Pressable onPress={onClose} hitSlop={10} style={[st.kapat, { backgroundColor: colors.cardSoft }]} accessibilityRole="button" accessibilityLabel="Kapat">
+                <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900' }}>✕</Text>
+              </Pressable>
+            </View>
+            <ScrollView style={{ flexShrink: 1 }} bounces={false} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator>
+              <View style={{ paddingBottom: spacing.sm }}>{children}</View>
             </ScrollView>
-          </Pressable>
-        </Pressable>
+            {footer ? <View style={[st.sheetFoot, { borderTopColor: colors.border }]}>{footer}</View> : null}
+          </View>
+        </View>
       </KeyboardAvoidingView>
     </Modal>
   );
 }
 
-// Dar ızgara yazıları: telefonun yazı boyutu büyükse sütundan taşmasın (Android'de sık), sığmazsa küçülsün.
-const SIGDIR = { numberOfLines: 1, adjustsFontSizeToFit: true, maxFontSizeMultiplier: 1.15 };
+// Dar ızgara yazıları: telefonun yazı boyutu büyükse sütundan taşmasın (Android'de sık). Tek tek küçülme ("sığdır") YOK:
+// aynı türdeki yazılar hep aynı boyda (iOS "sığdır"da tek bir yazıyı minicik yapabiliyordu). Saat sütunu 62 px'e
+// en büyük boyda da sığar.
+const SIGDIR = { numberOfLines: 1, maxFontSizeMultiplier: 1.15 };
 
 const BRANCHES = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
 
@@ -352,7 +376,22 @@ function ClassPicker({ cell, lesson, period, classes, dersler = [], varsayilanDe
   const known = (classes || []).filter((c) => parseClassName(c.name).branch && (!ders || (c.branch || varsayilanDers) === ders));
 
   return (
-    <Sheet title={`${DAYS[cell.day - 1]} · ${cell.period}. ders`} subtitle={`Bu saatte hangi derse, hangi sınıfa giriyorsun?${time}`} onClose={onClose}>
+    <Sheet
+      title={`${DAYS[cell.day - 1]} · ${cell.period}. ders`}
+      subtitle={`Bu saatte hangi derse, hangi sınıfa giriyorsun?${time}`}
+      onClose={onClose}
+      footer={
+        <Pressable
+          onPress={() => name && onPick({ grade, branch, ders })}
+          disabled={!name}
+          style={[st.primary, { marginTop: 0, backgroundColor: name ? classColor(name) : colors.accent }, !name && { opacity: 0.4 }]}
+        >
+          <Text style={{ color: inkOn(name ? classColor(name) : colors.accent), fontWeight: '900', fontSize: font.body }}>
+            {name ? `${name} olarak kaydet` : !grade ? 'Sınıfı seç' : 'Şubeyi seç'}
+          </Text>
+        </Pressable>
+      }
+    >
       {/* Dolu hücrede "Dersi boşalt" EN ÜSTTE: pencere uzun olunca alttaki düğme ekran dışında kalıyordu. */}
       {lesson ? (
         <View style={[st.bosaltSatir, { borderColor: colors.danger + '55', backgroundColor: colors.danger + '0F' }]}>
@@ -399,21 +438,6 @@ function ClassPicker({ cell, lesson, period, classes, dersler = [], varsayilanDe
         {BRANCHES.map((b) => (
           <Chip key={b} label={b} active={branch === b} onPress={() => setBranch(b)} />
         ))}
-      </View>
-
-      <Pressable
-        onPress={() => name && onPick({ grade, branch, ders })}
-        disabled={!name}
-        style={[st.primary, { backgroundColor: name ? classColor(name) : colors.accent, marginTop: spacing.md }, !name && { opacity: 0.4 }]}
-      >
-        <Text style={{ color: inkOn(name ? classColor(name) : colors.accent), fontWeight: '900', fontSize: font.body }}>
-          {name ? `${name} olarak kaydet` : !grade ? 'Sınıfı seç' : 'Şubeyi seç'}
-        </Text>
-      </Pressable>
-      <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm }}>
-        <Pressable onPress={onClose} style={[st.sheetBtn, { borderColor: colors.border, flex: 1 }]}>
-          <Text style={{ color: colors.text, fontWeight: '800' }}>Vazgeç</Text>
-        </Pressable>
       </View>
     </Sheet>
   );
@@ -516,21 +540,29 @@ function TimeEditor({ index, value, onSave, onClose }) {
   const [end, setEnd] = useState(validTime(value.end) ? value.end : addMin(validTime(value.start) ? value.start : '08:00', 40));
   const ok = validTime(start) && validTime(end) && end > start;
   return (
-    <Sheet title={`${index + 1}. ders saati`} subtitle="Giriş ve çıkış saatini tekerleği kaydırarak seç." onClose={onClose}>
+    <Sheet
+      title={`${index + 1}. ders saati`}
+      subtitle="Giriş ve çıkış saatini tekerleği kaydırarak seç."
+      onClose={onClose}
+      footer={
+        <>
+          <Pressable onPress={() => ok && onSave({ start, end })} style={[st.primary, { marginTop: 0, backgroundColor: colors.accent }, !ok && { opacity: 0.4 }]}>
+            <Text style={{ color: colors.onAccent, fontWeight: '800' }}>Kaydet</Text>
+          </Pressable>
+          {value.start ? (
+            <Pressable onPress={() => onSave({ start: '', end: '' })} style={[st.sheetBtn, { borderColor: colors.danger, marginTop: spacing.sm }]}>
+              <Text style={{ color: colors.danger, fontWeight: '800' }}>Saati sil</Text>
+            </Pressable>
+          ) : null}
+        </>
+      }
+    >
       <View style={{ flexDirection: 'row', gap: spacing.md, alignItems: 'center', justifyContent: 'center' }}>
         <TimeField label="GİRİŞ" value={start} onChange={(v) => { setStart(v); if (!(end > v)) setEnd(addMin(v, 40)); }} />
         <Text style={{ color: colors.textMuted, fontSize: font.h3, marginTop: 20 }}>–</Text>
         <TimeField label="ÇIKIŞ" value={end} onChange={setEnd} />
       </View>
       {!ok ? <Text style={{ color: colors.danger, fontSize: font.small, marginTop: spacing.sm, textAlign: 'center' }}>Çıkış saati girişten sonra olmalı.</Text> : null}
-      <Pressable onPress={() => ok && onSave({ start, end })} style={[st.primary, { backgroundColor: colors.accent }, !ok && { opacity: 0.4 }]}>
-        <Text style={{ color: colors.onAccent, fontWeight: '800' }}>Kaydet</Text>
-      </Pressable>
-      {value.start ? (
-        <Pressable onPress={() => onSave({ start: '', end: '' })} style={[st.sheetBtn, { borderColor: colors.danger, marginTop: spacing.sm }]}>
-          <Text style={{ color: colors.danger, fontWeight: '800' }}>Saati sil</Text>
-        </Pressable>
-      ) : null}
     </Sheet>
   );
 }
@@ -581,7 +613,16 @@ function QuickTimes({ count, periods, ogle, onApply, onClose }) {
   const [lunch, setLunch] = useState(ilk.lunch);
   const preview = validTime(first) && lesson > 0 && n > 0 ? buildPeriods({ count: Math.min(12, n), first, lesson, rest, lunchAfter, lunch }) : null;
   return (
-    <Sheet title="Okulun ders saatleri" subtitle="Bir kez gir, bütün dersler dolsun. Sonra tek tek düzeltebilirsin." onClose={onClose}>
+    <Sheet
+      title="Okulun ders saatleri"
+      subtitle="Bir kez gir, bütün dersler dolsun. Sonra tek tek düzeltebilirsin."
+      onClose={onClose}
+      footer={
+        <Pressable onPress={() => preview && onApply(preview, lunchAfter < preview.length ? lunchAfter : 0)} style={[st.primary, { marginTop: 0, backgroundColor: colors.accent }, !preview && { opacity: 0.4 }]}>
+          <Text style={{ color: colors.onAccent, fontWeight: '800' }}>Saatleri uygula</Text>
+        </Pressable>
+      }
+    >
       <View style={{ alignItems: 'center' }}>
         <TimeField label="İLK DERS GİRİŞ" value={first} onChange={setFirst} />
       </View>
@@ -589,8 +630,11 @@ function QuickTimes({ count, periods, ogle, onApply, onClose }) {
         <NumField label="DERS SÜRESİ" value={lesson} onChange={setLesson} suffix="dk" step={5} min={5} max={120} />
         <NumField label="TENEFFÜS" value={rest} onChange={setRest} suffix="dk" step={5} max={60} />
         <NumField label="DERS SAYISI" value={n} onChange={setN} min={1} max={12} />
-        <NumField label="ÖĞLE ARASI (kaçıncı dersten sonra)" value={lunchAfter} onChange={setLunchAfter} suffix={lunchAfter ? '. ders' : 'yok'} max={11} />
-        {lunchAfter ? <NumField label="ÖĞLE ARASI" value={lunch} onChange={setLunch} suffix="dk" step={5} min={5} max={120} /> : null}
+      </View>
+      {/* Öğle arası: yeri ve süresi aynı satırda (pencere uzamasın). */}
+      <View style={[st.formRow, { marginTop: spacing.sm }]}>
+        <NumField label="ÖĞLE ARASI · KAÇINCI DERSTEN SONRA" value={lunchAfter} onChange={setLunchAfter} suffix={lunchAfter ? '. ders' : 'yok'} max={11} />
+        {lunchAfter ? <NumField label="SÜRESİ" value={lunch} onChange={setLunch} suffix="dk" step={5} min={5} max={120} /> : null}
       </View>
       {preview ? (
         <View style={[st.preview, { backgroundColor: colors.cardSoft }]}>
@@ -603,9 +647,6 @@ function QuickTimes({ count, periods, ogle, onApply, onClose }) {
       ) : (
         <Text style={{ color: colors.textFaint, fontSize: font.small, marginTop: spacing.md }}>Ders süresini seç; saatler burada görünecek.</Text>
       )}
-      <Pressable onPress={() => preview && onApply(preview, lunchAfter < preview.length ? lunchAfter : 0)} style={[st.primary, { backgroundColor: colors.accent }, !preview && { opacity: 0.4 }]}>
-        <Text style={{ color: colors.onAccent, fontWeight: '800' }}>Saatleri uygula</Text>
-      </Pressable>
     </Sheet>
   );
 }
@@ -640,11 +681,13 @@ const st = StyleSheet.create({
   cellT: { fontWeight: '900', fontSize: 13, textAlign: 'center' },
 
   backdrop: { flex: 1, backgroundColor: 'rgba(15,23,42,0.55)', justifyContent: 'flex-end' },
-  // maxHeight: uzun içerikte pencere ekrana sığar ve içi kayar (yoksa alttaki düğmeler ekran dışında kalıyordu).
-  sheet: { borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: spacing.lg, paddingBottom: spacing.xl, maxWidth: 640, width: '100%', alignSelf: 'center', maxHeight: '92%' },
+  // maxHeight Sheet'te ekrandan hesaplanır; içerik sığmazsa yalnız orta alan kayar, footer hep görünür.
+  sheet: { borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: spacing.lg, paddingTop: spacing.md, maxWidth: 640, width: '100%', alignSelf: 'center' },
+  sheetHead: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm, marginBottom: spacing.md },
+  kapat: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  sheetFoot: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: spacing.sm },
   bosaltSatir: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderWidth: 1, borderRadius: radius.md, padding: spacing.sm, marginBottom: spacing.md },
   bosaltBtn: { borderRadius: radius.md, paddingVertical: 9, paddingHorizontal: spacing.md },
-  grabber: { width: 44, height: 5, borderRadius: 3, alignSelf: 'center', marginBottom: spacing.md },
   pickLbl: { fontSize: font.tiny, fontWeight: '800', letterSpacing: 1, marginBottom: 6, marginTop: 4 },
   stepLbl: { fontSize: font.body, fontWeight: '900', marginTop: spacing.sm, marginBottom: 6 },
   chips: { flexDirection: 'row', flexWrap: 'wrap' },

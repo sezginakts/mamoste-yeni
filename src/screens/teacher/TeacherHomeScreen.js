@@ -570,7 +570,7 @@ export default function TeacherHomeScreen({ navigation }) {
           {/* Izgara kalan alana TAM sığar (kaydırma yok): alanın yüksekliği ölçülüp satırlara bölünür. */}
           <Pressable
             onPress={tamEkrandaDokun}
-            onLayout={(e) => setTamAlan({ h: e.nativeEvent.layout.height })}
+            onLayout={(e) => setTamAlan({ h: e.nativeEvent.layout.height, w: e.nativeEvent.layout.width })}
             style={{ flex: 1 }}
             accessibilityLabel="Kapatmak için çift dokun"
           >
