@@ -1,6 +1,7 @@
 // Öğretmen ana sayfası: karşılama bandı, şimdiki/sıradaki ders, kısayollar, sınıflar.
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable, Image, Modal, Platform } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
 import { useSafeAreaInsets, initialWindowMetrics } from 'react-native-safe-area-context';
 import { spacing, font, radius, inkOn } from '../../theme';
 import { usePlans } from '../../teacher/PlanContext';
@@ -48,12 +49,48 @@ const minOf = (t) => {
   return m ? +m[1] * 60 + +m[2] : null;
 };
 
+// Programın TAMAMINDA (listedeki bütün dersler) şimdiki ders, yoksa bugünün sıradaki dersi, yoksa tatil olmayan
+// sonraki okul gününün ilk dersi. Ana kartla aynı kural; yalnız öndeki dersi kendiliğinden seçmek için kullanılır.
+// → { l, gun } (gun: dersin tarihi) ya da null
+const programdakiDers = (desk, now) => {
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const bugunTatil = now.getDay() !== 0 && now.getDay() !== 6 ? tatilBilgisi(now) : null;
+  const bugun = desk.lessonsOnDay(weekdayOf(now));
+  if (bugun.length && !bugunTatil) {
+    if (!bugun.some((l) => l.start && l.end)) return { l: bugun[0], gun: dayKey(now) };
+    const l =
+      bugun.find((x) => {
+        const s = minOf(x.start);
+        const e = minOf(x.end);
+        return s != null && e != null && nowMin >= s && nowMin < e; // şimdiki
+      }) ||
+      bugun.find((x) => {
+        const s = minOf(x.start);
+        const e = minOf(x.end);
+        if (s == null || e == null) return true; // saati yok: atlama
+        return nowMin < s; // sıradaki
+      });
+    if (l) return { l, gun: dayKey(now) };
+  }
+  if (!desk.hasTimetable) return null;
+  for (let i = 1; i <= 24; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
+    const ls = desk.lessonsOnDay(weekdayOf(d));
+    if (!ls.length || tatilBilgisi(d)) continue;
+    return { l: ls[0], gun: dayKey(d) };
+  }
+  return null;
+};
+// Son kendiliğinden seçilen ders (ekrandan çıkıp dönünce aynı derste elle seçim bozulmasın).
+let sonOtoDers = null;
+
 export default function TeacherHomeScreen({ navigation }) {
   const { colors, shadow, mode } = useTheme();
   const insets = useSafeAreaInsets();
   const t = useTeacher();
-  const { branch, branchId } = useRole();
+  const { branch, branchId, myBranches, switchBranch } = useRole();
   const { profile } = useTeacherProfile();
+  const ekranda = useIsFocused();
   const [newName, setNewName] = useState('');
   const [adding, setAdding] = useState(false);
   const [sinifAcilSin, setSinifAcilSin] = useState(0); // SINIFLARIM bölümünü dışarıdan açma sinyali
@@ -210,6 +247,20 @@ export default function TeacherHomeScreen({ navigation }) {
     }
   }
   const tatilNotu = bugunTatil || aradaTatil ? `🏖️ ${(bugunTatil || aradaTatil).etiket}` : null;
+
+  // Öndeki ders programa göre kendiliğinden seçilir: şimdiki/sıradaki ders hangi dersinse o ders öne gelir
+  // (Ayarlar → "Öndeki ders" ile aynı işlem). Yalnız ana sayfa ekrandayken ve YENİ bir derse geçilince yapılır;
+  // öğretmen aynı ders sürerken elle başka derse geçerse, sonraki ders başlayana kadar onun seçimi kalır.
+  // Ders etiketi olmayan (eski) hücre her derse sayıldığı için ders değiştirmez.
+  const otoDers = ekranda && desk.loaded ? programdakiDers(desk, now) : null;
+  const otoImza = otoDers && otoDers.l.ders ? `${otoDers.gun}|${otoDers.l.period}|${otoDers.l.ders}` : null;
+  useEffect(() => {
+    if (!otoImza || sonOtoDers === otoImza) return;
+    sonOtoDers = otoImza;
+    const ders = otoDers.l.ders;
+    if (ders !== branchId && myBranches.includes(ders)) switchBranch(ders);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [otoImza]);
   const live = focusLabel === 'ŞİMDİ';
   // Ders programı yoksa üst kart bu haftanın öğrenme çıktılarını düzey düzey gösterir.
   // Varsayılan: öğretmenin ilk sınıfının düzeyi (sınıf yoksa ilk plan).
